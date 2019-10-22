@@ -1,0 +1,26 @@
+
+BEHAVIOURS:
+
+     - One-Shot: executa action() uma vez e termina.
+     - Cyclic: executa action() até o agente da behaviour terminar.
+     - SomeStepsBehaviours (generic): podemos fazer um switch com estados. termina quando done() retornar true;
+
+    SequentialBehaviour, ParallelBehaviour, FSMBehaviour...
+
+     - WakerBehaviour: executa handleElapsedTimeout() após t ms ( no construtor de WakerBehaviour() ) e depois termina. ex:
+
+    protected void setup() {
+            System.out.println(“Adding waker behaviour”);
+            addBehaviour(new WakerBehaviour(this, t) {
+                protected void handleElapsedTimeout() {
+                // perform operation X
+            }
+        } );
+    }
+
+     - TickerBehaviour: executa onTick() periodically TimerBehaviour(this,t);
+
+
+    
+
+
