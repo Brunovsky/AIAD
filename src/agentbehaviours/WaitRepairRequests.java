@@ -13,7 +13,7 @@ public class WaitRepairRequests extends Behaviour {
                 MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
                 MessageTemplate.MatchPerformative(ACLMessage.CFP) );
 
-        myAgent.addBehaviour(new CoolBehaviour(myAgent, template));
+        myAgent.addBehaviour(new ContractResponder(myAgent, template));
     }
 
     @Override

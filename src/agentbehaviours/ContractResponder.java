@@ -8,11 +8,11 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.ContractNetResponder;
 
-public class CoolBehaviour extends ContractNetResponder {
+public class ContractResponder extends ContractNetResponder {
 
     private Agent agent;
 
-    public CoolBehaviour(Agent a, MessageTemplate mt) {
+    public ContractResponder(Agent a, MessageTemplate mt) {
         super(a, mt);
         this.agent = a;
 
