@@ -51,12 +51,13 @@ public class Client extends Agent {
 			else {
 				System.out.println("Agent "+getLocalName()+" did not find any "+serviceType+" service");
 			}
+
+			System.out.println("Starting Contract with Technicians...");
+			this.addBehaviour(new RequestRepair(results));
 		}
 		catch (FIPAException fe) {
 			fe.printStackTrace();
 		}
-
-		this.addBehaviour(new RequestRepair());
 	}
 }
 
