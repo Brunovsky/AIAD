@@ -23,6 +23,7 @@ public class Technician extends Agent {
 
         // Register the service
         System.out.println("Agent " + getLocalName() + " registering service \"" + serviceName + "\" of type "+serviceType);
+
         try {
             DFAgentDescription dfd = new DFAgentDescription();
             dfd.setName(getAID());
