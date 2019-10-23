@@ -56,7 +56,8 @@ public class Client extends Agent {
 			fe.printStackTrace();
 		}
 
-		this.addBehaviour(new RequestRepair());
+		System.out.println("Starting Contract with Technicians...");
+		this.addBehaviour(new RequestRepair(results));
 	}
 }
 
