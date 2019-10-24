@@ -1,29 +1,37 @@
 package agentbehaviours;
 
+import agents.Client;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetInitiator;
+import message.TechnicianMessage;
 
 import java.util.Enumeration;
 import java.util.Vector;
 
 public class ContractInitiator extends ContractNetInitiator {
 
-    private Agent agent;
     private int nResponders;
     private DFAgentDescription[] agents;
 
     public ContractInitiator(Agent a, ACLMessage msg, DFAgentDescription[] agents) {
         super(a, msg);
-        this.agent = a;
         this.agents = agents;
         this.nResponders = agents.length;
+        // ((Client) myAgent).getType()
+        // ((Client) myAgent).getLocation()
     }
 
+    // Warning: Useless function because we will use handleAllResponses
     protected void handlePropose(ACLMessage propose, Vector v) {
-        System.out.println("Agent " + propose.getSender().getName() + " proposed " + propose.getContent());
+        try {
+            System.out.println("Agent " + propose.getSender().getName() + " proposed " + propose.getContentObject());
+        } catch (UnreadableException e) {
+            e.printStackTrace();
+        }
     }
 
     protected void handleRefuse(ACLMessage refuse) {
@@ -43,29 +51,39 @@ public class ContractInitiator extends ContractNetInitiator {
     }
 
     protected void handleAllResponses(Vector responses, Vector acceptances) {
+        // Next if will be deleted probably
         if (responses.size() < nResponders) {
             // Some responder didn't reply within the specified timeout
             System.out.println("Timeout expired: missing " + (nResponders - responses.size()) + " responses");
         }
+
         // Evaluate proposals.
-        int bestProposal = -1;
+        TechnicianMessage bestProposal = null;
         AID bestProposer = null;
+
         ACLMessage accept = null;
         Enumeration e = responses.elements();
+        // Iterate through all responses
         while (e.hasMoreElements()) {
             ACLMessage msg = (ACLMessage) e.nextElement();
             if (msg.getPerformative() == ACLMessage.PROPOSE) {
                 ACLMessage reply = msg.createReply();
                 reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
                 acceptances.addElement(reply);
-                int proposal = Integer.parseInt(msg.getContent());
-                if (proposal > bestProposal) {
+                TechnicianMessage proposal = null;
+                try {
+                    proposal = (TechnicianMessage) msg.getContentObject();
+                } catch (UnreadableException e1) {
+                    e1.printStackTrace();
+                }
+                if (proposal != null && ((Client) myAgent).compareTechnicianMessages(proposal, bestProposal)) {
                     bestProposal = proposal;
                     bestProposer = msg.getSender();
                     accept = reply;
                 }
             }
         }
+
         // Accept the proposal of the best proposer
         if (accept != null) {
             System.out.println("Accepting proposal " + bestProposal + " from responder " + bestProposer.getName());

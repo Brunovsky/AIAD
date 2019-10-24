@@ -1,0 +1,8 @@
+package utils;
+
+public enum ClientType {
+    SELFISH_AVAILABLE,
+    SELFISH_UNAVAILABLE,
+    URGENT_AVAILABLE,
+    REASONABLE_UNAVAILABLE
+}

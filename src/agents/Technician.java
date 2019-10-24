@@ -7,6 +7,9 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAAgentManagement.Property;
+import jade.lang.acl.ACLMessage;
+import message.ClientMessage;
+import message.TechnicianMessage;
 
 public class Technician extends Agent {
 
@@ -44,6 +47,23 @@ public class Technician extends Agent {
         }
 
         addBehaviour(new WaitRepairRequests());
+    }
+
+    public TechnicianMessage handleReceivedClientCfp(ClientMessage contentObject) {
+        TechnicianMessage response = new TechnicianMessage();
+
+        // TODO: make response here
+
+        return response; // or return null
+    }
+
+    public boolean handleReceivedClientAcceptProposal(ACLMessage cfp, ACLMessage propose){
+        //  TODO:
+        // Handle Accept Proposal
+
+        // Perform action
+
+        return true;
     }
 
     /*

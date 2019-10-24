@@ -15,4 +15,4 @@ IntelliJ : In out/production/<project_folder_name>
     - Multiple: ```java jade.Boot -container "<client1_name>:agents.Client ; <client2_name>:agents.Client ; ..."```
     
     
-Agent with params: ```java jade.Boot -container <agent_name>:<agent_class>(<agent_param1> <agent_param2> ...)```
+Agent with params: ```java jade.Boot -container '<agent_name>:<agent_class>(<agent_param1>, <agent_param2>, ...)'``` 

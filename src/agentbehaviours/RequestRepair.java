@@ -1,10 +1,14 @@
 package agentbehaviours;
 
+import agents.Client;
 import jade.core.AID;
 import jade.core.behaviours.Behaviour;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
+import message.ClientMessage;
+
+import java.io.IOException;
 
 
 public class RequestRepair extends Behaviour {
@@ -17,7 +21,6 @@ public class RequestRepair extends Behaviour {
         this.agents = agents;
         this.nResponders = agents.length;
         this.finished = false;
-        System.out.println(agents);
     }
 
     public String getAgentName(String aid) {
@@ -32,14 +35,22 @@ public class RequestRepair extends Behaviour {
         // Fill the CFP message
         ACLMessage msg = new ACLMessage(ACLMessage.CFP);
         for (int i = 0; i < agents.length; ++i) {
-            System.out.println(agents[i].getName().getName());
-            System.out.println(new AID((String) getAgentName(agents[i].getName().getName()), AID.ISLOCALNAME));
             msg.addReceiver(new AID((String) getAgentName(agents[i].getName().getName()), AID.ISLOCALNAME));
         }
         msg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         // We want to receive a reply in 10 secs
         //msg.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
-        msg.setContent("O Miguel é giro");
+        ClientMessage messageToBeSent = new ClientMessage(((Client) myAgent).getLocation(), ((Client) myAgent).getType());
+        //msg.setContent("O Miguel é giro");
+        try {
+            msg.setContentObject(messageToBeSent);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        System.out.println("My Agent");
+        //((Client) myAgent).getType()
 
         myAgent.addBehaviour(new ContractInitiator(myAgent, msg, agents));
     }
