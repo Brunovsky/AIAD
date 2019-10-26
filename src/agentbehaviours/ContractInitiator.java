@@ -8,6 +8,7 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetInitiator;
 import message.TechnicianMessage;
+import utils.Logger;
 
 import java.util.Enumeration;
 import java.util.Vector;
@@ -21,30 +22,28 @@ public class ContractInitiator extends ContractNetInitiator {
         super(a, msg);
         this.agents = agents;
         this.nResponders = agents.length;
-        // ((Client) myAgent).getType()
         // ((Client) myAgent).getLocation()
     }
 
     // Warning: Useless function because we will use handleAllResponses
     protected void handlePropose(ACLMessage propose, Vector v) {
         try {
-            System.out.println("Agent " + propose.getSender().getName() + " proposed " + propose.getContentObject());
+            Logger.info(myAgent.getLocalName(), "Agent " + propose.getSender().getName() + " proposed " + propose.getContentObject());
         } catch (UnreadableException e) {
             e.printStackTrace();
         }
     }
 
     protected void handleRefuse(ACLMessage refuse) {
-        System.out.println("Agent " + refuse.getSender().getName() + " refused");
+        Logger.warn(myAgent.getLocalName(), "Agent " + refuse.getSender().getName() + " refused");
     }
 
     protected void handleFailure(ACLMessage failure) {
         if (failure.getSender().equals(myAgent.getAMS())) {
             // FAILURE notification from the JADE runtime: the receiver
-            // does not exist
-            System.out.println("Responder does not exist");
+            Logger.error(myAgent.getLocalName(), "Responder does not exist");
         } else {
-            System.out.println("Agent " + failure.getSender().getName() + " failed");
+            Logger.error(myAgent.getLocalName(), "Agent " + failure.getSender().getName() + " failed");
         }
         // Immediate failure --> we will not receive a response from this agent
         nResponders--;
@@ -54,7 +53,7 @@ public class ContractInitiator extends ContractNetInitiator {
         // Next if will be deleted probably
         if (responses.size() < nResponders) {
             // Some responder didn't reply within the specified timeout
-            System.out.println("Timeout expired: missing " + (nResponders - responses.size()) + " responses");
+            Logger.warn(myAgent.getLocalName(), "Timeout expired: missing " + (nResponders - responses.size()) + " responses");
         }
 
         // Evaluate proposals.
@@ -86,12 +85,12 @@ public class ContractInitiator extends ContractNetInitiator {
 
         // Accept the proposal of the best proposer
         if (accept != null) {
-            System.out.println("Accepting proposal " + bestProposal + " from responder " + bestProposer.getName());
+            Logger.info(myAgent.getLocalName(),"Accepting proposal " + bestProposal + " from responder " + bestProposer.getName());
             accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
         }
     }
 
     protected void handleInform(ACLMessage inform) {
-        System.out.println("Agent " + inform.getSender().getName() + " successfully performed the requested action");
+        Logger.info(myAgent.getLocalName(), "Agent " + inform.getSender().getName() + " successfully performed the requested action");
     }
 }

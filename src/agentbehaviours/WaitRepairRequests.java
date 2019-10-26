@@ -8,7 +8,6 @@ import jade.lang.acl.MessageTemplate;
 public class WaitRepairRequests extends Behaviour {
     @Override
     public void action() {
-        System.out.println("ANOTHER BEHAVIOUR");
         MessageTemplate template = MessageTemplate.and(
                 MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
                 MessageTemplate.MatchPerformative(ACLMessage.CFP) );

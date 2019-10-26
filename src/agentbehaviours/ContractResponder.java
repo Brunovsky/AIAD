@@ -3,7 +3,6 @@ package agentbehaviours;
 import agents.Technician;
 import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
 import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -11,26 +10,20 @@ import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetResponder;
 import message.ClientMessage;
 import message.TechnicianMessage;
+import utils.Logger;
 
 import java.io.IOException;
 
 public class ContractResponder extends ContractNetResponder {
 
-    private Agent agent;
-
     public ContractResponder(Agent a, MessageTemplate mt) {
         super(a, mt);
-        this.agent = a;
-
     }
 
     @Override
-    protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
+    protected ACLMessage handleCfp(ACLMessage cfp) throws RefuseException {
         try {
-            System.out.println("Agent "+agent.getLocalName()+": CFP received from "+cfp.getSender().getName());
-            //System.out.println(((ClientMessage) cfp.getContentObject()).getLocation());
-            System.out.println("Message: "+cfp.getContentObject());
-
+            Logger.info(myAgent.getLocalName(), "CFP received from "+cfp.getSender().getName());
 
             TechnicianMessage proposal =((Technician) myAgent).handleReceivedClientCfp((ClientMessage) cfp.getContentObject());
             if(proposal != null){
@@ -41,7 +34,7 @@ public class ContractResponder extends ContractNetResponder {
                 return propose;
             } else {
                 // Don't send propose to Client
-                System.out.println("Agent "+agent.getLocalName()+": Refuse");
+                Logger.warn(myAgent.getLocalName(), "Refuse");
             }
         } catch (UnreadableException e) {
             e.printStackTrace();
@@ -54,20 +47,20 @@ public class ContractResponder extends ContractNetResponder {
 
     @Override
     protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
-        System.out.println("Agent "+agent.getLocalName()+": Proposal accepted");
+        Logger.info(myAgent.getLocalName(), "Proposal accepted");
         if (((Technician) myAgent).handleReceivedClientAcceptProposal(cfp, propose)) {
-            System.out.println("Agent "+agent.getLocalName()+": Action successfully performed");
+            Logger.info(myAgent.getLocalName(), "Action successfully performed");
             ACLMessage inform = accept.createReply();
             inform.setPerformative(ACLMessage.INFORM);
             return inform;
         }
         else {
-            System.out.println("Agent "+agent.getLocalName()+": Action execution failed");
+            Logger.error(myAgent.getLocalName(), " Action execution failed");
             throw new FailureException("unexpected-error");
         }
     }
 
     protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
-        System.out.println("Agent "+agent.getLocalName()+": Proposal rejected");
+        Logger.warn(myAgent.getLocalName(), "Proposal rejected");
     }
 }

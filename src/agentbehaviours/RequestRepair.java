@@ -30,8 +30,6 @@ public class RequestRepair extends Behaviour {
 
     @Override
     public void action() {
-        //System.out.println("SOME BEHAVIOUR");
-
         // Fill the CFP message
         ACLMessage msg = new ACLMessage(ACLMessage.CFP);
         for (int i = 0; i < agents.length; ++i) {
@@ -40,8 +38,8 @@ public class RequestRepair extends Behaviour {
         msg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         // We want to receive a reply in 10 secs
         //msg.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
-        ClientMessage messageToBeSent = new ClientMessage(((Client) myAgent).getLocation(), ((Client) myAgent).getType());
-        //msg.setContent("O Miguel é giro");
+        ClientMessage messageToBeSent = new ClientMessage(((Client) myAgent).getLocation());
+
         try {
             msg.setContentObject(messageToBeSent);
         } catch (IOException e) {
@@ -49,14 +47,12 @@ public class RequestRepair extends Behaviour {
         }
 
 
-        System.out.println("My Agent");
-        //((Client) myAgent).getType()
-
         myAgent.addBehaviour(new ContractInitiator(myAgent, msg, agents));
     }
 
     @Override
     public boolean done() {
+        // TODO: check when it's finished
         this.finished = true;
         return finished;
     }

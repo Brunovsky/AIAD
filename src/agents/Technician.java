@@ -10,11 +10,17 @@ import jade.domain.FIPAAgentManagement.Property;
 import jade.lang.acl.ACLMessage;
 import message.ClientMessage;
 import message.TechnicianMessage;
+import utils.Location;
+import utils.Logger;
 
 public class Technician extends Agent {
 
+    private Location location;
+    private int repairPrice;
+
     protected void setup() {
-        System.out.println("Setup Technician Agent");
+        Logger.info(getLocalName(), "Setup Technician Agent");
+
         String serviceName = "TechRepairs";
         String serviceType = "tech-repairs";
 
@@ -24,8 +30,7 @@ public class Technician extends Agent {
             serviceName = (String) args[0];
         }
 
-        // Register the service
-        System.out.println("Agent " + getLocalName() + " registering service \"" + serviceName + "\" of type "+serviceType);
+        Logger.info(getLocalName(), "Registering service \"" + serviceName + "\" of type "+serviceType);
 
         try {
             DFAgentDescription dfd = new DFAgentDescription();
@@ -38,7 +43,8 @@ public class Technician extends Agent {
 //            sd.addOntologies("tech-repairs-ontology");
             // Agents that want to use this service need to "speak" the FIPA-SL language
 //            sd.addLanguages(FIPANames.ContentLanguage.FIPA_SL);
-            sd.addProperties(new Property("country", "Portugal"));
+            //sd.addProperties(new Property("country", "Portugal"));
+
             dfd.addServices(sd);
 
             DFService.register(this, dfd);
@@ -80,7 +86,7 @@ public class Technician extends Agent {
             fe.printStackTrace();
         }
 
-        System.out.println("Technician-agent " + getAID().getName() + " has terminated!");
+        Logger.warn(getLocalName(), "Terminated!");
     }
 }
 
