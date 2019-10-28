@@ -6,17 +6,23 @@ import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAAgentManagement.Property;
 import jade.lang.acl.ACLMessage;
 import message.ClientMessage;
 import message.TechnicianMessage;
+import utils.FinancialAccount;
 import utils.Location;
 import utils.Logger;
+import utils.TimeBoard;
+
+
+import static java.lang.System.exit;
 
 public class Technician extends Agent {
 
     private Location location;
-    private int repairPrice;
+    private double repairPriceMultiplier; //p.e. 1.2 ou 1.5 - definined in arguments
+    TimeBoard timeBoard;
+    FinancialAccount financialAccount;
 
     protected void setup() {
         Logger.info(getLocalName(), "Setup Technician Agent");
@@ -25,10 +31,15 @@ public class Technician extends Agent {
         String serviceType = "tech-repairs";
 
         // Read the name of the service to register as an argument
-        Object[] args = getArguments();
-        if (args != null && args.length > 0) {
-            serviceName = (String) args[0];
+        String[] args = (String[]) getArguments();
+        if (args != null && args.length == 2) {
+            location = new Location(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+        } else {
+            Logger.error(getLocalName(), "Wrong arguments");
+            exit(0);
         }
+
+        financialAccount = new FinancialAccount();
 
         Logger.info(getLocalName(), "Registering service \"" + serviceName + "\" of type "+serviceType);
 
@@ -68,6 +79,7 @@ public class Technician extends Agent {
         // Handle Accept Proposal
 
         // Perform action
+        // Update account and timeboard
 
         return true;
     }
@@ -87,6 +99,10 @@ public class Technician extends Agent {
         }
 
         Logger.warn(getLocalName(), "Terminated!");
+    }
+
+    public Location getLocation() {
+        return location;
     }
 }
 

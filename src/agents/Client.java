@@ -11,12 +11,14 @@ import jade.util.leap.Iterator;
 import message.TechnicianMessage;
 import utils.Location;
 import utils.Logger;
+import utils.MalfunctionType;
 
 import static java.lang.System.exit;
 
 public abstract class Client extends Agent {
 
     private Location location;
+    private MalfunctionType malfunctionType;
 
     protected void setup() {
         Logger.info(getLocalName(), "Setup Client Agent");
