@@ -26,8 +26,6 @@ public abstract class Client extends Agent {
 
         Logger.WARN(getLocalName(), "Setup Client Agent");
 
-        // TODO: get args from console
-
         String[] args = (String[]) getArguments();
         if (args != null && args.length == 2) {
             location = new Location(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
