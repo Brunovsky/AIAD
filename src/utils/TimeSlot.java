@@ -1,11 +1,9 @@
 package utils;
 
 public class TimeSlot {
-    
-    // Date (create class?)
-    //hora inicio
-    //hora fim
-    //duraçao
+
+    private Date date;
+    private int duration;
     //Client
 
     public TimeSlot() {
