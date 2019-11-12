@@ -25,6 +25,9 @@ public class Technician extends Agent {
     FinancialAccount financialAccount;
 
     protected void setup() {
+        
+        timeBoard = new TimeBoard();
+
         Logger.info(getLocalName(), "Setup Technician Agent");
 
         String serviceName = "TechRepairs";
