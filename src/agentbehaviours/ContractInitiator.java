@@ -93,4 +93,6 @@ public class ContractInitiator extends ContractNetInitiator {
     protected void handleInform(ACLMessage inform) {
         Logger.info(myAgent.getLocalName(), "Agent " + inform.getSender().getName() + " successfully performed the requested action");
     }
+
+
 }
