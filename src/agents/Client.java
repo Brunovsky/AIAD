@@ -1,8 +1,10 @@
 package agents;
 
+import static java.lang.System.exit;
+
 import agentbehaviours.RequestRepair;
-import jade.core.Agent;
 import jade.core.AID;
+import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -13,10 +15,7 @@ import utils.Location;
 import utils.Logger;
 import utils.MalfunctionType;
 
-import static java.lang.System.exit;
-
 public abstract class Client extends Agent {
-
     private Location location;
     private MalfunctionType malfunctionType;
 
@@ -46,17 +45,16 @@ public abstract class Client extends Agent {
             template.addServices(templateSd);
 
             // Constraint for search
-            //SearchConstraints sc = new SearchConstraints();
-            //sc.setMaxResults(new Long(100));
+            // SearchConstraints sc = new SearchConstraints();
+            // sc.setMaxResults(new Long(100));
 
-            //DFAgentDescription[] results = DFService.search(this, template, sc);
+            // DFAgentDescription[] results = DFService.search(this, template, sc);
             DFAgentDescription[] results = DFService.search(this, template);
 
             if (results.length > 0) {
                 Logger.info(getLocalName(), "Found the following " + serviceType + " services:");
 
                 for (int i = 0; i < results.length; ++i) {
-
                     DFAgentDescription dfd = results[i];
                     AID provider = dfd.getName();
                     Iterator it = dfd.getAllServices();
@@ -64,7 +62,9 @@ public abstract class Client extends Agent {
                     while (it.hasNext()) {
                         ServiceDescription sd = (ServiceDescription) it.next();
                         if (sd.getType().equals(serviceType)) {
-                            Logger.info(getLocalName(), "- Service \"" + sd.getName() + "\" provided by agent " + provider.getName());
+                            Logger.info(getLocalName(), "- Service \"" + sd.getName()
+                                                            + "\" provided by agent "
+                                                            + provider.getName());
                         }
                     }
                 }
@@ -79,11 +79,10 @@ public abstract class Client extends Agent {
         }
     }
 
-
-    public abstract boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2);
+    public abstract boolean compareTechnicianMessages(TechnicianMessage msg1,
+                                                      TechnicianMessage msg2);
 
     public Location getLocation() {
         return location;
     }
 }
-
