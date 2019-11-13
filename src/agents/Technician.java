@@ -28,7 +28,7 @@ public class Technician extends Agent {
     }
 
     protected void setup() {
-        
+
         timeBoard = new TimeBoard();
 
         Logger.info(getLocalName(), "Setup Technician Agent");
@@ -46,7 +46,7 @@ public class Technician extends Agent {
 //            exit(0);
 //        }
 
-        Logger.info(getLocalName(), "Registering service \"" + serviceName + "\" of type "+serviceType);
+        Logger.info(getLocalName(), "Registering service \"" + serviceName + "\" of type " + serviceType);
 
         try {
             DFAgentDescription dfd = new DFAgentDescription();
@@ -69,7 +69,13 @@ public class Technician extends Agent {
         try {
             ClientMessage receivedClientMessage = (ClientMessage) cfp.getContentObject();
             double startSlotTime = this.timeBoard.getNextAvailableSlotStartTime(receivedClientMessage.getRequestSendTime());
-            double repairPrice = getRepairPrice(receivedClientMessage.getLocation(), receivedClientMessage.getType());
+            double repairPrice = getRepairPrice(receivedClientMessage, startSlotTime);
+
+            if (repairPrice == 0) {
+                // It won't send a proposal message to client because it isn't worth the trip
+                return null;
+            }
+
             String clientId = cfp.getSender().getName();
 
             RepairSlot repairSlot = new RepairSlot(receivedClientMessage.getType(), startSlotTime, receivedClientMessage.getLocation(), repairPrice, clientId, this.location);
@@ -82,24 +88,82 @@ public class Technician extends Agent {
         return null;
     }
 
-    public double getRepairPrice(Location clientLocation, MalfunctionType type){
-        // TODO: Miguel faz aí um switch
+    public double getRepairPrice(ClientMessage receivedClientMessage, double startSlotTime) {
+        switch (this.technicianType) {
+            case TECHNICIAN_TYPE_1:
+                // Cares about distance
+                // Malfunction price depends on type
+                return 2 * Constants.calculateDistance(receivedClientMessage.getLocation(), this.location) * Constants.PRICE_PER_UNIT_OF_DISTANCE + Constants.getMalFunctionPrice(receivedClientMessage.getType());
+            case TECHNICIAN_TYPE_2:
+                // Cares about distance
+                // Malfunction price is default
+                return 2 * Constants.calculateDistance(receivedClientMessage.getLocation(), this.location) * Constants.PRICE_PER_UNIT_OF_DISTANCE + Constants.PRICE_DEFAULT_MALFUNCTION;
+            case TECHNICIAN_TYPE_3:
+                // Doesn't care about distance
+                // Malfunction price depends on type
+                // If the distance is not worth he refuses
+                if (2 * Constants.calculateDistance(receivedClientMessage.getLocation(), this.location) * Constants.PRICE_PER_UNIT_OF_DISTANCE < Constants.getMalFunctionPrice(receivedClientMessage.getType())) {
+                    return Constants.getMalFunctionPrice(receivedClientMessage.getType());
+                } else {
+                    return 0;
+                }
+            case TECHNICIAN_TYPE_4:
+                // Doesn't care about distance
+                // Malfunction price is default
+                // If the distance is not worth he refuses
+                if (2 * Constants.calculateDistance(receivedClientMessage.getLocation(), this.location) * Constants.PRICE_PER_UNIT_OF_DISTANCE < Constants.PRICE_DEFAULT_MALFUNCTION) {
+                    return Constants.PRICE_DEFAULT_MALFUNCTION;
+                } else {
+                    return 0;
+                }
+            case TECHNICIAN_TYPE_5:
+                // Cares about distance
+                // Malfunction price depends on type
+                // Cares about the time between client request time and technician repair proposed time
+                return 2 * Constants.calculateDistance(receivedClientMessage.getLocation(), this.location) * Constants.PRICE_PER_UNIT_OF_DISTANCE + Constants.getMalFunctionPrice(receivedClientMessage.getType()) + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
 
-        // calcular preço gasto para a viagem + preço consoante o type de malfunction
+            case TECHNICIAN_TYPE_6:
+                // Doesn't care about distance
+                // Malfunction price depends on type
+                // If the distance is not worth he refuses
+                // Cares about the time between client request time and technician repair proposed time
+                if (2 * Constants.calculateDistance(receivedClientMessage.getLocation(), this.location) * Constants.PRICE_PER_UNIT_OF_DISTANCE < Constants.PRICE_DEFAULT_MALFUNCTION) {
+                    return Constants.getMalFunctionPrice(receivedClientMessage.getType()) + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
+                } else {
+                    return 0;
+                }
+
+            case TECHNICIAN_TYPE_7:
+                // Cares about distance
+                // Malfunction price is default
+                // Cares about the time between client request time and technician repair proposed time
+                return 2 * Constants.calculateDistance(receivedClientMessage.getLocation(), this.location) * Constants.PRICE_PER_UNIT_OF_DISTANCE + Constants.PRICE_DEFAULT_MALFUNCTION + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
+
+            case TECHNICIAN_TYPE_8:
+                // Doesn't care about distance
+                // If the distance is not worth he refuses
+                // Malfunction price is default
+                // Cares about the time between client request time and technician repair proposed time
+                if (2 * Constants.calculateDistance(receivedClientMessage.getLocation(), this.location) * Constants.PRICE_PER_UNIT_OF_DISTANCE < Constants.PRICE_DEFAULT_MALFUNCTION) {
+                    return Constants.PRICE_DEFAULT_MALFUNCTION + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
+                } else {
+                    return 0;
+                }
+
+            default:
+                break;
+        }
         return 0;
     }
 
-    public boolean handleReceivedClientAcceptProposal(RepairSlot slot){
+    public boolean handleReceivedClientAcceptProposal(RepairSlot slot) {
         this.timeBoard.addRepairSlot(slot);
         return true;
     }
 
-    /*
-        Agent Termination
-    */
+    // Agent Termination
     protected void takeDown() {
         try {
-
             DFService.deregister(this);
         } catch (FIPAException fe) {
             fe.printStackTrace();
