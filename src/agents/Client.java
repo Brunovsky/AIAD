@@ -18,7 +18,8 @@ import static java.lang.System.exit;
 public abstract class Client extends Agent {
 
     private Location location;
-    private MalfunctionType malfunctionType;
+    private MalfunctionType type;
+    private double requestSendTime;
 
     protected void setup() {
         Logger.info(getLocalName(), "Setup Client Agent");
@@ -84,6 +85,14 @@ public abstract class Client extends Agent {
 
     public Location getLocation() {
         return location;
+    }
+
+    public MalfunctionType getType() {
+        return type;
+    }
+
+    public double getRequestSendTime() {
+        return requestSendTime;
     }
 }
 

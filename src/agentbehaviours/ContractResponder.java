@@ -11,10 +11,13 @@ import jade.proto.ContractNetResponder;
 import message.ClientMessage;
 import message.TechnicianMessage;
 import utils.Logger;
+import utils.RepairSlot;
 
 import java.io.IOException;
 
 public class ContractResponder extends ContractNetResponder {
+
+    RepairSlot repairSlot;
 
     public ContractResponder(Agent a, MessageTemplate mt) {
         super(a, mt);
@@ -25,9 +28,12 @@ public class ContractResponder extends ContractNetResponder {
         try {
             Logger.info(myAgent.getLocalName(), "CFP received from "+cfp.getSender().getName());
 
-            TechnicianMessage proposal =((Technician) myAgent).handleReceivedClientCfp((ClientMessage) cfp.getContentObject());
-            if(proposal != null){
+            RepairSlot slot =((Technician) myAgent).handleReceivedClientCfp(cfp);
+            if(slot != null){
                 // Send propose to Client
+
+
+                TechnicianMessage proposal = new TechnicianMessage();
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
                 propose.setContentObject(proposal);
@@ -36,8 +42,6 @@ public class ContractResponder extends ContractNetResponder {
                 // Don't send propose to Client
                 Logger.warn(myAgent.getLocalName(), "Refuse");
             }
-        } catch (UnreadableException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -60,7 +64,9 @@ public class ContractResponder extends ContractNetResponder {
         }
     }
 
+    @Override
     protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
         Logger.warn(myAgent.getLocalName(), "Proposal rejected");
+        //matar repairslot
     }
 }

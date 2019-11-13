@@ -4,17 +4,16 @@ import utils.constants.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class TimeBoard {
 
-    Map<Date,ArrayList<TimeSlot>> timeBoard;
+    ArrayList<RepairSlot> timeBoard;
 
     public TimeBoard() {
-        timeBoard = new HashMap<>();
+        timeBoard = new ArrayList<>();
     }
 
-    public TimeSlot getAvailableSlot(MalfunctionType type) {
+    public RepairSlot getAvailableSlot(MalfunctionType type) {
         int duration = Constants.getMalfunctionDuration(type);
 
         // check in timeBoard available time

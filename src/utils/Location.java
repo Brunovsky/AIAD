@@ -4,19 +4,19 @@ import java.io.Serializable;
 
 public class Location implements Serializable {
 
-    private int x;
-    private int y;
+    private double x;
+    private double y;
 
     public Location(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
-    public Integer getX() {
+    public double getX() {
         return x;
     }
 
-    public Integer getY() {
+    public double getY() {
         return y;
     }
 

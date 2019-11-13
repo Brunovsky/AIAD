@@ -7,12 +7,10 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.UnreadableException;
 import message.ClientMessage;
 import message.TechnicianMessage;
-import utils.FinancialAccount;
-import utils.Location;
-import utils.Logger;
-import utils.TimeBoard;
+import utils.*;
 
 
 import static java.lang.System.exit;
@@ -69,12 +67,25 @@ public class Technician extends Agent {
         addBehaviour(new WaitRepairRequests());
     }
 
-    public TechnicianMessage handleReceivedClientCfp(ClientMessage contentObject) {
-        TechnicianMessage response = new TechnicianMessage();
+    public RepairSlot handleReceivedClientCfp(ACLMessage cfp) {
+        try {
+            ClientMessage receivedClientMessage = (ClientMessage) cfp.getContentObject();
+            // verificar timeboard se dá ou não e retornar startSlotTime
+            receivedClientMessage.getRequestSendTime();
 
-        // TODO: make response here
+            double startSlotTime = 0;
+            double repairPrice = 0;
+            String clientId = cfp.getSender().getName();
 
-        return response; // or return null
+
+            RepairSlot repairSlot = new RepairSlot(receivedClientMessage.getType(), startSlotTime, receivedClientMessage.getLocation(), repairPrice, clientId, this.location);
+
+            return repairSlot;
+        } catch (UnreadableException e) {
+            e.printStackTrace();
+        }
+
+        return null; // or return null
     }
 
     public boolean handleReceivedClientAcceptProposal(ACLMessage cfp, ACLMessage propose){
