@@ -1,13 +1,11 @@
 package agents;
 
 import agentbehaviours.RequestRepair;
-import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.util.leap.Iterator;
 import message.TechnicianMessage;
 import utils.ClientType;
 import utils.Location;
@@ -15,7 +13,7 @@ import utils.Logger;
 import utils.MalfunctionType;
 import utils.constants.Constants;
 
-public abstract class Client extends Agent {
+public class Client extends Agent {
     private Location location;
     private MalfunctionType malfunctionType;
     private double requestSendTime;

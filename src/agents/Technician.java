@@ -11,11 +11,11 @@ import jade.lang.acl.UnreadableException;
 import message.ClientMessage;
 import utils.Location;
 import utils.Logger;
-import utils.MalfunctionType;
 import utils.RepairSlot;
 import utils.TechnicianType;
 import utils.TimeBoard;
-import utils.constants.Constants;
+import static utils.constants.Constants .*;
+
 
 public class Technician extends Agent {
     private Location location;
@@ -33,8 +33,8 @@ public class Technician extends Agent {
 
         Logger.info(getLocalName(), "Setup Technician Agent");
 
-        String serviceName = Constants.SERVICE_NAME;
-        String serviceType = Constants.SERVICE_TYPE;
+        String serviceName = SERVICE_NAME;
+        String serviceType = SERVICE_TYPE;
 
         //        // Read the name of the service to register as an argument
         //        Object[] args = getArguments();
@@ -92,24 +92,24 @@ public class Technician extends Agent {
     }
 
     public double getRepairPrice(ClientMessage receivedClientMessage, double startSlotTime) {
-        double distancePrice = 2 * Constants.calculateDistance(receivedClientMessage.getLocation(), this.location);
+        double distancePrice = 2 * calculateDistance(receivedClientMessage.getLocation(), this.location);
         double fixPrice;
 
         switch (this.technicianType) {
             case TECHNICIAN_TYPE_1:
                 // Cares about distance
                 // Malfunction price depends on type
-                return distancePrice + Constants.getMalFunctionPrice(receivedClientMessage.getType());
+                return distancePrice + getMalFunctionPrice(receivedClientMessage.getType());
             case TECHNICIAN_TYPE_2:
                 // Cares about distance
                 // Malfunction price is default
-                return distancePrice + Constants.PRICE_DEFAULT_MALFUNCTION;
+                return distancePrice + PRICE_DEFAULT_MALFUNCTION;
             case TECHNICIAN_TYPE_3:
                 // Doesn't care about distance
                 // Malfunction price depends on type
                 // If the distance is not worth he refuses
-                if (distancePrice < Constants.getMalFunctionPrice(receivedClientMessage.getType())) {
-                    return Constants.getMalFunctionPrice(receivedClientMessage.getType());
+                if (distancePrice < getMalFunctionPrice(receivedClientMessage.getType())) {
+                    return getMalFunctionPrice(receivedClientMessage.getType());
                 } else {
                     return 0;
                 }
@@ -117,8 +117,8 @@ public class Technician extends Agent {
                 // Doesn't care about distance
                 // Malfunction price is default
                 // If the distance is not worth he refuses
-                if (distancePrice < Constants.PRICE_DEFAULT_MALFUNCTION) {
-                    return Constants.PRICE_DEFAULT_MALFUNCTION;
+                if (distancePrice < PRICE_DEFAULT_MALFUNCTION) {
+                    return PRICE_DEFAULT_MALFUNCTION;
                 } else {
                     return 0;
                 }
@@ -126,15 +126,15 @@ public class Technician extends Agent {
                 // Cares about distance
                 // Malfunction price depends on type
                 // Cares about the time between client request time and technician repair proposed time
-                return distancePrice + Constants.getMalFunctionPrice(receivedClientMessage.getType()) + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
+                return distancePrice + getMalFunctionPrice(receivedClientMessage.getType()) + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
 
             case TECHNICIAN_TYPE_6:
                 // Doesn't care about distance
                 // Malfunction price depends on type
                 // If the distance is not worth he refuses
                 // Cares about the time between client request time and technician repair proposed time
-                fixPrice = Constants.getMalFunctionPrice(receivedClientMessage.getType()) + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
-                if (distancePrice < Constants.PRICE_DEFAULT_MALFUNCTION) {
+                fixPrice = getMalFunctionPrice(receivedClientMessage.getType()) + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
+                if (distancePrice < PRICE_DEFAULT_MALFUNCTION) {
                     return fixPrice;
                 } else {
                     return 0;
@@ -144,14 +144,14 @@ public class Technician extends Agent {
                 // Cares about distance
                 // Malfunction price is default
                 // Cares about the time between client request time and technician repair proposed time
-                return distancePrice + Constants.PRICE_DEFAULT_MALFUNCTION + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
+                return distancePrice + PRICE_DEFAULT_MALFUNCTION + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
 
             case TECHNICIAN_TYPE_8:
                 // Doesn't care about distance
                 // If the distance is not worth he refuses
                 // Malfunction price is default
                 // Cares about the time between client request time and technician repair proposed time
-                fixPrice = Constants.PRICE_DEFAULT_MALFUNCTION + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
+                fixPrice = PRICE_DEFAULT_MALFUNCTION + Math.exp(-0.004*(startSlotTime - receivedClientMessage.getRequestSendTime()))*20;
                 if (distancePrice < fixPrice) {
                     return fixPrice;
                 } else {
