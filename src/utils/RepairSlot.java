@@ -1,6 +1,6 @@
 package utils;
 
-import utils.constants.Constants;
+import static utils.constants.Constants .*;
 
 public class RepairSlot {
 
@@ -20,10 +20,10 @@ public class RepairSlot {
         this.clientLocation = clientLocation;
         this.repairPrice = repairPrice;
         this.clientId = clientId;
-        this.duration = Constants.calculateSlotDuration(Constants.calculateDistance(clientLocation, technicianLocation), type);
+        this.duration = calculateSlotDuration(calculateDistance(clientLocation, technicianLocation), type);
         this.endSlotTime = startSlotTime + this.duration;
-        this.startRepairTime = startSlotTime + (this.duration - Constants.getMalfunctionDuration(type)) / 2;
-        this.endRepairTime = this.startRepairTime + Constants.getMalfunctionDuration(type);
+        this.startRepairTime = startSlotTime + (this.duration - getMalfunctionDuration(type)) / 2;
+        this.endRepairTime = this.startRepairTime + getMalfunctionDuration(type);
     }
 
     public MalfunctionType getType() {
