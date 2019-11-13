@@ -26,6 +26,8 @@ public class ContractInitiator extends ContractNetInitiator {
     }
 
     // Warning: Useless function because we will use handleAllResponses
+    //  Can be used for logging or smthg like that.
+    @Override
     protected void handlePropose(ACLMessage propose, Vector v) {
         try {
             Logger.info(myAgent.getLocalName(), "Agent " + propose.getSender().getName() + " proposed " + propose.getContentObject());
@@ -34,10 +36,12 @@ public class ContractInitiator extends ContractNetInitiator {
         }
     }
 
+    @Override
     protected void handleRefuse(ACLMessage refuse) {
         Logger.warn(myAgent.getLocalName(), "Agent " + refuse.getSender().getName() + " refused");
     }
 
+    @Override
     protected void handleFailure(ACLMessage failure) {
         if (failure.getSender().equals(myAgent.getAMS())) {
             // FAILURE notification from the JADE runtime: the receiver
@@ -49,6 +53,7 @@ public class ContractInitiator extends ContractNetInitiator {
         nResponders--;
     }
 
+    @Override
     protected void handleAllResponses(Vector responses, Vector acceptances) {
         // Next if will be deleted probably
         if (responses.size() < nResponders) {
@@ -90,6 +95,7 @@ public class ContractInitiator extends ContractNetInitiator {
         }
     }
 
+    @Override
     protected void handleInform(ACLMessage inform) {
         Logger.info(myAgent.getLocalName(), "Agent " + inform.getSender().getName() + " successfully performed the requested action");
     }

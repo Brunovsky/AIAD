@@ -1,7 +1,5 @@
 package agents;
 
-import static java.lang.System.exit;
-
 import agentbehaviours.RequestRepair;
 import jade.core.AID;
 import jade.core.Agent;
@@ -11,27 +9,48 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.util.leap.Iterator;
 import message.TechnicianMessage;
+import utils.ClientType;
 import utils.Location;
 import utils.Logger;
 import utils.MalfunctionType;
+import utils.constants.Constants;
 
 public abstract class Client extends Agent {
     private Location location;
     private MalfunctionType malfunctionType;
+    private double requestSendTime;
+    private ClientType clientType;
 
+    public Client(Location location, MalfunctionType malfunctionType, double requestSendTime,
+                  ClientType clientType) {
+        this.location = location;
+        this.malfunctionType = malfunctionType;
+        this.requestSendTime = requestSendTime;
+        this.clientType = clientType;
+    }
+
+    /**
+     *      Arguments:
+     * ClientType
+     * MalfunctionType
+     * int
+     * int
+     */
     protected void setup() {
         Logger.info(getLocalName(), "Setup Client Agent");
-        String serviceType = "tech-repairs";
+        String serviceType = Constants.SERVICE_TYPE;
 
         Logger.WARN(getLocalName(), "Setup Client Agent");
 
-        String[] args = (String[]) getArguments();
-        if (args != null && args.length == 2) {
-            location = new Location(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
-        } else {
-            Logger.error(getLocalName(), "Wrong arguments");
-            exit(0);
-        }
+        //        Object[] args = getArguments();
+        //        if (args != null && args.length == 3) {
+        //            this.clientType = (ClientType) args[0];
+        //            this.malfunctionType = (MalfunctionType) args[1];
+        //            this.location = new Location((int)args[2], (int)args[3]);
+        //        } else {
+        //            Logger.error(getLocalName(), "Wrong arguments");
+        //            exit(0);
+        //        }
 
         // Use myAgent to access Client private variables
 
@@ -79,10 +98,34 @@ public abstract class Client extends Agent {
         }
     }
 
-    public abstract boolean compareTechnicianMessages(TechnicianMessage msg1,
-                                                      TechnicianMessage msg2);
+    public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2) {
+        switch (clientType) {
+        case REASONABLE_UNAVAILABLE:
+            //  TODO
+        case SELFISH_AVAILABLE:
+            //  TODO
+        case SELFISH_UNAVAILABLE:
+            //  TODO
+        case URGENT_AVAILABLE:
+            //  TODO
+        }
+
+        return true;
+    }
 
     public Location getLocation() {
         return location;
+    }
+
+    public MalfunctionType getMalfunctionType() {
+        return malfunctionType;
+    }
+
+    public ClientType getClientType() {
+        return clientType;
+    }
+
+    public double getRequestSendTime() {
+        return requestSendTime;
     }
 }

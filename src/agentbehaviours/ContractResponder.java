@@ -11,10 +11,13 @@ import jade.proto.ContractNetResponder;
 import message.ClientMessage;
 import message.TechnicianMessage;
 import utils.Logger;
+import utils.RepairSlot;
 
 import java.io.IOException;
 
 public class ContractResponder extends ContractNetResponder {
+
+    RepairSlot repairSlot;
 
     public ContractResponder(Agent a, MessageTemplate mt) {
         super(a, mt);
@@ -25,9 +28,10 @@ public class ContractResponder extends ContractNetResponder {
         try {
             Logger.info(myAgent.getLocalName(), "CFP received from "+cfp.getSender().getName());
 
-            TechnicianMessage proposal =((Technician) myAgent).handleReceivedClientCfp((ClientMessage) cfp.getContentObject());
-            if(proposal != null){
+            this.repairSlot =((Technician) myAgent).handleReceivedClientCfp(cfp);
+            if(this.repairSlot != null){
                 // Send propose to Client
+                TechnicianMessage proposal = new TechnicianMessage(this.repairSlot.getRepairPrice(), this.repairSlot.getStartRepairTime());
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
                 propose.setContentObject(proposal);
@@ -36,8 +40,6 @@ public class ContractResponder extends ContractNetResponder {
                 // Don't send propose to Client
                 Logger.warn(myAgent.getLocalName(), "Refuse");
             }
-        } catch (UnreadableException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,10 +47,11 @@ public class ContractResponder extends ContractNetResponder {
         throw new RefuseException("evaluation-failed");
     }
 
+    //TODO:
     @Override
-    protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
+    protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose, ACLMessage accept) throws FailureException {
         Logger.info(myAgent.getLocalName(), "Proposal accepted");
-        if (((Technician) myAgent).handleReceivedClientAcceptProposal(cfp, propose)) {
+        if (((Technician) myAgent).handleReceivedClientAcceptProposal(this.repairSlot)) {
             Logger.info(myAgent.getLocalName(), "Action successfully performed");
             ACLMessage inform = accept.createReply();
             inform.setPerformative(ACLMessage.INFORM);
@@ -60,6 +63,8 @@ public class ContractResponder extends ContractNetResponder {
         }
     }
 
+    //TODO:
+    @Override
     protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
         Logger.warn(myAgent.getLocalName(), "Proposal rejected");
     }

@@ -33,12 +33,14 @@ public class RequestRepair extends Behaviour {
         // Fill the CFP message
         ACLMessage msg = new ACLMessage(ACLMessage.CFP);
         for (int i = 0; i < agents.length; ++i) {
-            msg.addReceiver(new AID((String) getAgentName(agents[i].getName().getName()), AID.ISLOCALNAME));
+            msg.addReceiver(new AID(getAgentName(agents[i].getName().getName()), AID.ISLOCALNAME));
         }
         msg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+
         // We want to receive a reply in 10 secs
         //msg.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
-        ClientMessage messageToBeSent = new ClientMessage(((Client) myAgent).getLocation());
+
+        ClientMessage messageToBeSent = new ClientMessage(((Client) myAgent).getLocation(), ((Client) myAgent).getMalfunctionType(), ((Client) myAgent).getRequestSendTime());
 
         try {
             msg.setContentObject(messageToBeSent);

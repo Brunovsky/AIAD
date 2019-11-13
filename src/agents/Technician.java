@@ -7,12 +7,10 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.UnreadableException;
 import message.ClientMessage;
-import message.TechnicianMessage;
-import utils.FinancialAccount;
-import utils.Location;
-import utils.Logger;
-import utils.TimeBoard;
+import utils.*;
+import utils.constants.Constants;
 
 
 import static java.lang.System.exit;
@@ -20,9 +18,14 @@ import static java.lang.System.exit;
 public class Technician extends Agent {
 
     private Location location;
-    private double repairPriceMultiplier; //p.e. 1.2 ou 1.5 - definined in arguments
     TimeBoard timeBoard;
-    FinancialAccount financialAccount;
+    TechnicianType technicianType;
+
+    public Technician(Location location, TechnicianType technicianType) {
+        this.location = location;
+        this.timeBoard = new TimeBoard();
+        this.technicianType = technicianType;
+    }
 
     protected void setup() {
         
@@ -30,19 +33,18 @@ public class Technician extends Agent {
 
         Logger.info(getLocalName(), "Setup Technician Agent");
 
-        String serviceName = "TechRepairs";
-        String serviceType = "tech-repairs";
+        String serviceName = Constants.SERVICE_NAME;
+        String serviceType = Constants.SERVICE_TYPE;
 
-        // Read the name of the service to register as an argument
-        String[] args = (String[]) getArguments();
-        if (args != null && args.length == 2) {
-            location = new Location(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
-        } else {
-            Logger.error(getLocalName(), "Wrong arguments");
-            exit(0);
-        }
-
-        financialAccount = new FinancialAccount();
+//        // Read the name of the service to register as an argument
+//        Object[] args = getArguments();
+//        if (args != null && args.length == 3) {
+//            TechnicianType technicianType = (TechnicianType) args[0];
+//            location = new Location((int)args[1], (int)args[2]);
+//        } else {
+//            Logger.error(getLocalName(), "Wrong arguments");
+//            exit(0);
+//        }
 
         Logger.info(getLocalName(), "Registering service \"" + serviceName + "\" of type "+serviceType);
 
@@ -52,12 +54,6 @@ public class Technician extends Agent {
             ServiceDescription sd = new ServiceDescription();
             sd.setName(serviceName);
             sd.setType(serviceType);
-
-            // Agents that want to use this service need to "know" the weather-forecast-ontology
-//            sd.addOntologies("tech-repairs-ontology");
-            // Agents that want to use this service need to "speak" the FIPA-SL language
-//            sd.addLanguages(FIPANames.ContentLanguage.FIPA_SL);
-            //sd.addProperties(new Property("country", "Portugal"));
 
             dfd.addServices(sd);
 
@@ -69,35 +65,43 @@ public class Technician extends Agent {
         addBehaviour(new WaitRepairRequests());
     }
 
-    public TechnicianMessage handleReceivedClientCfp(ClientMessage contentObject) {
-        TechnicianMessage response = new TechnicianMessage();
+    public RepairSlot handleReceivedClientCfp(ACLMessage cfp) {
+        try {
+            ClientMessage receivedClientMessage = (ClientMessage) cfp.getContentObject();
+            double startSlotTime = this.timeBoard.getNextAvailableSlotStartTime(receivedClientMessage.getRequestSendTime());
+            double repairPrice = getRepairPrice(receivedClientMessage.getLocation(), receivedClientMessage.getType());
+            String clientId = cfp.getSender().getName();
 
-        // TODO: make response here
+            RepairSlot repairSlot = new RepairSlot(receivedClientMessage.getType(), startSlotTime, receivedClientMessage.getLocation(), repairPrice, clientId, this.location);
 
-        return response; // or return null
+            return repairSlot;
+        } catch (UnreadableException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
-    public boolean handleReceivedClientAcceptProposal(ACLMessage cfp, ACLMessage propose){
-        //  TODO:
-        // Handle Accept Proposal
+    public double getRepairPrice(Location clientLocation, MalfunctionType type){
+        // TODO: Miguel faz aí um switch
 
-        // Perform action
-        // Update account and timeboard
+        // calcular preço gasto para a viagem + preço consoante o type de malfunction
+        return 0;
+    }
 
+    public boolean handleReceivedClientAcceptProposal(RepairSlot slot){
+        this.timeBoard.addRepairSlot(slot);
         return true;
     }
 
     /*
-    Agent Termination
- */
+        Agent Termination
+    */
     protected void takeDown() {
-
-        // Removing the registration in the yellow pages
         try {
 
             DFService.deregister(this);
         } catch (FIPAException fe) {
-
             fe.printStackTrace();
         }
 
