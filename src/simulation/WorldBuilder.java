@@ -4,7 +4,7 @@ import utils.ClientType;
 import utils.TechnicianType;
 
 public class WorldBuilder {
-    World select(String name) {
+    public static World select(String name) {
         switch (name) {
         case "simple_small":
             return simpleSmall();
@@ -17,7 +17,7 @@ public class WorldBuilder {
         }
     }
 
-    World simpleSmall() {
+    public static World simpleSmall() {
         World world = new World();
 
         world.radius = 100.0;
@@ -34,6 +34,7 @@ public class WorldBuilder {
         world.clientRadius = new double[] {30.0, 65.0};
         world.clientNumbers = new int[] {40, 60};
         world.period = 2.0;
+        world.malfunctions = new int[] {30, 70, 100};
         world.clients = new ClientsDesc[] {
             new ClientsDesc(45, ClientType.REASONABLE_UNAVAILABLE),  //
             new ClientsDesc(155, ClientType.URGENT_AVAILABLE)        //
@@ -42,7 +43,7 @@ public class WorldBuilder {
         return world;
     }
 
-    World disksSmall() {
+    public static World disksSmall() {
         World world = new World();
 
         // ...
@@ -50,7 +51,7 @@ public class WorldBuilder {
         return world;
     }
 
-    World simpleLarge() {
+    public static World simpleLarge() {
         World world = new World();
 
         // ...
