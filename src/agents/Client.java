@@ -1,28 +1,28 @@
 package agents;
 
 import agentbehaviours.RequestRepair;
-import jade.core.Agent;
 import jade.core.AID;
+import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.util.leap.Iterator;
 import message.TechnicianMessage;
+import utils.ClientType;
 import utils.Location;
 import utils.Logger;
 import utils.MalfunctionType;
-import utils.ClientType;
 import utils.constants.Constants;
 
 public abstract class Client extends Agent {
-
     private Location location;
     private MalfunctionType malfunctionType;
     private double requestSendTime;
     private ClientType clientType;
 
-    public Client(Location location, MalfunctionType malfunctionType, double requestSendTime, ClientType clientType) {
+    public Client(Location location, MalfunctionType malfunctionType, double requestSendTime,
+                  ClientType clientType) {
         this.location = location;
         this.malfunctionType = malfunctionType;
         this.requestSendTime = requestSendTime;
@@ -33,7 +33,7 @@ public abstract class Client extends Agent {
      * Arguments:
      * ClientType
      * MalfunctionType
-     * int 
+     * int
      * int
      */
     protected void setup() {
@@ -42,15 +42,15 @@ public abstract class Client extends Agent {
 
         Logger.WARN(getLocalName(), "Setup Client Agent");
 
-//        Object[] args = getArguments();
-//        if (args != null && args.length == 3) {
-//            this.clientType = (ClientType) args[0];
-//            this.malfunctionType = (MalfunctionType) args[1];
-//            this.location = new Location((int)args[2], (int)args[3]);
-//        } else {
-//            Logger.error(getLocalName(), "Wrong arguments");
-//            exit(0);
-//        }
+        //        Object[] args = getArguments();
+        //        if (args != null && args.length == 3) {
+        //            this.clientType = (ClientType) args[0];
+        //            this.malfunctionType = (MalfunctionType) args[1];
+        //            this.location = new Location((int)args[2], (int)args[3]);
+        //        } else {
+        //            Logger.error(getLocalName(), "Wrong arguments");
+        //            exit(0);
+        //        }
 
 
 
@@ -66,10 +66,10 @@ public abstract class Client extends Agent {
             template.addServices(templateSd);
 
             // Constraint for search
-            //SearchConstraints sc = new SearchConstraints();
-            //sc.setMaxResults(new Long(100));
+            // SearchConstraints sc = new SearchConstraints();
+            // sc.setMaxResults(new Long(100));
 
-            //DFAgentDescription[] results = DFService.search(this, template, sc);
+            // DFAgentDescription[] results = DFService.search(this, template, sc);
             DFAgentDescription[] results = DFService.search(this, template);
 
 //            if (results.length > 0) {
@@ -100,16 +100,15 @@ public abstract class Client extends Agent {
         }
     }
 
-
-    public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2){
-        switch(clientType) {    
-            case REASONABLE_UNAVAILABLE:
+    public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2) {
+        switch (clientType) {
+        case REASONABLE_UNAVAILABLE:
             //  TODO
-            case SELFISH_AVAILABLE:
+        case SELFISH_AVAILABLE:
             //  TODO
-            case SELFISH_UNAVAILABLE:
+        case SELFISH_UNAVAILABLE:
             //  TODO
-            case URGENT_AVAILABLE:
+        case URGENT_AVAILABLE:
             //  TODO
         }
         // return true if msg1 it's better than msg2
@@ -132,4 +131,3 @@ public abstract class Client extends Agent {
         return requestSendTime;
     }
 }
-
