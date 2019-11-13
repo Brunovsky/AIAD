@@ -12,14 +12,16 @@ import message.TechnicianMessage;
 import utils.Location;
 import utils.Logger;
 import utils.MalfunctionType;
+import utils.ClientType;
 
 import static java.lang.System.exit;
 
 public abstract class Client extends Agent {
 
     private Location location;
-    private MalfunctionType type;
+    private MalfunctionType malfunctionType;
     private double requestSendTime;
+    private ClientType clientType;
 
     protected void setup() {
         Logger.info(getLocalName(), "Setup Client Agent");
@@ -28,8 +30,18 @@ public abstract class Client extends Agent {
         Logger.WARN(getLocalName(), "Setup Client Agent");
 
         String[] args = (String[]) getArguments();
-        if (args != null && args.length == 2) {
-            location = new Location(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+        if (args != null && args.length == 3) {
+            switch(args[0]) {
+                case "RU":
+                    clientType = ClientType.REASONABLE_UNAVAILABLE;
+                case "SA":
+                    clientType = ClientType.SELFISH_AVAILABLE;
+                case "SU":
+                    clientType = ClientType.SELFISH_UNAVAILABLE;
+                case "UA":
+                    clientType = ClientType.URGENT_AVAILABLE;
+            }
+            location = new Location(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
         } else {
             Logger.error(getLocalName(), "Wrong arguments");
             exit(0);
@@ -81,14 +93,31 @@ public abstract class Client extends Agent {
     }
 
 
-    public abstract boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2);
+    public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2){
+        switch(clientType) {    
+            case REASONABLE_UNAVAILABLE:
+            //  TODO
+            case SELFISH_AVAILABLE:
+            //  TODO
+            case SELFISH_UNAVAILABLE:
+            //  TODO
+            case URGENT_AVAILABLE:
+            //  TODO
+        }
+
+        return true;
+    }
 
     public Location getLocation() {
         return location;
     }
 
-    public MalfunctionType getType() {
-        return type;
+    public MalfunctionType getMalfunctionType() {
+        return malfunctionType;
+    }
+
+    public ClientType getClientType() {
+        return clientType;
     }
 
     public double getRequestSendTime() {

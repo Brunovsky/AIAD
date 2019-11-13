@@ -9,7 +9,6 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 import message.ClientMessage;
-import message.TechnicianMessage;
 import utils.*;
 
 
@@ -19,6 +18,7 @@ public class Technician extends Agent {
 
     private Location location;
     TimeBoard timeBoard;
+    TechnicianType technicianType;
 
     protected void setup() {
         
@@ -31,8 +31,18 @@ public class Technician extends Agent {
 
         // Read the name of the service to register as an argument
         String[] args = (String[]) getArguments();
-        if (args != null && args.length == 2) {
-            location = new Location(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+        if (args != null && args.length == 3) {
+            switch(args[0]) {
+                case "T1":
+                    technicianType = TechnicianType.TECHNICIAN_TYPE_1;
+                case "T2":
+                    technicianType = TechnicianType.TECHNICIAN_TYPE_2;
+                case "T3":
+                    technicianType = TechnicianType.TECHNICIAN_TYPE_3;
+                case "T4":
+                    technicianType = TechnicianType.TECHNICIAN_TYPE_4;
+            }
+            location = new Location(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
         } else {
             Logger.error(getLocalName(), "Wrong arguments");
             exit(0);

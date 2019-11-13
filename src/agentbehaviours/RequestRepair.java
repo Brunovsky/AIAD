@@ -40,7 +40,7 @@ public class RequestRepair extends Behaviour {
         // We want to receive a reply in 10 secs
         //msg.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
 
-        ClientMessage messageToBeSent = new ClientMessage(((Client) myAgent).getLocation(), ((Client) myAgent).getType(), ((Client) myAgent).getRequestSendTime());
+        ClientMessage messageToBeSent = new ClientMessage(((Client) myAgent).getLocation(), ((Client) myAgent).getMalfunctionType(), ((Client) myAgent).getRequestSendTime());
 
         try {
             msg.setContentObject(messageToBeSent);
