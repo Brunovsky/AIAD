@@ -6,7 +6,7 @@ export CLASSPATH="$CLASSPATH:$PWD/bin"
 mkdir -p log
 
 java jade.Boot -gui &> log/gui &
-sleep 1.5s
+sleep 5s
 
 java jade.Boot -container Nuno:agents.Technician &> log/nuno &
 sleep 1.5s
