@@ -47,7 +47,15 @@ public class Simulation {
         profile = new ProfileImpl(true);
         container = runtime.createMainContainer(profile);
 
-        // ...
+        launchTechnicians();
+        launchClients();
+
+        try {
+            container.kill();
+            runtime.shutDown();
+        } catch (StaleProxyException e) {
+            e.printStackTrace();
+        }
     }
 
     // shuffle array of ints
@@ -116,7 +124,6 @@ public class Simulation {
                 Location location = new Location(x, y);
 
                 Technician technician = new Technician(location, personality);
-                // ^ Initialize technician: id, location, personality
 
                 try {
                     AgentController ac = container.acceptNewAgent(id, technician);
@@ -163,7 +170,6 @@ public class Simulation {
             MalfunctionType malfunction = types[i];
 
             Client client = new Client(location, malfunction, time, personality);
-            // ^ Initialize client: id, location, personality, time, malfunction
 
             try {
                 AgentController ac = container.acceptNewAgent(id, client);

@@ -1,13 +1,14 @@
 package agents;
 
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
 import agentbehaviours.RequestRepair;
-import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.util.leap.Iterator;
 import message.TechnicianMessage;
 import utils.ClientType;
 import utils.Location;
@@ -15,7 +16,7 @@ import utils.Logger;
 import utils.MalfunctionType;
 import utils.constants.Constants;
 
-public abstract class Client extends Agent {
+public class Client extends Agent {
     private Location location;
     private MalfunctionType malfunctionType;
     private double requestSendTime;
@@ -29,30 +30,9 @@ public abstract class Client extends Agent {
         this.clientType = clientType;
     }
 
-    /**
-     * Arguments:
-     * ClientType
-     * MalfunctionType
-     * int
-     * int
-     */
     protected void setup() {
         Logger.info(getLocalName(), "Setup Client Agent");
         String serviceType = Constants.SERVICE_TYPE;
-
-        Logger.WARN(getLocalName(), "Setup Client Agent");
-
-        //        Object[] args = getArguments();
-        //        if (args != null && args.length == 3) {
-        //            this.clientType = (ClientType) args[0];
-        //            this.malfunctionType = (MalfunctionType) args[1];
-        //            this.location = new Location((int)args[2], (int)args[3]);
-        //        } else {
-        //            Logger.error(getLocalName(), "Wrong arguments");
-        //            exit(0);
-        //        }
-
-
 
         // Use myAgent to access Client private variables
 
@@ -72,26 +52,6 @@ public abstract class Client extends Agent {
             // DFAgentDescription[] results = DFService.search(this, template, sc);
             DFAgentDescription[] results = DFService.search(this, template);
 
-//            if (results.length > 0) {
-//                Logger.info(getLocalName(), "Found the following " + serviceType + " services:");
-//
-//                for (int i = 0; i < results.length; ++i) {
-//
-//                    DFAgentDescription dfd = results[i];
-//                    AID provider = dfd.getName();
-//                    Iterator it = dfd.getAllServices();
-//
-//                    while (it.hasNext()) {
-//                        ServiceDescription sd = (ServiceDescription) it.next();
-//                        if (sd.getType().equals(serviceType)) {
-//                            Logger.info(getLocalName(), "- Service \"" + sd.getName() + "\" provided by agent " + provider.getName());
-//                        }
-//                    }
-//                }
-//            } else {
-//                Logger.warn(getLocalName(), "No " + serviceType + " service found");
-//            }
-
             Logger.info(getLocalName(), "Starting Contract with Technicians...");
             this.addBehaviour(new RequestRepair(results));
 
@@ -101,6 +61,7 @@ public abstract class Client extends Agent {
     }
 
     public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2) {
+        Random rng = ThreadLocalRandom.current();
         switch (clientType) {
         case REASONABLE_UNAVAILABLE:
             //  TODO
@@ -110,9 +71,10 @@ public abstract class Client extends Agent {
             //  TODO
         case URGENT_AVAILABLE:
             //  TODO
+        default:
+            return rng.nextBoolean();
         }
         // return true if msg1 it's better than msg2
-        return true;
     }
 
     public Location getLocation() {
