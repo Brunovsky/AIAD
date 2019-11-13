@@ -10,6 +10,7 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 import message.ClientMessage;
 import utils.*;
+import utils.constants.Constants;
 
 
 import static java.lang.System.exit;
@@ -32,8 +33,8 @@ public class Technician extends Agent {
 
         Logger.info(getLocalName(), "Setup Technician Agent");
 
-        String serviceName = "TechRepairs";
-        String serviceType = "tech-repairs";
+        String serviceName = Constants.SERVICE_NAME;
+        String serviceType = Constants.SERVICE_TYPE;
 
 //        // Read the name of the service to register as an argument
 //        Object[] args = getArguments();

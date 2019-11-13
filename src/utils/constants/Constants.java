@@ -5,6 +5,10 @@ import utils.MalfunctionType;
 
 public class Constants {
 
+    public static String SERVICE_TYPE = "tech-repairs";
+
+    public static String SERVICE_NAME = "TechRepairs";
+
     public static double PRICE_PER_UNIT_OF_DISTANCE = 0.5;
 
     public static int DURATION_EASY_MALFUNCTION_REPAIR = 20; // minutes

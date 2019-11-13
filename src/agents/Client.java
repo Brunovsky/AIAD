@@ -13,8 +13,7 @@ import utils.Location;
 import utils.Logger;
 import utils.MalfunctionType;
 import utils.ClientType;
-
-import static java.lang.System.exit;
+import utils.constants.Constants;
 
 public abstract class Client extends Agent {
 
@@ -22,6 +21,13 @@ public abstract class Client extends Agent {
     private MalfunctionType malfunctionType;
     private double requestSendTime;
     private ClientType clientType;
+
+    public Client(Location location, MalfunctionType malfunctionType, double requestSendTime, ClientType clientType) {
+        this.location = location;
+        this.malfunctionType = malfunctionType;
+        this.requestSendTime = requestSendTime;
+        this.clientType = clientType;
+    }
 
     /**
      *      Arguments:
@@ -32,19 +38,19 @@ public abstract class Client extends Agent {
      */
     protected void setup() {
         Logger.info(getLocalName(), "Setup Client Agent");
-        String serviceType = "tech-repairs";
+        String serviceType = Constants.SERVICE_TYPE;
 
         Logger.WARN(getLocalName(), "Setup Client Agent");
 
-        Object[] args = getArguments();
-        if (args != null && args.length == 3) {
-            this.clientType = (ClientType) args[0];
-            this.malfunctionType = (MalfunctionType) args[1];
-            this.location = new Location((int)args[2], (int)args[3]);
-        } else {
-            Logger.error(getLocalName(), "Wrong arguments");
-            exit(0);
-        }
+//        Object[] args = getArguments();
+//        if (args != null && args.length == 3) {
+//            this.clientType = (ClientType) args[0];
+//            this.malfunctionType = (MalfunctionType) args[1];
+//            this.location = new Location((int)args[2], (int)args[3]);
+//        } else {
+//            Logger.error(getLocalName(), "Wrong arguments");
+//            exit(0);
+//        }
 
         // Use myAgent to access Client private variables
 
