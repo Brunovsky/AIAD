@@ -28,12 +28,10 @@ public class ContractResponder extends ContractNetResponder {
         try {
             Logger.info(myAgent.getLocalName(), "CFP received from "+cfp.getSender().getName());
 
-            RepairSlot slot =((Technician) myAgent).handleReceivedClientCfp(cfp);
-            if(slot != null){
+            this.repairSlot =((Technician) myAgent).handleReceivedClientCfp(cfp);
+            if(this.repairSlot != null){
                 // Send propose to Client
-
-
-                TechnicianMessage proposal = new TechnicianMessage();
+                TechnicianMessage proposal = new TechnicianMessage(this.repairSlot.getRepairPrice(), this.repairSlot.getStartRepairTime());
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
                 propose.setContentObject(proposal);
@@ -49,10 +47,11 @@ public class ContractResponder extends ContractNetResponder {
         throw new RefuseException("evaluation-failed");
     }
 
+    //TODO:
     @Override
-    protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
+    protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose, ACLMessage accept) throws FailureException {
         Logger.info(myAgent.getLocalName(), "Proposal accepted");
-        if (((Technician) myAgent).handleReceivedClientAcceptProposal(cfp, propose)) {
+        if (((Technician) myAgent).handleReceivedClientAcceptProposal(this.repairSlot)) {
             Logger.info(myAgent.getLocalName(), "Action successfully performed");
             ACLMessage inform = accept.createReply();
             inform.setPerformative(ACLMessage.INFORM);
@@ -64,9 +63,9 @@ public class ContractResponder extends ContractNetResponder {
         }
     }
 
+    //TODO:
     @Override
     protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
         Logger.warn(myAgent.getLocalName(), "Proposal rejected");
-        //matar repairslot
     }
 }

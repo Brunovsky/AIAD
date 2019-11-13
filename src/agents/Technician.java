@@ -18,9 +18,7 @@ import static java.lang.System.exit;
 public class Technician extends Agent {
 
     private Location location;
-    private double repairPriceMultiplier; //p.e. 1.2 ou 1.5 - definined in arguments
     TimeBoard timeBoard;
-    FinancialAccount financialAccount;
 
     protected void setup() {
         
@@ -40,8 +38,6 @@ public class Technician extends Agent {
             exit(0);
         }
 
-        financialAccount = new FinancialAccount();
-
         Logger.info(getLocalName(), "Registering service \"" + serviceName + "\" of type "+serviceType);
 
         try {
@@ -50,12 +46,6 @@ public class Technician extends Agent {
             ServiceDescription sd = new ServiceDescription();
             sd.setName(serviceName);
             sd.setType(serviceType);
-
-            // Agents that want to use this service need to "know" the weather-forecast-ontology
-//            sd.addOntologies("tech-repairs-ontology");
-            // Agents that want to use this service need to "speak" the FIPA-SL language
-//            sd.addLanguages(FIPANames.ContentLanguage.FIPA_SL);
-            //sd.addProperties(new Property("country", "Portugal"));
 
             dfd.addServices(sd);
 
@@ -70,13 +60,9 @@ public class Technician extends Agent {
     public RepairSlot handleReceivedClientCfp(ACLMessage cfp) {
         try {
             ClientMessage receivedClientMessage = (ClientMessage) cfp.getContentObject();
-            // verificar timeboard se dá ou não e retornar startSlotTime
-            receivedClientMessage.getRequestSendTime();
-
-            double startSlotTime = 0;
-            double repairPrice = 0;
+            double startSlotTime = this.timeBoard.getNextAvailableSlotStartTime(receivedClientMessage.getRequestSendTime());
+            double repairPrice = getRepairPrice(receivedClientMessage.getLocation(), receivedClientMessage.getType());
             String clientId = cfp.getSender().getName();
-
 
             RepairSlot repairSlot = new RepairSlot(receivedClientMessage.getType(), startSlotTime, receivedClientMessage.getLocation(), repairPrice, clientId, this.location);
 
@@ -85,16 +71,20 @@ public class Technician extends Agent {
             e.printStackTrace();
         }
 
-        return null; // or return null
+        return null;
     }
 
-    public boolean handleReceivedClientAcceptProposal(ACLMessage cfp, ACLMessage propose){
+    public double getRepairPrice(Location clientLocation, MalfunctionType type){
+        // TODO: Miguel faz aí um switch
+
+        // calcular preço gasto para a viagem + preço consoante o type de malfunction
+        return 0;
+    }
+
+    public boolean handleReceivedClientAcceptProposal(RepairSlot slot){
         //  TODO:
         // Handle Accept Proposal
-
-        // Perform action
-        // Update account and timeboard
-
+        this.timeBoard.addRepairSlot(slot);
         return true;
     }
 

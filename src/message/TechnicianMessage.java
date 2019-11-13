@@ -1,14 +1,23 @@
 package message;
 
 import java.io.Serializable;
-import java.util.Comparator;
 
 public class TechnicianMessage implements Serializable {
 
     // Message response from Technician to Client
+    private double repairPrice;
+    private double startRepairTime;
 
-
-    public TechnicianMessage() {
+    public TechnicianMessage(double repairPrice, double startRepairTime) {
+        this.repairPrice = repairPrice;
+        this.startRepairTime = startRepairTime;
     }
 
+    public double getRepairPrice() {
+        return repairPrice;
+    }
+
+    public double getStartRepairTime() {
+        return startRepairTime;
+    }
 }
