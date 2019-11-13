@@ -9,7 +9,32 @@ public class Constants {
 
     public static String SERVICE_NAME = "TechRepairs";
 
-    public static double PRICE_PER_UNIT_OF_DISTANCE = 0.5;
+    public static double PRICE_PER_UNIT_OF_DISTANCE = 0.1;
+
+    // ------------- TO DELETE? ------------------
+    public static double PRICE_EASY_MALFUNCTION = 20;
+
+    public static double PRICE_MEDIUM_MALFUNCTION = 40;
+
+    public static double PRICE_HARD_MALFUNCTION = 60;
+
+    public static double PRICE_DEFAULT_MALFUNCTION = 30;
+
+    public static double getMalFunctionPrice(MalfunctionType type){
+        switch (type) {
+            case EASY:
+                return PRICE_EASY_MALFUNCTION;
+            case MEDIUM:
+                return PRICE_MEDIUM_MALFUNCTION;
+            case HARD:
+                return PRICE_HARD_MALFUNCTION;
+            default:
+                break;
+        }
+        return 0;
+    }
+    // ------------------------------------------
+
 
     public static int DURATION_EASY_MALFUNCTION_REPAIR = 20; // minutes
 

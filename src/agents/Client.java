@@ -30,7 +30,7 @@ public abstract class Client extends Agent {
     }
 
     /**
-     *      Arguments:
+     * Arguments:
      * ClientType
      * MalfunctionType
      * int
@@ -52,6 +52,8 @@ public abstract class Client extends Agent {
         //            exit(0);
         //        }
 
+
+
         // Use myAgent to access Client private variables
 
         Logger.info(getLocalName(), "Searching for services of type " + serviceType);
@@ -70,29 +72,29 @@ public abstract class Client extends Agent {
             // DFAgentDescription[] results = DFService.search(this, template, sc);
             DFAgentDescription[] results = DFService.search(this, template);
 
-            if (results.length > 0) {
-                Logger.info(getLocalName(), "Found the following " + serviceType + " services:");
-
-                for (int i = 0; i < results.length; ++i) {
-                    DFAgentDescription dfd = results[i];
-                    AID provider = dfd.getName();
-                    Iterator it = dfd.getAllServices();
-
-                    while (it.hasNext()) {
-                        ServiceDescription sd = (ServiceDescription) it.next();
-                        if (sd.getType().equals(serviceType)) {
-                            Logger.info(getLocalName(), "- Service \"" + sd.getName()
-                                                            + "\" provided by agent "
-                                                            + provider.getName());
-                        }
-                    }
-                }
-            } else {
-                Logger.warn(getLocalName(), "No " + serviceType + " service found");
-            }
+//            if (results.length > 0) {
+//                Logger.info(getLocalName(), "Found the following " + serviceType + " services:");
+//
+//                for (int i = 0; i < results.length; ++i) {
+//
+//                    DFAgentDescription dfd = results[i];
+//                    AID provider = dfd.getName();
+//                    Iterator it = dfd.getAllServices();
+//
+//                    while (it.hasNext()) {
+//                        ServiceDescription sd = (ServiceDescription) it.next();
+//                        if (sd.getType().equals(serviceType)) {
+//                            Logger.info(getLocalName(), "- Service \"" + sd.getName() + "\" provided by agent " + provider.getName());
+//                        }
+//                    }
+//                }
+//            } else {
+//                Logger.warn(getLocalName(), "No " + serviceType + " service found");
+//            }
 
             Logger.info(getLocalName(), "Starting Contract with Technicians...");
             this.addBehaviour(new RequestRepair(results));
+
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }
@@ -109,7 +111,7 @@ public abstract class Client extends Agent {
         case URGENT_AVAILABLE:
             //  TODO
         }
-
+        // return true if msg1 it's better than msg2
         return true;
     }
 

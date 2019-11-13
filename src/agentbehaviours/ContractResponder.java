@@ -38,7 +38,10 @@ public class ContractResponder extends ContractNetResponder {
                 return propose;
             } else {
                 // Don't send propose to Client
+                ACLMessage refuse = cfp.createReply();
+                refuse.setPerformative(ACLMessage.REFUSE);
                 Logger.warn(myAgent.getLocalName(), "Refuse");
+                return refuse;
             }
         } catch (IOException e) {
             e.printStackTrace();
