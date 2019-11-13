@@ -20,6 +20,12 @@ public class Technician extends Agent {
     TimeBoard timeBoard;
     TechnicianType technicianType;
 
+    public Technician(Location location, TechnicianType technicianType) {
+        this.location = location;
+        this.timeBoard = new TimeBoard();
+        this.technicianType = technicianType;
+    }
+
     protected void setup() {
         
         timeBoard = new TimeBoard();
@@ -29,24 +35,24 @@ public class Technician extends Agent {
         String serviceName = "TechRepairs";
         String serviceType = "tech-repairs";
 
-        // Read the name of the service to register as an argument
-        String[] args = (String[]) getArguments();
-        if (args != null && args.length == 3) {
-            switch(args[0]) {
-                case "T1":
-                    technicianType = TechnicianType.TECHNICIAN_TYPE_1;
-                case "T2":
-                    technicianType = TechnicianType.TECHNICIAN_TYPE_2;
-                case "T3":
-                    technicianType = TechnicianType.TECHNICIAN_TYPE_3;
-                case "T4":
-                    technicianType = TechnicianType.TECHNICIAN_TYPE_4;
-            }
-            location = new Location(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
-        } else {
-            Logger.error(getLocalName(), "Wrong arguments");
-            exit(0);
-        }
+//        // Read the name of the service to register as an argument
+//        String[] args = (String[]) getArguments();
+//        if (args != null && args.length == 3) {
+//            switch(args[0]) {
+//                case "T1":
+//                    technicianType = TechnicianType.TECHNICIAN_TYPE_1;
+//                case "T2":
+//                    technicianType = TechnicianType.TECHNICIAN_TYPE_2;
+//                case "T3":
+//                    technicianType = TechnicianType.TECHNICIAN_TYPE_3;
+//                case "T4":
+//                    technicianType = TechnicianType.TECHNICIAN_TYPE_4;
+//            }
+//            location = new Location(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+//        } else {
+//            Logger.error(getLocalName(), "Wrong arguments");
+//            exit(0);
+//        }
 
         Logger.info(getLocalName(), "Registering service \"" + serviceName + "\" of type "+serviceType);
 
@@ -92,23 +98,18 @@ public class Technician extends Agent {
     }
 
     public boolean handleReceivedClientAcceptProposal(RepairSlot slot){
-        //  TODO:
-        // Handle Accept Proposal
         this.timeBoard.addRepairSlot(slot);
         return true;
     }
 
     /*
-    Agent Termination
- */
+        Agent Termination
+    */
     protected void takeDown() {
-
-        // Removing the registration in the yellow pages
         try {
 
             DFService.deregister(this);
         } catch (FIPAException fe) {
-
             fe.printStackTrace();
         }
 
