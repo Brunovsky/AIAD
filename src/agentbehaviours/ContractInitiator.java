@@ -26,6 +26,7 @@ public class ContractInitiator extends ContractNetInitiator {
     }
 
     // Warning: Useless function because we will use handleAllResponses
+    //  Can be used for logging or smthg like that.
     @Override
     protected void handlePropose(ACLMessage propose, Vector v) {
         try {

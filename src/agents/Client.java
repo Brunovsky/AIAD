@@ -23,25 +23,24 @@ public abstract class Client extends Agent {
     private double requestSendTime;
     private ClientType clientType;
 
+    /**
+     *      Arguments:
+     * ClientType
+     * MalfunctionType
+     * int 
+     * int
+     */
     protected void setup() {
         Logger.info(getLocalName(), "Setup Client Agent");
         String serviceType = "tech-repairs";
 
         Logger.WARN(getLocalName(), "Setup Client Agent");
 
-        String[] args = (String[]) getArguments();
+        Object[] args = getArguments();
         if (args != null && args.length == 3) {
-            switch(args[0]) {
-                case "RU":
-                    clientType = ClientType.REASONABLE_UNAVAILABLE;
-                case "SA":
-                    clientType = ClientType.SELFISH_AVAILABLE;
-                case "SU":
-                    clientType = ClientType.SELFISH_UNAVAILABLE;
-                case "UA":
-                    clientType = ClientType.URGENT_AVAILABLE;
-            }
-            location = new Location(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+            this.clientType = (ClientType) args[0];
+            this.malfunctionType = (MalfunctionType) args[1];
+            this.location = new Location((int)args[2], (int)args[3]);
         } else {
             Logger.error(getLocalName(), "Wrong arguments");
             exit(0);
