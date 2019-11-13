@@ -9,14 +9,15 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 import message.ClientMessage;
-import utils.*;
+import utils.Location;
+import utils.Logger;
+import utils.MalfunctionType;
+import utils.RepairSlot;
+import utils.TechnicianType;
+import utils.TimeBoard;
 import utils.constants.Constants;
 
-
-import static java.lang.System.exit;
-
 public class Technician extends Agent {
-
     private Location location;
     TimeBoard timeBoard;
     TechnicianType technicianType;
@@ -28,7 +29,6 @@ public class Technician extends Agent {
     }
 
     protected void setup() {
-        
         timeBoard = new TimeBoard();
 
         Logger.info(getLocalName(), "Setup Technician Agent");
@@ -36,17 +36,18 @@ public class Technician extends Agent {
         String serviceName = Constants.SERVICE_NAME;
         String serviceType = Constants.SERVICE_TYPE;
 
-//        // Read the name of the service to register as an argument
-//        Object[] args = getArguments();
-//        if (args != null && args.length == 3) {
-//            TechnicianType technicianType = (TechnicianType) args[0];
-//            location = new Location((int)args[1], (int)args[2]);
-//        } else {
-//            Logger.error(getLocalName(), "Wrong arguments");
-//            exit(0);
-//        }
+        //        // Read the name of the service to register as an argument
+        //        Object[] args = getArguments();
+        //        if (args != null && args.length == 3) {
+        //            TechnicianType technicianType = (TechnicianType) args[0];
+        //            location = new Location((int)args[1], (int)args[2]);
+        //        } else {
+        //            Logger.error(getLocalName(), "Wrong arguments");
+        //            exit(0);
+        //        }
 
-        Logger.info(getLocalName(), "Registering service \"" + serviceName + "\" of type "+serviceType);
+        Logger.info(getLocalName(),
+                    "Registering service \"" + serviceName + "\" of type " + serviceType);
 
         try {
             DFAgentDescription dfd = new DFAgentDescription();
@@ -68,11 +69,15 @@ public class Technician extends Agent {
     public RepairSlot handleReceivedClientCfp(ACLMessage cfp) {
         try {
             ClientMessage receivedClientMessage = (ClientMessage) cfp.getContentObject();
-            double startSlotTime = this.timeBoard.getNextAvailableSlotStartTime(receivedClientMessage.getRequestSendTime());
-            double repairPrice = getRepairPrice(receivedClientMessage.getLocation(), receivedClientMessage.getType());
+            double startSlotTime = this.timeBoard.getNextAvailableSlotStartTime(
+                receivedClientMessage.getRequestSendTime());
+            double repairPrice = getRepairPrice(receivedClientMessage.getLocation(),
+                                                receivedClientMessage.getType());
             String clientId = cfp.getSender().getName();
 
-            RepairSlot repairSlot = new RepairSlot(receivedClientMessage.getType(), startSlotTime, receivedClientMessage.getLocation(), repairPrice, clientId, this.location);
+            RepairSlot repairSlot = new RepairSlot(receivedClientMessage.getType(), startSlotTime,
+                                                   receivedClientMessage.getLocation(), repairPrice,
+                                                   clientId, this.location);
 
             return repairSlot;
         } catch (UnreadableException e) {
@@ -82,14 +87,14 @@ public class Technician extends Agent {
         return null;
     }
 
-    public double getRepairPrice(Location clientLocation, MalfunctionType type){
+    public double getRepairPrice(Location clientLocation, MalfunctionType type) {
         // TODO: Miguel faz aí um switch
 
         // calcular preço gasto para a viagem + preço consoante o type de malfunction
         return 0;
     }
 
-    public boolean handleReceivedClientAcceptProposal(RepairSlot slot){
+    public boolean handleReceivedClientAcceptProposal(RepairSlot slot) {
         this.timeBoard.addRepairSlot(slot);
         return true;
     }
@@ -99,7 +104,6 @@ public class Technician extends Agent {
     */
     protected void takeDown() {
         try {
-
             DFService.deregister(this);
         } catch (FIPAException fe) {
             fe.printStackTrace();
@@ -112,4 +116,3 @@ public class Technician extends Agent {
         return location;
     }
 }
-

@@ -1,14 +1,14 @@
 package simulation;
 
+import utils.ClientType;
+
 public class ClientsDesc {
-    public enum ClientBehaviour { BrunoC, NunoC, MiguelC }
-
     public int number;
-    public ClientBehaviour behaviour;
+    public ClientType personality;
 
-    public ClientsDesc(int number, ClientBehaviour behaviour) {
-        assert behaviour != null;
+    public ClientsDesc(int number, ClientType personality) {
+        assert personality != null;
         this.number = number;
-        this.behaviour = behaviour;
+        this.personality = personality;
     }
 }

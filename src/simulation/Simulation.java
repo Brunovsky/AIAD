@@ -8,15 +8,26 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import agents.Client;
 import agents.Technician;
-import simulation.ClientsDesc.ClientBehaviour;
-import simulation.TechniciansDesc.TechnicianBehaviour;
+import jade.core.Profile;
+import jade.core.ProfileImpl;
+import jade.core.Runtime;
+import jade.wrapper.AgentController;
+import jade.wrapper.ContainerController;
+import jade.wrapper.StaleProxyException;
+import utils.ClientType;
+import utils.Location;
+import utils.TechnicianType;
 
 public class Simulation {
     private World world;
 
-    private Map<TechnicianBehaviour, ArrayList<Technician>> technicianMap;
+    private Map<TechnicianType, ArrayList<Technician>> technicianMap;
     private ArrayList<Technician> technicianAgents;
     private ArrayList<Client> clientAgents;
+
+    private Runtime runtime;
+    private Profile profile;
+    private ContainerController container;
 
     public Simulation(World world) {
         assert world != null;
@@ -25,6 +36,10 @@ public class Simulation {
         technicianMap = new HashMap<>();
         technicianAgents = new ArrayList<>();
         clientAgents = new ArrayList<>();
+
+        runtime = Runtime.instance();
+        profile = new ProfileImpl(true);
+        container = runtime.createMainContainer(profile);
     }
 
     // shuffle array of ints
@@ -52,7 +67,7 @@ public class Simulation {
     /**
      * Launch all world technicians
      */
-    private void launchTechnicians() {
+    private boolean launchTechnicians() {
         int[] indices = new int[world.T];
         for (int i = 0; i < world.T; ++i) indices[i] = i;
         shuffle(indices);
@@ -60,31 +75,43 @@ public class Simulation {
         int i = 0;
 
         for (TechniciansDesc entry : world.technicians) {
-            TechnicianBehaviour behaviour = entry.behaviour;
-            technicianMap.put(behaviour, new ArrayList<>());
+            TechnicianType personality = entry.personality;
+            technicianMap.put(personality, new ArrayList<>());
 
             for (int j = 0; j < entry.number; ++j) {
                 double theta = (2.0 * indices[i++]) * Math.PI / (double) world.T;
 
+                String id = "technician_" + i;
                 double x = world.technicianRadius * Math.cos(theta);
                 double y = world.technicianRadius * Math.sin(theta);
+                Location location = new Location(x, y);
 
                 Technician technician = null;
-                // ^ Initialize technician: x, y, behaviour
+                // ^ Initialize technician: location, personality
 
-                technicianMap.get(behaviour).add(technician);
+                try {
+                    AgentController ac = container.acceptNewAgent(id, technician);
+                    ac.start();
+                } catch (StaleProxyException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+
+                technicianMap.get(personality).add(technician);
                 technicianAgents.add(technician);
             }
         }
+
+        return true;
     }
 
     /**
      * Launch all world clients according to the world specification with randomly ordered
      * locations.
      */
-    private void launchClients() {
+    private boolean launchClients() {
         int[][] indices = new int[world.C][2];
-        ClientBehaviour behaviours[] = new ClientBehaviour[world.C];
+        ClientType personalities[] = new ClientType[world.C];
         for (int c = 0, i = 0; c < world.clientRadius.length; ++c) {
             for (int n = 0; n < world.clientNumbers[c]; ++n, ++i) {
                 indices[i] = new int[] {c, n};
@@ -93,11 +120,11 @@ public class Simulation {
         int z = 0;
         for (ClientsDesc entry : world.clients) {
             for (int k = 0; k < entry.number; ++k, ++z) {
-                behaviours[z] = entry.behaviour;
+                personalities[z] = entry.personality;
             }
         }
         shuffle(indices);
-        shuffle(behaviours);
+        shuffle(personalities);
 
         for (int i = 0; i < world.C; ++i) {
             int circle = indices[i][0], k = indices[i][1];
@@ -105,15 +132,27 @@ public class Simulation {
             double n = (double) world.clientNumbers[circle];
             double theta = (2.0 * k) * Math.PI / n;
 
+            String id = "client_" + i;
             double time = world.period * i;
             double x = radius * Math.cos(theta);
             double y = radius * Math.sin(theta);
-            ClientBehaviour behaviour = behaviours[i];
+            Location location = new Location(x, y);
+            ClientType personality = personalities[i];
 
             Client client = null;
-            // ^ Initialize client: x, y, behaviour, time?
+            // ^ Initialize client: id, location, personality, time, malfunction type
+
+            try {
+                AgentController ac = container.acceptNewAgent(id, client);
+                ac.start();
+            } catch (StaleProxyException e) {
+                e.printStackTrace();
+                return false;
+            }
 
             clientAgents.add(client);
         }
+
+        return true;
     }
 }

@@ -1,9 +1,7 @@
 package simulation;
 
-import static simulation.ClientsDesc.ClientBehaviour.BrunoC;
-import static simulation.ClientsDesc.ClientBehaviour.NunoC;
-import static simulation.TechniciansDesc.TechnicianBehaviour.BrunoT;
-import static simulation.TechniciansDesc.TechnicianBehaviour.NunoT;
+import utils.ClientType;
+import utils.TechnicianType;
 
 public class WorldBuilder {
     World select(String name) {
@@ -28,8 +26,8 @@ public class WorldBuilder {
         world.T = 20;
         world.technicianRadius = 50.0;
         world.technicians = new TechniciansDesc[] {
-            new TechniciansDesc(10, BrunoT),  //
-            new TechniciansDesc(10, NunoT)    //
+            new TechniciansDesc(10, TechnicianType.TECHNICIAN_TYPE_2),  //
+            new TechniciansDesc(10, TechnicianType.TECHNICIAN_TYPE_4)   //
         };
 
         world.C = 200;
@@ -37,8 +35,8 @@ public class WorldBuilder {
         world.clientNumbers = new int[] {40, 60};
         world.period = 2.0;
         world.clients = new ClientsDesc[] {
-            new ClientsDesc(45, BrunoC),  //
-            new ClientsDesc(155, NunoC)   //
+            new ClientsDesc(45, ClientType.REASONABLE_UNAVAILABLE),  //
+            new ClientsDesc(155, ClientType.URGENT_AVAILABLE)        //
         };
 
         return world;

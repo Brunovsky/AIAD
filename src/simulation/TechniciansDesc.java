@@ -1,14 +1,14 @@
 package simulation;
 
+import utils.TechnicianType;
+
 public class TechniciansDesc {
-    public enum TechnicianBehaviour { BrunoT, NunoT, MiguelT }
-
     public int number;
-    public TechnicianBehaviour behaviour;
+    public TechnicianType personality;
 
-    public TechniciansDesc(int number, TechnicianBehaviour behaviour) {
-        assert behaviour != null;
+    public TechniciansDesc(int number, TechnicianType personality) {
+        assert personality != null;
         this.number = number;
-        this.behaviour = behaviour;
+        this.personality = personality;
     }
 }
