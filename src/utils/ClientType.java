@@ -1,8 +1,8 @@
 package utils;
 
 public enum ClientType {
-    REASONABLE_UNAVAILABLE,
-    SELFISH_AVAILABLE,
-    SELFISH_UNAVAILABLE,
-    URGENT_AVAILABLE
+    CLIENT_TYPE_1,
+    CLIENT_TYPE_2,
+    CLIENT_TYPE_3,
+    CLIENT_TYPE_4
 }

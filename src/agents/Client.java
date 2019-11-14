@@ -100,16 +100,15 @@ public class Client extends Agent {
 
     public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2) {
         switch (clientType) {
-        case REASONABLE_UNAVAILABLE:
-            //  TODO
-        case SELFISH_AVAILABLE:
-            //  TODO
-        case SELFISH_UNAVAILABLE:
-            //  TODO
-        case URGENT_AVAILABLE:
-            //  TODO
+        case CLIENT_TYPE_1:
+            return msg1.getRepairPrice() < msg2.getRepairPrice();
+        case CLIENT_TYPE_2:
+            return msg1.getStartRepairTime() < msg2.getStartRepairTime();
+        case CLIENT_TYPE_3:
+            return ((msg1.getStartRepairTime()-this.requestSendTime)*0.05 + msg1.getRepairPrice()) < ((msg2.getStartRepairTime()-this.requestSendTime)*0.05 + msg2.getRepairPrice());
+        case CLIENT_TYPE_4:
+            return ((msg1.getStartRepairTime()-this.requestSendTime) + msg1.getRepairPrice()) < ((msg2.getStartRepairTime()-this.requestSendTime) + msg2.getRepairPrice());
         }
-        // return true if msg1 it's better than msg2
         return true;
     }
 

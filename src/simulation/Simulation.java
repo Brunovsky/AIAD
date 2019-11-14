@@ -8,8 +8,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import agents.Client;
 import agents.Technician;
-import jade.core.Profile;
-import jade.core.ProfileImpl;
+import jade.core.*;
 import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
@@ -145,6 +144,10 @@ public class Simulation {
             try {
                 AgentController ac = container.acceptNewAgent(id, client);
                 ac.start();
+
+                if(client.getState() == jade.wrapper.AgentState.cAGENT_STATE_DELETED){
+
+                }
             } catch (StaleProxyException e) {
                 e.printStackTrace();
                 return false;

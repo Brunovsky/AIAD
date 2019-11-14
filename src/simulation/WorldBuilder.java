@@ -35,8 +35,8 @@ public class WorldBuilder {
         world.clientNumbers = new int[] {40, 60};
         world.period = 2.0;
         world.clients = new ClientsDesc[] {
-            new ClientsDesc(45, ClientType.REASONABLE_UNAVAILABLE),  //
-            new ClientsDesc(155, ClientType.URGENT_AVAILABLE)        //
+            new ClientsDesc(45, ClientType.CLIENT_TYPE_1),  //
+            new ClientsDesc(155, ClientType.CLIENT_TYPE_4)        //
         };
 
         return world;
