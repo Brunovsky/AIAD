@@ -1,5 +1,8 @@
 package agents;
 
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
 import agentbehaviours.RequestRepair;
 import jade.core.Agent;
 import jade.domain.DFService;
@@ -27,30 +30,9 @@ public class Client extends Agent {
         this.clientType = clientType;
     }
 
-    /**
-     * Arguments:
-     * ClientType
-     * MalfunctionType
-     * int
-     * int
-     */
     protected void setup() {
         Logger.info(getLocalName(), "Setup Client Agent");
         String serviceType = Constants.SERVICE_TYPE;
-
-        Logger.WARN(getLocalName(), "Setup Client Agent");
-
-        //        Object[] args = getArguments();
-        //        if (args != null && args.length == 3) {
-        //            this.clientType = (ClientType) args[0];
-        //            this.malfunctionType = (MalfunctionType) args[1];
-        //            this.location = new Location((int)args[2], (int)args[3]);
-        //        } else {
-        //            Logger.error(getLocalName(), "Wrong arguments");
-        //            exit(0);
-        //        }
-
-
 
         // Use myAgent to access Client private variables
 
@@ -70,26 +52,6 @@ public class Client extends Agent {
             // DFAgentDescription[] results = DFService.search(this, template, sc);
             DFAgentDescription[] results = DFService.search(this, template);
 
-//            if (results.length > 0) {
-//                Logger.info(getLocalName(), "Found the following " + serviceType + " services:");
-//
-//                for (int i = 0; i < results.length; ++i) {
-//
-//                    DFAgentDescription dfd = results[i];
-//                    AID provider = dfd.getName();
-//                    Iterator it = dfd.getAllServices();
-//
-//                    while (it.hasNext()) {
-//                        ServiceDescription sd = (ServiceDescription) it.next();
-//                        if (sd.getType().equals(serviceType)) {
-//                            Logger.info(getLocalName(), "- Service \"" + sd.getName() + "\" provided by agent " + provider.getName());
-//                        }
-//                    }
-//                }
-//            } else {
-//                Logger.warn(getLocalName(), "No " + serviceType + " service found");
-//            }
-
             Logger.info(getLocalName(), "Starting Contract with Technicians...");
             this.addBehaviour(new RequestRepair(results));
 
@@ -99,15 +61,16 @@ public class Client extends Agent {
     }
 
     public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2) {
+        Random rng = ThreadLocalRandom.current();
         switch (clientType) {
-        case CLIENT_TYPE_1:
-            return msg1.getRepairPrice() < msg2.getRepairPrice();
-        case CLIENT_TYPE_2:
-            return msg1.getStartRepairTime() < msg2.getStartRepairTime();
-        case CLIENT_TYPE_3:
-            return ((msg1.getStartRepairTime()-this.requestSendTime)*0.05 + msg1.getRepairPrice()) < ((msg2.getStartRepairTime()-this.requestSendTime)*0.05 + msg2.getRepairPrice());
-        case CLIENT_TYPE_4:
-            return ((msg1.getStartRepairTime()-this.requestSendTime) + msg1.getRepairPrice()) < ((msg2.getStartRepairTime()-this.requestSendTime) + msg2.getRepairPrice());
+            case CLIENT_TYPE_1:
+                return msg1.getRepairPrice() < msg2.getRepairPrice();
+            case CLIENT_TYPE_2:
+                return msg1.getStartRepairTime() < msg2.getStartRepairTime();
+            case CLIENT_TYPE_3:
+                return ((msg1.getStartRepairTime() - this.requestSendTime) * 0.05 + msg1.getRepairPrice()) < ((msg2.getStartRepairTime() - this.requestSendTime) * 0.05 + msg2.getRepairPrice());
+            case CLIENT_TYPE_4:
+                return ((msg1.getStartRepairTime() - this.requestSendTime) + msg1.getRepairPrice()) < ((msg2.getStartRepairTime() - this.requestSendTime) + msg2.getRepairPrice());
         }
         return true;
     }

@@ -15,6 +15,6 @@ public class World {
     double period;          // time period (regular interval) in which clients are launched
     double[] clientRadius;  // client circles radii
     int[] clientNumbers;    // number of clients in the circles
-    int[] malfunctions;     // absolute frequency of each malfunction
+    int[] malfunctions;     // absolute frequency of each malfunction [0]=HARD, [1]=MEDIUM, [2]=EASY
     ClientsDesc[] clients;
 }
