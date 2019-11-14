@@ -17,28 +17,27 @@ public class ContractInitiator extends ContractNetInitiator {
     private int nResponders;
     private DFAgentDescription[] agents;
 
+    final Client myClient;
+
     public ContractInitiator(Agent a, ACLMessage msg, DFAgentDescription[] agents) {
         super(a, msg);
         this.agents = agents;
         this.nResponders = agents.length;
-        // ((Client) myAgent).getLocation()
+        this.myClient = (Client) myAgent;
     }
 
     // Warning: Useless function because we will use handleAllResponses
     //  Can be used for logging or smthg like that.
     @Override
     protected void handlePropose(ACLMessage propose, Vector v) {
-        try {
-            Logger.info(myAgent.getLocalName(), "Agent " + propose.getSender().getName()
-                                                    + " proposed " + propose.getContentObject());
-        } catch (UnreadableException e) {
-            e.printStackTrace();
-        }
+        String technicianName = propose.getSender().getLocalName();
+        Logger.info(myAgent.getLocalName(), "Agent " + technicianName + " proposed");
     }
 
     @Override
     protected void handleRefuse(ACLMessage refuse) {
-        Logger.warn(myAgent.getLocalName(), "Agent " + refuse.getSender().getName() + " refused");
+        String technicianName = refuse.getSender().getLocalName();
+        Logger.warn(myAgent.getLocalName(), "Agent " + technicianName + " refused");
     }
 
     @Override
@@ -57,6 +56,7 @@ public class ContractInitiator extends ContractNetInitiator {
 
         ACLMessage accept = null;
         Enumeration e = responses.elements();
+
         // Iterate through all responses
         while (e.hasMoreElements()) {
             ACLMessage msg = (ACLMessage) e.nextElement();
@@ -67,11 +67,14 @@ public class ContractInitiator extends ContractNetInitiator {
                 TechnicianMessage proposal = null;
                 try {
                     proposal = (TechnicianMessage) msg.getContentObject();
+                    if (proposal == null) {
+                        throw new RuntimeException("Proposal from technician is null");
+                    }
                 } catch (UnreadableException e1) {
                     e1.printStackTrace();
                 }
-                if (proposal != null
-                    && ((Client) myAgent).compareTechnicianMessages(proposal, bestProposal)) {
+                if (bestProposal == null
+                    || myClient.compareTechnicianMessages(proposal, bestProposal)) {
                     bestProposal = proposal;
                     bestProposer = msg.getSender();
                     accept = reply;
@@ -81,20 +84,20 @@ public class ContractInitiator extends ContractNetInitiator {
 
         // Accept the proposal of the best proposer
         if (accept != null) {
-            Logger.info(myAgent.getLocalName(), "Accepting proposal " + bestProposal
-                                                    + " from responder " + bestProposer.getName());
+            Logger.info(myAgent.getLocalName(),
+                        "Accepting proposal from " + bestProposer.getLocalName());
             accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
         }
     }
 
     @Override
     protected void handleFailure(ACLMessage failure) {
+        String technicianName = failure.getSender().getLocalName();
         if (failure.getSender().equals(myAgent.getAMS())) {
             // FAILURE notification from the JADE runtime: the receiver
             Logger.error(myAgent.getLocalName(), "Responder does not exist");
         } else {
-            Logger.error(myAgent.getLocalName(),
-                         "Agent " + failure.getSender().getName() + " failed");
+            Logger.error(myAgent.getLocalName(), "Agent " + technicianName + " failed");
         }
         // Immediate failure --> we will not receive a response from this agent
         nResponders--;
@@ -103,8 +106,9 @@ public class ContractInitiator extends ContractNetInitiator {
 
     @Override
     protected void handleInform(ACLMessage inform) {
-        Logger.info(myAgent.getLocalName(), "Agent " + inform.getSender().getName()
-                                                + " successfully performed the requested action");
+        String technicianName = inform.getSender().getName();
+        Logger.info(myAgent.getLocalName(),
+                    "Agent " + technicianName + " successfully performed the requested action");
         myAgent.doDelete();
     }
 }

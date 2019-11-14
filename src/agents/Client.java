@@ -1,8 +1,5 @@
 package agents;
 
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
 import agentbehaviours.RequestRepair;
 import jade.core.Agent;
 import jade.domain.DFService;
@@ -68,16 +65,22 @@ public class Client extends Agent {
     }
 
     public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2) {
-        Random rng = ThreadLocalRandom.current();
+        assert msg1 != null && msg2 != null;
+        if (msg1 == null) throw new IllegalArgumentException("DEU PEIDO NO msg1");
+        if (msg2 == null) throw new IllegalArgumentException("DEU PEIDO NO msg2");
         switch (clientType) {
-            case CLIENT_TYPE_1:
-                return msg1.getRepairPrice() < msg2.getRepairPrice();
-            case CLIENT_TYPE_2:
-                return msg1.getStartRepairTime() < msg2.getStartRepairTime();
-            case CLIENT_TYPE_3:
-                return ((msg1.getStartRepairTime() - this.requestSendTime) * 0.05 + msg1.getRepairPrice()) < ((msg2.getStartRepairTime() - this.requestSendTime) * 0.05 + msg2.getRepairPrice());
-            case CLIENT_TYPE_4:
-                return ((msg1.getStartRepairTime() - this.requestSendTime) + msg1.getRepairPrice()) < ((msg2.getStartRepairTime() - this.requestSendTime) + msg2.getRepairPrice());
+        case CLIENT_TYPE_1:
+            return msg1.getRepairPrice() < msg2.getRepairPrice();
+        case CLIENT_TYPE_2:
+            return msg1.getStartRepairTime() < msg2.getStartRepairTime();
+        case CLIENT_TYPE_3:
+            return ((msg1.getStartRepairTime() - this.requestSendTime) * 0.05
+                    + msg1.getRepairPrice())
+                < ((msg2.getStartRepairTime() - this.requestSendTime) * 0.05
+                   + msg2.getRepairPrice());
+        case CLIENT_TYPE_4:
+            return ((msg1.getStartRepairTime() - this.requestSendTime) + msg1.getRepairPrice())
+                < ((msg2.getStartRepairTime() - this.requestSendTime) + msg2.getRepairPrice());
         }
         return true;
     }

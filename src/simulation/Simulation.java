@@ -48,12 +48,13 @@ public class Simulation {
 
         runtime = Runtime.instance();
         profile = new ProfileImpl(true);
-        container = runtime.createMainContainer(profile);
+        container = runtime.createAgentContainer(profile);
 
         launchTechnicians();
         launchClients();
 
         try {
+            for (Technician technician : technicianAgents) technician.doDelete();
             container.kill();
             runtime.shutDown();
         } catch (StaleProxyException e) {
@@ -185,7 +186,7 @@ public class Simulation {
                 return false;
             }
 
-            System.out.println("\n=== === === === === === === === === === ===");
+            System.out.println("\n=== === === === === === === === === === ===\n");
 
             clientAgents.add(client);
         }
