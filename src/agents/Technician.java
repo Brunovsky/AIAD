@@ -188,4 +188,8 @@ public class Technician extends Agent {
 
         return 0;
     }
+
+    public TimeBoard getTimeBoard() {
+        return timeBoard;
+    }
 }

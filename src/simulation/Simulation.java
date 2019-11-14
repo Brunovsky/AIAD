@@ -17,10 +17,7 @@ import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
-import utils.ClientType;
-import utils.Location;
-import utils.MalfunctionType;
-import utils.TechnicianType;
+import utils.*;
 
 public class Simulation {
     private World world;
@@ -52,6 +49,30 @@ public class Simulation {
 
         launchTechnicians();
         launchClients();
+
+        // get last technician endtime
+        double totalRunTime = 0;
+        for (Technician technician : technicianAgents){
+            double tempEndTime = technician.getTimeBoard().getLastSlotEndTime();
+            if(totalRunTime < tempEndTime){
+                totalRunTime = tempEndTime;
+            }
+        }
+
+
+        for (Technician technician : technicianAgents){
+            TimeBoard tempTimeBoard = technician.getTimeBoard();
+
+            System.out.println("> Technician " + technician.getLocalName());
+            System.out.println("- Number of slots: " + tempTimeBoard.getNumberOfTimeSlots());
+            System.out.println("- Receipts: " + tempTimeBoard.getReceipts() + "€");
+            System.out.println("- Occupied time: " + tempTimeBoard.getOccupiedTime());
+            System.out.println("- Work time: " + tempTimeBoard.getWorkTime());
+            System.out.println("- Travel time: " + tempTimeBoard.getTravelTime());
+            System.out.println("- Percentage of working: " + tempTimeBoard.getWorkTime()/totalRunTime*100);
+
+            System.out.println("--------------------------");
+        }
 
         try {
             for (Technician technician : technicianAgents) technician.doDelete();
