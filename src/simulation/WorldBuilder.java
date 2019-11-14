@@ -36,8 +36,8 @@ public class WorldBuilder {
         world.period = 2.0;
         world.malfunctions = new int[] {30, 70, 100};
         world.clients = new ClientsDesc[] {
-            new ClientsDesc(45, ClientType.REASONABLE_UNAVAILABLE),  //
-            new ClientsDesc(155, ClientType.URGENT_AVAILABLE)        //
+            new ClientsDesc(45, ClientType.CLIENT_TYPE_1),  //
+            new ClientsDesc(155, ClientType.CLIENT_TYPE_4)        //
         };
 
         return world;

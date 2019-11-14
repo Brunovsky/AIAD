@@ -1,18 +1,16 @@
 package agentbehaviours;
 
+import java.io.IOException;
+
 import agents.Client;
 import jade.core.AID;
 import jade.core.behaviours.Behaviour;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPANames;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.lang.acl.ACLMessage;
 import message.ClientMessage;
 
-import java.io.IOException;
-
-
 public class RequestRepair extends Behaviour {
-
     private DFAgentDescription[] agents;
     private int nResponders;
     private boolean finished = false;
@@ -38,9 +36,11 @@ public class RequestRepair extends Behaviour {
         msg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
 
         // We want to receive a reply in 10 secs
-        //msg.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
+        // msg.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
 
-        ClientMessage messageToBeSent = new ClientMessage(((Client) myAgent).getLocation(), ((Client) myAgent).getMalfunctionType(), ((Client) myAgent).getRequestSendTime());
+        ClientMessage messageToBeSent = new ClientMessage(((Client) myAgent).getLocation(),
+                                                          ((Client) myAgent).getMalfunctionType(),
+                                                          ((Client) myAgent).getRequestSendTime());
 
         try {
             msg.setContentObject(messageToBeSent);
@@ -48,16 +48,12 @@ public class RequestRepair extends Behaviour {
             e.printStackTrace();
         }
 
-
         myAgent.addBehaviour(new ContractInitiator(myAgent, msg, agents));
     }
 
     @Override
     public boolean done() {
-        // TODO: check when it's finished
         this.finished = true;
-        return finished;
+        return true;
     }
-
-
 }
