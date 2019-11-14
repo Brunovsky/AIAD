@@ -21,15 +21,18 @@ public class Client extends Agent {
     private MalfunctionType malfunctionType;
     private double requestSendTime;
     private ClientType clientType;
+    private Callback callback;
 
     public Client(Location location, MalfunctionType malfunctionType, double requestSendTime,
-                  ClientType clientType) {
+                  ClientType clientType, Callback callback) {
         this.location = location;
         this.malfunctionType = malfunctionType;
         this.requestSendTime = requestSendTime;
         this.clientType = clientType;
+        this.callback = callback;
     }
 
+    @Override
     protected void setup() {
         Logger.info(getLocalName(), "Setup Client Agent");
         String serviceType = Constants.SERVICE_TYPE;
@@ -54,10 +57,14 @@ public class Client extends Agent {
 
             Logger.info(getLocalName(), "Starting Contract with Technicians...");
             this.addBehaviour(new RequestRepair(results));
-
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }
+    }
+
+    @Override
+    protected void takeDown() {
+        callback.run();
     }
 
     public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2) {
@@ -92,4 +99,6 @@ public class Client extends Agent {
     public double getRequestSendTime() {
         return requestSendTime;
     }
+
+    public interface Callback { public void run(); }
 }

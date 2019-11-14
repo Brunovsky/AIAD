@@ -19,5 +19,4 @@ public class WaitRepairRequests extends Behaviour {
     public boolean done() {
         return true;
     }
-
 }

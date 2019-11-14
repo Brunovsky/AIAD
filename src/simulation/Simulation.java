@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import agents.Client;
 import agents.Technician;
@@ -155,6 +158,8 @@ public class Simulation {
         shuffle(personalities);
         shuffle(types);
 
+        ClientWaiter waiter = new ClientWaiter();
+
         for (int i = 0; i < world.C; ++i) {
             int circle = indices[i][0], k = indices[i][1];
             double radius = world.clientRadius[circle];
@@ -169,19 +174,58 @@ public class Simulation {
             double time = world.period * i;
             MalfunctionType malfunction = types[i];
 
-            Client client = new Client(location, malfunction, time, personality);
+            Client client = new Client(location, malfunction, time, personality, waiter);
 
             try {
                 AgentController ac = container.acceptNewAgent(id, client);
                 ac.start();
+                waiter.await();
             } catch (StaleProxyException e) {
                 e.printStackTrace();
                 return false;
             }
 
+            System.out.println("\n=== === === === === === === === === === ===");
+
             clientAgents.add(client);
         }
 
         return true;
+    }
+
+    public class ClientWaiter implements Client.Callback {
+        private Lock lock;
+        private Condition condition;
+
+        private ClientWaiter() {
+            lock = new ReentrantLock();
+            condition = lock.newCondition();
+        }
+
+        private boolean await() {
+            try {
+                lock.lock();
+                condition.await();
+                return true;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                return false;
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        private void signal() {
+            try {
+                lock.lock();
+                condition.signal();
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        public void run() {
+            signal();
+        }
     }
 }

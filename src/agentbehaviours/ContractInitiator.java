@@ -1,5 +1,8 @@
 package agentbehaviours;
 
+import java.util.Enumeration;
+import java.util.Vector;
+
 import agents.Client;
 import jade.core.AID;
 import jade.core.Agent;
@@ -10,11 +13,7 @@ import jade.proto.ContractNetInitiator;
 import message.TechnicianMessage;
 import utils.Logger;
 
-import java.util.Enumeration;
-import java.util.Vector;
-
 public class ContractInitiator extends ContractNetInitiator {
-
     private int nResponders;
     private DFAgentDescription[] agents;
 
@@ -30,7 +29,8 @@ public class ContractInitiator extends ContractNetInitiator {
     @Override
     protected void handlePropose(ACLMessage propose, Vector v) {
         try {
-            Logger.info(myAgent.getLocalName(), "Agent " + propose.getSender().getName() + " proposed " + propose.getContentObject());
+            Logger.info(myAgent.getLocalName(), "Agent " + propose.getSender().getName()
+                                                    + " proposed " + propose.getContentObject());
         } catch (UnreadableException e) {
             e.printStackTrace();
         }
@@ -42,23 +42,13 @@ public class ContractInitiator extends ContractNetInitiator {
     }
 
     @Override
-    protected void handleFailure(ACLMessage failure) {
-        if (failure.getSender().equals(myAgent.getAMS())) {
-            // FAILURE notification from the JADE runtime: the receiver
-            Logger.error(myAgent.getLocalName(), "Responder does not exist");
-        } else {
-            Logger.error(myAgent.getLocalName(), "Agent " + failure.getSender().getName() + " failed");
-        }
-        // Immediate failure --> we will not receive a response from this agent
-        nResponders--;
-    }
-
-    @Override
     protected void handleAllResponses(Vector responses, Vector acceptances) {
         // Next if will be deleted probably
         if (responses.size() < nResponders) {
             // Some responder didn't reply within the specified timeout
-            Logger.warn(myAgent.getLocalName(), "Timeout expired: missing " + (nResponders - responses.size()) + " responses");
+            Logger.warn(myAgent.getLocalName(), "Timeout expired: missing "
+                                                    + (nResponders - responses.size())
+                                                    + " responses");
         }
 
         // Evaluate proposals.
@@ -80,7 +70,8 @@ public class ContractInitiator extends ContractNetInitiator {
                 } catch (UnreadableException e1) {
                     e1.printStackTrace();
                 }
-                if (proposal != null && ((Client) myAgent).compareTechnicianMessages(proposal, bestProposal)) {
+                if (proposal != null
+                    && ((Client) myAgent).compareTechnicianMessages(proposal, bestProposal)) {
                     bestProposal = proposal;
                     bestProposer = msg.getSender();
                     accept = reply;
@@ -90,15 +81,30 @@ public class ContractInitiator extends ContractNetInitiator {
 
         // Accept the proposal of the best proposer
         if (accept != null) {
-            Logger.info(myAgent.getLocalName(),"Accepting proposal " + bestProposal + " from responder " + bestProposer.getName());
+            Logger.info(myAgent.getLocalName(), "Accepting proposal " + bestProposal
+                                                    + " from responder " + bestProposer.getName());
             accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
         }
     }
 
     @Override
-    protected void handleInform(ACLMessage inform) {
-        Logger.info(myAgent.getLocalName(), "Agent " + inform.getSender().getName() + " successfully performed the requested action");
+    protected void handleFailure(ACLMessage failure) {
+        if (failure.getSender().equals(myAgent.getAMS())) {
+            // FAILURE notification from the JADE runtime: the receiver
+            Logger.error(myAgent.getLocalName(), "Responder does not exist");
+        } else {
+            Logger.error(myAgent.getLocalName(),
+                         "Agent " + failure.getSender().getName() + " failed");
+        }
+        // Immediate failure --> we will not receive a response from this agent
+        nResponders--;
+        myAgent.doDelete();
     }
 
-
+    @Override
+    protected void handleInform(ACLMessage inform) {
+        Logger.info(myAgent.getLocalName(), "Agent " + inform.getSender().getName()
+                                                + " successfully performed the requested action");
+        myAgent.doDelete();
+    }
 }
