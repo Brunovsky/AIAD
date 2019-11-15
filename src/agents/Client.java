@@ -6,7 +6,7 @@ import static jade.lang.acl.MessageTemplate.and;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
@@ -47,7 +47,7 @@ public class Client extends Agent {
         return "leviosa";
     }
 
-    class ClientDay extends CyclicBehaviour {
+    class ClientDay extends Behaviour {
         private static final long serialVersionUID = 2838271060454701293L;
 
         @Override
@@ -75,6 +75,12 @@ public class Client extends Agent {
 
             // Remove informed malfunctions which will be solved in the next day.
             // Process the informed prices: consider increasing/decreasing maximum prices set.
+        }
+
+        @Override
+        public boolean done() {
+            return true;
+            // return false in the final day to unsubscribe.
         }
     }
 

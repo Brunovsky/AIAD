@@ -135,12 +135,10 @@ public class Station extends Agent {
         private static final long serialVersionUID = 9068977292715279066L;
 
         private final MessageTemplate mt;
-        private final String ontology;
         private final Set<AID> agentsSet;
 
         SubscriptionListener(Agent a, String ontology, Set<AID> agentsSet) {
             super(a);
-            this.ontology = ontology;
             this.agentsSet = agentsSet;
 
             MessageTemplate subscribe = MatchPerformative(ACLMessage.SUBSCRIBE);
@@ -156,13 +154,12 @@ public class Station extends Agent {
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
                 this.agentsSet.add(message.getSender());
-            } else {
+            } else /* ACLMessage.CANCEL */ {
                 this.agentsSet.remove(message.getSender());
             }
 
             message.createReply();
             message.setPerformative(ACLMessage.CONFIRM);
-            message.setOntology(ontology);
             send(message);
         }
     }
