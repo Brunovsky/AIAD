@@ -9,8 +9,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import agents.Client;
-import agents.Technician;
+import agents.OldClient;
+import agents.OldTechnician;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
@@ -24,9 +24,9 @@ import utils.TechnicianType;
 import utils.TimeBoard;
 
 public class Simulation {
-    private Map<TechnicianType, ArrayList<Technician>> technicianMap;
-    private ArrayList<Technician> technicianAgents;
-    private ArrayList<Client> clientAgents;
+    private Map<TechnicianType, ArrayList<OldTechnician>> technicianMap;
+    private ArrayList<OldTechnician> technicianAgents;
+    private ArrayList<OldClient> clientAgents;
 
     private Runtime runtime;
     private Profile profile;
@@ -52,7 +52,7 @@ public class Simulation {
         printStatistics();
 
         try {
-            for (Technician technician : technicianAgents) technician.doDelete();
+            for (OldTechnician technician : technicianAgents) technician.doDelete();
             container.kill();
             runtime.shutDown();
         } catch (StaleProxyException e) {
@@ -62,7 +62,7 @@ public class Simulation {
 
     private double findEndTime() {
         double endTime = 0;
-        for (Technician technician : technicianAgents) {
+        for (OldTechnician technician : technicianAgents) {
             double tempEndTime = technician.getTimeBoard().getLastSlotEndTime();
             if (endTime < tempEndTime) {
                 endTime = tempEndTime;
@@ -74,7 +74,7 @@ public class Simulation {
     private void printStatistics() {  // get last technician endtime
         double endTime = findEndTime();
 
-        for (Technician technician : technicianAgents) {
+        for (OldTechnician technician : technicianAgents) {
             TimeBoard timeBoard = technician.getTimeBoard();
 
             System.out.println("> Technician " + technician.getLocalName());
@@ -155,7 +155,7 @@ public class Simulation {
                 double y = World.get().technicianRadius * Math.sin(theta);
                 Location location = new Location(x, y);
 
-                Technician technician = new Technician(location, personality);
+                OldTechnician technician = new OldTechnician(location, personality);
 
                 try {
                     AgentController ac = container.acceptNewAgent(id, technician);
@@ -203,7 +203,7 @@ public class Simulation {
             double time = World.get().period * i;
             MalfunctionType malfunction = types[i];
 
-            Client client = new Client(location, malfunction, time, personality, waiter);
+            OldClient client = new OldClient(location, malfunction, time, personality, waiter);
 
             try {
                 AgentController ac = container.acceptNewAgent(id, client);
@@ -222,7 +222,7 @@ public class Simulation {
         return true;
     }
 
-    public class ClientWaiter implements Client.Callback {
+    public class ClientWaiter implements OldClient.Callback {
         private Lock lock;
         private Condition condition;
 

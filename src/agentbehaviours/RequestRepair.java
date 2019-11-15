@@ -2,7 +2,7 @@ package agentbehaviours;
 
 import java.io.IOException;
 
-import agents.Client;
+import agents.OldClient;
 import jade.core.AID;
 import jade.core.behaviours.Behaviour;
 import jade.domain.FIPANames;
@@ -38,9 +38,10 @@ public class RequestRepair extends Behaviour {
         // We want to receive a reply in 10 secs
         // msg.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
 
-        ClientMessage messageToBeSent = new ClientMessage(((Client) myAgent).getLocation(),
-                                                          ((Client) myAgent).getMalfunctionType(),
-                                                          ((Client) myAgent).getRequestSendTime());
+        ClientMessage
+            messageToBeSent = new ClientMessage(((OldClient) myAgent).getLocation(),
+                                                ((OldClient) myAgent).getMalfunctionType(),
+                                                ((OldClient) myAgent).getRequestSendTime());
 
         try {
             msg.setContentObject(messageToBeSent);
