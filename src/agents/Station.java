@@ -5,10 +5,9 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 import static jade.lang.acl.MessageTemplate.or;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.Vector;
-import java.util.concurrent.ConcurrentHashMap;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -26,15 +25,18 @@ import utils.Logger;
 public class Station extends Agent {
     private static final long serialVersionUID = 3322670743911601747L;
 
-    private String id;
-    private final Set<AID> clients;
-    private final Set<AID> technicians;
+    private final String id;
+    private final HashMap<AID, Integer> clients;
+    private final HashMap<AID, Integer> technicians;
 
     public Station(String id) {
         assert id != null;
         this.id = id;
-        this.clients = ConcurrentHashMap.newKeySet(20);
-        this.technicians = ConcurrentHashMap.newKeySet(20);
+        this.clients = new HashMap<>();
+        this.technicians = new HashMap<>();
+
+        // TODO LOGIC: replace Integer with a proper data structure for state tracking
+        // TODO LOGIC: technicians probably don't need state tracking, but clients do
     }
 
     @Override
@@ -46,7 +48,7 @@ public class Station extends Agent {
         addBehaviour(new SubscriptionListener(this, "client-subscription", clients));
         addBehaviour(new SubscriptionListener(this, "technician-subscription", technicians));
 
-        // in a loop, in this order (during the night)
+        // TODO COMMS: in a loop, in this order (during the night)
         addBehaviour(new FetchNewMalfunctions(this));
         addBehaviour(new AssignTechnicians(this));
     }
@@ -71,7 +73,7 @@ public class Station extends Agent {
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology("prompt-client-malfunctions");
-        for (AID client : clients) message.addReceiver(client);
+        for (AID client : clients.keySet()) message.addReceiver(client);
         return message;
     }
 
@@ -79,7 +81,7 @@ public class Station extends Agent {
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology("inform-technician-jobs");
-        for (AID technician : technicians) message.addReceiver(technician);
+        for (AID technician : technicians.keySet()) message.addReceiver(technician);
         return message;
     }
 
@@ -93,13 +95,12 @@ public class Station extends Agent {
         @Override
         protected void handleInform(ACLMessage inform) {
             AID client = inform.getSender();
-            assert clients.contains(client);
+            assert clients.containsKey(client);
             Object content = inform.getContent();
 
-            // ...
-            // Client answered with an inform message.
-            // Read the content and update the repair requests for this client.
-            // Message is REPAIRS\nADJUSTMENTS
+            // TODO LOGIC: read 'content' and update the repairs cache.
+            // Content is "REPAIRS\nADJUSTMENTS" but this can be changed.
+            // TODO COMMS: verify this does indeed finish when all clients respond.
         }
     }
 
@@ -121,12 +122,10 @@ public class Station extends Agent {
         protected void handleAllResultNotifications(Vector resultNotifications) {
             Map<Long, AID> assignment;
 
-            // ...
-            // Technicians answered with an inform message, saying which repairs they will handle in
-            // the next day. Sort them out so the smallest invoices get assigned and the rest
-            // rejected. Ignore any invoice not respecting the maximum set price by the client.
+            // TODO LOGIC: read 'resultNotifications' contents, compare with the repair cache,
+            // TODO LOGIC: and assign technicians to jobs.
 
-            // once then, inform each client. Some contents will be empty (no assignments).
+            // TODO COMMS: then inform each client. Some contents will be empty (no assignments).
             // informClient(client, content)
         }
     }
@@ -135,11 +134,11 @@ public class Station extends Agent {
         private static final long serialVersionUID = 9068977292715279066L;
 
         private final MessageTemplate mt;
-        private final Set<AID> agentsSet;
+        private final Map<AID, Integer> subscribers;
 
-        SubscriptionListener(Agent a, String ontology, Set<AID> agentsSet) {
+        SubscriptionListener(Agent a, String ontology, Map<AID, Integer> subscribers) {
             super(a);
-            this.agentsSet = agentsSet;
+            this.subscribers = subscribers;
 
             MessageTemplate subscribe = MatchPerformative(ACLMessage.SUBSCRIBE);
             MessageTemplate unsubscribe = MatchPerformative(ACLMessage.CANCEL);
@@ -150,12 +149,15 @@ public class Station extends Agent {
         @Override
         public void action() {
             ACLMessage message = receive(mt);
-            if (message == null) return;
+            while (message == null) {
+                block();
+                message = receive(mt);
+            }
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
-                this.agentsSet.add(message.getSender());
+                this.subscribers.putIfAbsent(message.getSender(), 0);
             } else /* ACLMessage.CANCEL */ {
-                this.agentsSet.remove(message.getSender());
+                this.subscribers.remove(message.getSender());
             }
 
             message.createReply();

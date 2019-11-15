@@ -16,7 +16,7 @@ import utils.Logger;
 public class Client extends Agent {
     private static final long serialVersionUID = 5090227891936996896L;
 
-    private String id;
+    private final String id;
     private AID station;
 
     public Client(String id, AID station) {
@@ -61,6 +61,10 @@ public class Client extends Agent {
             onto = MatchOntology("prompt-client-malfunctions");
             acl = MatchPerformative(ACLMessage.REQUEST);
             ACLMessage request = receive(and(onto, acl));
+            while (request == null) {
+                block();
+                request = receive(and(onto, acl));
+            }
 
             // answer message
             ACLMessage reply = request.createReply();
@@ -72,6 +76,10 @@ public class Client extends Agent {
             onto = MatchOntology("inform-client-assignment");
             acl = MatchPerformative(ACLMessage.INFORM);
             ACLMessage assign = receive(and(onto, acl));
+            while (assign == null) {
+                block();
+                assign = receive(and(onto, acl));
+            }
 
             // Remove informed malfunctions which will be solved in the next day.
             // Process the informed prices: consider increasing/decreasing maximum prices set.
@@ -89,18 +97,18 @@ public class Client extends Agent {
 
         @Override
         public void action() {
-            MessageTemplate confirm = MatchPerformative(ACLMessage.CONFIRM);
+            MessageTemplate acl = MatchPerformative(ACLMessage.CONFIRM);
             MessageTemplate onto = MatchOntology("client-subscription");
-            MessageTemplate mt = and(confirm, onto);
 
             ACLMessage subscribe = new ACLMessage(ACLMessage.SUBSCRIBE);
             subscribe.setOntology("client-subscription");
             subscribe.addReceiver(station);
             send(subscribe);
 
-            ACLMessage reply = receive(mt);
-            if (reply == null) {
-                Logger.warn(getLocalName(), "Did not receive subscription confirmation");
+            ACLMessage confirm = receive(and(onto, acl));
+            while (confirm == null) {
+                block();
+                confirm = receive(and(onto, acl));
             }
         }
     }
