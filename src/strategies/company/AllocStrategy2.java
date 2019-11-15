@@ -8,6 +8,6 @@ import agents.Technician;
 public class AllocStrategy2 implements AllocStrategy {
    @Override
     public Map<ArrayList<Technician>, ArrayList<String>> decideAllocation() {
-       //return ;
+       return null;
     }
  }

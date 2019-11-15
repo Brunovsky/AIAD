@@ -1,5 +1,8 @@
 package agents;
 
+import java.util.HashMap;
+
+import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -11,6 +14,7 @@ import strategies.company.AllocStrategy2;
 import strategies.company.PaymentStrategy;
 import strategies.company.PaymentStrategy1;
 import strategies.company.PaymentStrategy2;
+import strategies.company.TechDistributionStrategy;
 import utils.Logger;
 
 public class Company extends Agent {
@@ -18,8 +22,12 @@ public class Company extends Agent {
     private String serviceName = "Company_";
     private String serviceType = "company";  
 
+    private HashMap<AID, String> technicians;
+    private HashMap<AID, String> stations;
+
     private PaymentStrategy paymentStrategy;
     private AllocStrategy allocStrategy;
+    private TechDistributionStrategy techDistributionStrategy;
 
     /**
      * € Technicians receive per month
@@ -43,37 +51,15 @@ public class Company extends Agent {
 
     // TODO: Decide which ones are public to stranger Technicians
 
+    public Company(String companyName, TechDistributionStrategy techDistributionStrategy, PaymentStrategy paymentStrategyParam, AllocStrategy allocStrategyParam) {
+        technicians = new HashMap<AID, String>();
+        stations = new HashMap<AID, String>();
 
-    public Company(String companyName, int paymentStrategyParam, int allocStrategyParam) {
         serviceName += companyName; 
-        savePaymentStrategy(paymentStrategyParam);
-        saveAllocStrategy(allocStrategyParam);
-    }
-
-    private void savePaymentStrategy(int paymentStrategyParam) {
-        switch(paymentStrategyParam) {
-            case 1:
-            this.paymentStrategy = new PaymentStrategy1();
-                break;
-            case 2:
-            this.paymentStrategy = new PaymentStrategy2();
-                break;
-            default:
-            Logger.ERROR(this.getLocalName(), "Wrong company payment strategy");
-        }
-    }
-
-    private void saveAllocStrategy(int allocStrategyParam) {
-        switch(allocStrategyParam) {
-            case 1:
-            this.allocStrategy = new AllocStrategy1();
-                break;
-            case 2:
-            this.allocStrategy = new AllocStrategy2();
-                break;
-            default:
-            Logger.ERROR(this.getLocalName(), "Wrong company allocation strategy");
-        }
+        
+        this.techDistributionStrategy = techDistributionStrategy;
+        this.paymentStrategy = paymentStrategy; 
+        this.allocStrategy = allocStrategy;
     }
 
     @Override
@@ -97,17 +83,19 @@ public class Company extends Agent {
         }
 
         //  Search for Stations and notify them
-
             DFAgentDescription template = new DFAgentDescription();
             ServiceDescription templateSd = new ServiceDescription();
             templateSd.setType("repairs-station");
             template.addServices(templateSd);
 
             // DFAgentDescription[] results = DFService.search(this, template, sc);
-            try {
-            DFAgentDescription[] results = DFService.search(this, template);
+        try {
+            DFAgentDescription[] stations = DFService.search(this, template);
+            for (DFAgentDescription stationDescriptor : stations) {
+                this.stations.put(stationDescriptor.getName(), "");
+            }
+            
         } catch (FIPAException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
