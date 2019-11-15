@@ -1,8 +1,5 @@
 package agentbehaviours;
 
-import java.util.Enumeration;
-import java.util.Vector;
-
 import agents.Client;
 import jade.core.AID;
 import jade.core.Agent;
@@ -10,6 +7,8 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetInitiator;
+import java.util.Enumeration;
+import java.util.Vector;
 import message.TechnicianMessage;
 import utils.Logger;
 
@@ -31,13 +30,13 @@ public class ContractInitiator extends ContractNetInitiator {
     @Override
     protected void handlePropose(ACLMessage propose, Vector v) {
         String technicianName = propose.getSender().getLocalName();
-        Logger.info(myAgent.getLocalName(), "Agent " + technicianName + " proposed");
+        Logger.info(myAgent.getLocalName(), technicianName + " proposed");
     }
 
     @Override
     protected void handleRefuse(ACLMessage refuse) {
         String technicianName = refuse.getSender().getLocalName();
-        Logger.warn(myAgent.getLocalName(), "Agent " + technicianName + " refused");
+        Logger.warn(myAgent.getLocalName(), technicianName + " refused");
     }
 
     @Override
@@ -97,7 +96,7 @@ public class ContractInitiator extends ContractNetInitiator {
             // FAILURE notification from the JADE runtime: the receiver
             Logger.error(myAgent.getLocalName(), "Responder does not exist");
         } else {
-            Logger.error(myAgent.getLocalName(), "Agent " + technicianName + " failed");
+            Logger.error(myAgent.getLocalName(), technicianName + " failed");
         }
         // Immediate failure --> we will not receive a response from this agent
         nResponders--;
@@ -106,9 +105,8 @@ public class ContractInitiator extends ContractNetInitiator {
 
     @Override
     protected void handleInform(ACLMessage inform) {
-        String technicianName = inform.getSender().getName();
-        Logger.info(myAgent.getLocalName(),
-                    "Agent " + technicianName + " successfully performed the requested action");
+        String technicianName = inform.getSender().getLocalName();
+        Logger.info(myAgent.getLocalName(), technicianName + " confirmed repair visit");
         myAgent.doDelete();
     }
 }

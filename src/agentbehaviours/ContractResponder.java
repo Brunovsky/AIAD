@@ -50,7 +50,6 @@ public class ContractResponder extends ContractNetResponder {
         throw new RefuseException("evaluation-failed");
     }
 
-    // TODO:
     @Override
     protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose, ACLMessage accept)
         throws FailureException {
@@ -66,7 +65,6 @@ public class ContractResponder extends ContractNetResponder {
         }
     }
 
-    // TODO:
     @Override
     protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
         Logger.warn(myAgent.getLocalName(), "Proposal rejected");

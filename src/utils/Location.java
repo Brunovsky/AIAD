@@ -18,4 +18,9 @@ public class Location implements Serializable {
     public double getY() {
         return y;
     }
+
+    public static double distance(Location a, Location b) {
+        double x = a.getX() - b.getX(), y = a.getY() - b.getY();
+        return Math.sqrt(x * x + y * y);
+    }
 }

@@ -7,11 +7,11 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import message.TechnicianMessage;
+import simulation.World;
 import utils.ClientType;
 import utils.Location;
 import utils.Logger;
 import utils.MalfunctionType;
-import utils.constants.Constants;
 
 public class Client extends Agent {
     private Location location;
@@ -32,11 +32,11 @@ public class Client extends Agent {
     @Override
     protected void setup() {
         Logger.info(getLocalName(), "Setup Client Agent");
-        String serviceType = Constants.SERVICE_TYPE;
+        String serviceType = World.get().getServiceType();
 
         // Use myAgent to access Client private variables
 
-        Logger.info(getLocalName(), "Searching for services of type " + serviceType);
+        Logger.info(getLocalName(), "Searching for services " + serviceType);
 
         try {
             // Build the description used as template for the search
@@ -65,9 +65,6 @@ public class Client extends Agent {
     }
 
     public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2) {
-        assert msg1 != null && msg2 != null;
-        if (msg1 == null) throw new IllegalArgumentException("DEU PEIDO NO msg1");
-        if (msg2 == null) throw new IllegalArgumentException("DEU PEIDO NO msg2");
         switch (clientType) {
         case CLIENT_TYPE_1:
             return msg1.getRepairPrice() < msg2.getRepairPrice();

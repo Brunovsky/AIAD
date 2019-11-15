@@ -17,11 +17,13 @@ import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
-import utils.*;
+import utils.ClientType;
+import utils.Location;
+import utils.MalfunctionType;
+import utils.TechnicianType;
+import utils.TimeBoard;
 
 public class Simulation {
-    private World world;
-
     private Map<TechnicianType, ArrayList<Technician>> technicianMap;
     private ArrayList<Technician> technicianAgents;
     private ArrayList<Client> clientAgents;
@@ -31,14 +33,12 @@ public class Simulation {
     private ContainerController container;
 
     public static void main(String[] args) {
-        World world = WorldBuilder.simpleSmall();
-        new Simulation(world);
+        System.out.print("\033[H\033[2J");
+        World.set(new PortoWorld());
+        new Simulation();
     }
 
-    public Simulation(World world) {
-        assert world != null;
-        this.world = world;
-
+    public Simulation() {
         technicianMap = new HashMap<>();
         technicianAgents = new ArrayList<>();
         clientAgents = new ArrayList<>();
@@ -49,30 +49,7 @@ public class Simulation {
 
         launchTechnicians();
         launchClients();
-
-        // get last technician endtime
-        double totalRunTime = 0;
-        for (Technician technician : technicianAgents){
-            double tempEndTime = technician.getTimeBoard().getLastSlotEndTime();
-            if(totalRunTime < tempEndTime){
-                totalRunTime = tempEndTime;
-            }
-        }
-
-
-        for (Technician technician : technicianAgents){
-            TimeBoard tempTimeBoard = technician.getTimeBoard();
-
-            System.out.println("> Technician " + technician.getLocalName());
-            System.out.println("- Number of slots: " + tempTimeBoard.getNumberOfTimeSlots());
-            System.out.println("- Receipts: " + tempTimeBoard.getReceipts() + "€");
-            System.out.println("- Occupied time: " + tempTimeBoard.getOccupiedTime());
-            System.out.println("- Work time: " + tempTimeBoard.getWorkTime());
-            System.out.println("- Travel time: " + tempTimeBoard.getTravelTime());
-            System.out.println("- Percentage of working: " + tempTimeBoard.getWorkTime()/totalRunTime*100);
-
-            System.out.println("--------------------------");
-        }
+        printStatistics();
 
         try {
             for (Technician technician : technicianAgents) technician.doDelete();
@@ -80,6 +57,35 @@ public class Simulation {
             runtime.shutDown();
         } catch (StaleProxyException e) {
             e.printStackTrace();
+        }
+    }
+
+    private double findEndTime() {
+        double endTime = 0;
+        for (Technician technician : technicianAgents) {
+            double tempEndTime = technician.getTimeBoard().getLastSlotEndTime();
+            if (endTime < tempEndTime) {
+                endTime = tempEndTime;
+            }
+        }
+        return endTime;
+    }
+
+    private void printStatistics() {  // get last technician endtime
+        double endTime = findEndTime();
+
+        for (Technician technician : technicianAgents) {
+            TimeBoard timeBoard = technician.getTimeBoard();
+
+            System.out.println("> Technician " + technician.getLocalName());
+            System.out.println("- Number of slots: " + timeBoard.getNumberOfTimeSlots());
+            System.out.println("- Receipts: " + timeBoard.getReceipts() + "€");
+            System.out.println("- Occupied time: " + timeBoard.getOccupiedTime());
+            System.out.println("- Travel time: " + timeBoard.getTravelTime());
+            System.out.println("- Work time: " + timeBoard.getWorkTime());
+            System.out.println("- Working %: " + timeBoard.getWorkTime() / endTime * 100 + "%");
+
+            System.out.println("--------------------------");
         }
     }
 
@@ -107,45 +113,46 @@ public class Simulation {
 
     // fill the arrays to be shuffled with the appropriate frequencies
     private void fillArrays(int[][] indices, ClientType[] personalities, MalfunctionType[] types) {
-        for (int c = 0, i = 0; c < world.clientRadius.length; ++c) {
-            for (int n = 0; n < world.clientNumbers[c]; ++n, ++i) {
+        for (int c = 0, i = 0; c < World.get().clientRadius.length; ++c) {
+            for (int n = 0; n < World.get().clientNumbers[c]; ++n, ++i) {
                 indices[i] = new int[] {c, n};
             }
         }
 
         int z = 0;
-        for (ClientsDesc entry : world.clients) {
+        for (ClientsDesc entry : World.get().clients) {
             for (int k = 0; k < entry.number; ++k, ++z) {
                 personalities[z] = entry.personality;
             }
         }
 
         z = 0;
-        for (int i = 0; i < world.malfunctions[0]; ++i, ++z) types[z] = MalfunctionType.HARD;
-        for (int i = 0; i < world.malfunctions[1]; ++i, ++z) types[z] = MalfunctionType.MEDIUM;
-        for (int i = 0; i < world.malfunctions[2]; ++i, ++z) types[z] = MalfunctionType.EASY;
+        final int[] malfunctions = World.get().malfunctions;
+        for (int i = 0; i < malfunctions[0]; ++i, ++z) types[z] = MalfunctionType.HARD;
+        for (int i = 0; i < malfunctions[1]; ++i, ++z) types[z] = MalfunctionType.MEDIUM;
+        for (int i = 0; i < malfunctions[2]; ++i, ++z) types[z] = MalfunctionType.EASY;
     }
 
     /**
      * Launch all world technicians
      */
     private boolean launchTechnicians() {
-        int[] indices = new int[world.T];
-        for (int i = 0; i < world.T; ++i) indices[i] = i;
+        int[] indices = new int[World.get().T];
+        for (int i = 0; i < World.get().T; ++i) indices[i] = i;
         shuffle(indices);
 
         int i = 0;
 
-        for (TechniciansDesc entry : world.technicians) {
+        for (TechniciansDesc entry : World.get().technicians) {
             TechnicianType personality = entry.personality;
-            technicianMap.put(personality, new ArrayList<>());
+            technicianMap.putIfAbsent(personality, new ArrayList<>());
 
-            for (int j = 0; j < entry.number; ++j) {
-                double theta = (2.0 * indices[i++]) * Math.PI / (double) world.T;
+            for (int j = 0; j < entry.number; ++j, ++i) {
+                double theta = (2.0 * indices[i]) * Math.PI / (double) World.get().T;
 
-                String id = "technician_" + i;
-                double x = world.technicianRadius * Math.cos(theta);
-                double y = world.technicianRadius * Math.sin(theta);
+                String id = "technician_" + (i + 1);
+                double x = World.get().technicianRadius * Math.cos(theta);
+                double y = World.get().technicianRadius * Math.sin(theta);
                 Location location = new Location(x, y);
 
                 Technician technician = new Technician(location, personality);
@@ -171,9 +178,9 @@ public class Simulation {
      * locations.
      */
     private boolean launchClients() {
-        int[][] indices = new int[world.C][2];
-        ClientType personalities[] = new ClientType[world.C];
-        MalfunctionType types[] = new MalfunctionType[world.C];
+        int[][] indices = new int[World.get().C][2];
+        ClientType personalities[] = new ClientType[World.get().C];
+        MalfunctionType types[] = new MalfunctionType[World.get().C];
 
         fillArrays(indices, personalities, types);
         shuffle(indices);
@@ -182,18 +189,18 @@ public class Simulation {
 
         ClientWaiter waiter = new ClientWaiter();
 
-        for (int i = 0; i < world.C; ++i) {
+        for (int i = 0; i < World.get().C; ++i) {
             int circle = indices[i][0], k = indices[i][1];
-            double radius = world.clientRadius[circle];
-            double n = (double) world.clientNumbers[circle];
+            double radius = World.get().clientRadius[circle];
+            double n = (double) World.get().clientNumbers[circle];
             double theta = (2.0 * k) * Math.PI / n;
 
-            String id = "client_" + i;
+            String id = "client_" + (i + 1);
             double x = radius * Math.cos(theta);
             double y = radius * Math.sin(theta);
             Location location = new Location(x, y);
             ClientType personality = personalities[i];
-            double time = world.period * i;
+            double time = World.get().period * i;
             MalfunctionType malfunction = types[i];
 
             Client client = new Client(location, malfunction, time, personality, waiter);

@@ -1,11 +1,10 @@
 package utils;
 
-import static utils.constants.Constants .*;
+import simulation.World;
 
 public class RepairSlot {
-
     private MalfunctionType type;
-    private double duration; //slot duration
+    private double duration;  // slot duration
     private double startSlotTime;
     private double startRepairTime;
     private double endRepairTime;
@@ -14,16 +13,20 @@ public class RepairSlot {
     private double repairPrice;
     private String clientId;
 
-    public RepairSlot(MalfunctionType type, double startSlotTime, Location clientLocation, double repairPrice, String clientId, Location technicianLocation) {
+    public RepairSlot(MalfunctionType type, double startSlotTime, Location clientLocation,
+                      double repairPrice, String clientId, Location technicianLocation) {
+        double distance = Location.distance(clientLocation, technicianLocation);
+        double malfunctionDuration = World.get().malfunctionDuration(type);
+
         this.type = type;
         this.startSlotTime = startSlotTime;
         this.clientLocation = clientLocation;
         this.repairPrice = repairPrice;
         this.clientId = clientId;
-        this.duration = calculateSlotDuration(calculateDistance(clientLocation, technicianLocation), type);
+        this.duration = World.get().workDuration(distance, type);
         this.endSlotTime = startSlotTime + this.duration;
-        this.startRepairTime = startSlotTime + (this.duration - getMalfunctionDuration(type)) / 2;
-        this.endRepairTime = this.startRepairTime + getMalfunctionDuration(type);
+        this.startRepairTime = startSlotTime + World.get().travelDuration(distance);
+        this.endRepairTime = this.startRepairTime + malfunctionDuration;
     }
 
     public MalfunctionType getType() {
