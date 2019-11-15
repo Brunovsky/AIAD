@@ -1,5 +1,10 @@
 package agents;
 
+import static jade.lang.acl.MessageTemplate.MatchOntology;
+import static jade.lang.acl.MessageTemplate.MatchPerformative;
+import static jade.lang.acl.MessageTemplate.and;
+import static jade.lang.acl.MessageTemplate.or;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -34,8 +39,19 @@ public class Station extends Agent {
 
     @Override
     public void setup() {
-        Logger.info(getLocalName(), "Setup Station");
+        Logger.info(getLocalName(), "Setup");
 
+        registerDFService();
+
+        addBehaviour(new SubscriptionListener(this, "client-subscription", clients));
+        addBehaviour(new SubscriptionListener(this, "technician-subscription", technicians));
+
+        // in a loop, in this order (during the night)
+        addBehaviour(new FetchNewMalfunctions(this));
+        addBehaviour(new AssignTechnicians(this));
+    }
+
+    private void registerDFService() {
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
         ServiceDescription sd = new ServiceDescription();
@@ -49,15 +65,12 @@ public class Station extends Agent {
         } catch (FIPAException e) {
             e.printStackTrace();
         }
-
-        addBehaviour(new SubscriptionListener(this, "client-subscription", clients));
-        addBehaviour(new SubscriptionListener(this, "technician-subscription", technicians));
-        addBehaviour(new ClientPrompt(this));
     }
 
     private ACLMessage prepareClientPromptMessage() {
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+        message.setOntology("prompt-client-malfunctions");
         for (AID client : clients) message.addReceiver(client);
         return message;
     }
@@ -65,14 +78,15 @@ public class Station extends Agent {
     private ACLMessage prepareTechnicianInformMessage() {
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+        message.setOntology("inform-technician-jobs");
         for (AID technician : technicians) message.addReceiver(technician);
         return message;
     }
 
-    class ClientPrompt extends AchieveREInitiator {
+    class FetchNewMalfunctions extends AchieveREInitiator {
         private static final long serialVersionUID = 8662470226125479639L;
 
-        public ClientPrompt(Agent a) {
+        public FetchNewMalfunctions(Agent a) {
             super(a, prepareClientPromptMessage());
         }
 
@@ -85,14 +99,22 @@ public class Station extends Agent {
             // ...
             // Client answered with an inform message.
             // Read the content and update the repair requests for this client.
+            // Message is REPAIRS\nADJUSTMENTS
         }
     }
 
-    class TechnicianInform extends AchieveREInitiator {
+    class AssignTechnicians extends AchieveREInitiator {
         private static final long serialVersionUID = -6775360046825661442L;
 
-        TechnicianInform(Agent a) {
+        AssignTechnicians(Agent a) {
             super(a, prepareTechnicianInformMessage());
+        }
+
+        private void informClient(AID client, String content) {
+            ACLMessage message = new ACLMessage(ACLMessage.INFORM);
+            message.setOntology("inform-client-assignment");
+            message.addReceiver(client);
+            send(message);
         }
 
         @Override
@@ -101,8 +123,11 @@ public class Station extends Agent {
 
             // ...
             // Technicians answered with an inform message, saying which repairs they will handle in
-            // the next day. Sort them out so the smallest invoices get assigned. Ignore any invoice
-            // not respecting the maximum set price.
+            // the next day. Sort them out so the smallest invoices get assigned and the rest
+            // rejected. Ignore any invoice not respecting the maximum set price by the client.
+
+            // once then, inform each client. Some contents will be empty (no assignments).
+            // informClient(client, content)
         }
     }
 
@@ -118,10 +143,10 @@ public class Station extends Agent {
             this.ontology = ontology;
             this.agentsSet = agentsSet;
 
-            MessageTemplate subscribe = MessageTemplate.MatchPerformative(ACLMessage.SUBSCRIBE);
-            MessageTemplate unsubscribe = MessageTemplate.MatchPerformative(ACLMessage.CANCEL);
-            MessageTemplate tp = MessageTemplate.MatchOntology(ontology);
-            this.mt = MessageTemplate.and(MessageTemplate.or(subscribe, unsubscribe), tp);
+            MessageTemplate subscribe = MatchPerformative(ACLMessage.SUBSCRIBE);
+            MessageTemplate unsubscribe = MatchPerformative(ACLMessage.CANCEL);
+            MessageTemplate onto = MatchOntology(ontology);
+            this.mt = and(or(subscribe, unsubscribe), onto);
         }
 
         @Override
