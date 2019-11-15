@@ -2,7 +2,7 @@ package agentbehaviours;
 
 import java.io.IOException;
 
-import agents.Technician;
+import agents.OldTechnician;
 import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.FailureException;
 import jade.domain.FIPAAgentManagement.RefuseException;
@@ -26,7 +26,7 @@ public class ContractResponder extends ContractNetResponder {
         try {
             Logger.info(myAgent.getLocalName(), "CFP received from " + clientName);
 
-            this.repairSlot = ((Technician) myAgent).handleReceivedClientCfp(cfp);
+            this.repairSlot = ((OldTechnician) myAgent).handleReceivedClientCfp(cfp);
             if (this.repairSlot != null) {
                 // Send propose to Client
                 TechnicianMessage proposal = new TechnicianMessage(this.repairSlot.getRepairPrice(),
@@ -54,7 +54,7 @@ public class ContractResponder extends ContractNetResponder {
     protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose, ACLMessage accept)
         throws FailureException {
         Logger.info(myAgent.getLocalName(), "Proposal accepted");
-        if (((Technician) myAgent).handleReceivedClientAcceptProposal(this.repairSlot)) {
+        if (((OldTechnician) myAgent).handleReceivedClientAcceptProposal(this.repairSlot)) {
             Logger.info(myAgent.getLocalName(), "Action successfully performed");
             ACLMessage inform = accept.createReply();
             inform.setPerformative(ACLMessage.INFORM);

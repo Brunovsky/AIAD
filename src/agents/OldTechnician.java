@@ -17,12 +17,12 @@ import utils.RepairSlot;
 import utils.TechnicianType;
 import utils.TimeBoard;
 
-public class Technician extends Agent {
+public class OldTechnician extends Agent {
     private Location location;
     TimeBoard timeBoard;
     TechnicianType technicianType;
 
-    public Technician(Location location, TechnicianType technicianType) {
+    public OldTechnician(Location location, TechnicianType technicianType) {
         this.location = location;
         this.timeBoard = new TimeBoard();
         this.technicianType = technicianType;

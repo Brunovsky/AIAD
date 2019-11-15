@@ -1,102 +1,58 @@
 package agents;
 
-import agentbehaviours.RequestRepair;
+import static jade.lang.acl.MessageTemplate.MatchPerformative;
+import static jade.lang.acl.MessageTemplate.MatchSender;
+import static jade.lang.acl.MessageTemplate.and;
+
+import agentbehaviours.client.QueryListeningBehaviour;
 import jade.core.Agent;
-import jade.domain.DFService;
-import jade.domain.FIPAException;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
-import message.TechnicianMessage;
-import simulation.World;
-import utils.ClientType;
-import utils.Location;
+import jade.core.behaviours.CyclicBehaviour;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import utils.Logger;
-import utils.MalfunctionType;
 
 public class Client extends Agent {
-    private Location location;
-    private MalfunctionType malfunctionType;
-    private double requestSendTime;
-    private ClientType clientType;
-    private Callback callback;
+    private Station station;
 
-    public Client(Location location, MalfunctionType malfunctionType, double requestSendTime,
-                  ClientType clientType, Callback callback) {
-        this.location = location;
-        this.malfunctionType = malfunctionType;
-        this.requestSendTime = requestSendTime;
-        this.clientType = clientType;
-        this.callback = callback;
+    public Client(Station station) {
+        assert station != null;
+        this.station = station;
     }
 
     @Override
-    protected void setup() {
-        Logger.info(getLocalName(), "Setup Client Agent");
-        String serviceType = World.get().getServiceType();
+    public void setup() {
+        addBehaviour(new QueryListeningBehaviour());
+    }
 
-        // Use myAgent to access Client private variables
+    public class ClientBehaviour extends CyclicBehaviour {
+        private final MessageTemplate inform = MatchPerformative(ACLMessage.INFORM);
 
-        Logger.info(getLocalName(), "Searching for services " + serviceType);
+        @Override
+        public void action() {
+            Logger.info(getLocalName(), "Starting behaviour...");
 
-        try {
-            // Build the description used as template for the search
-            DFAgentDescription template = new DFAgentDescription();
-            ServiceDescription templateSd = new ServiceDescription();
-            templateSd.setType(serviceType);
-            template.addServices(templateSd);
+            MessageTemplate fromStation = MatchSender(station.getAID());
+            MessageTemplate mt = and(inform, fromStation);
 
-            // Constraint for search
-            // SearchConstraints sc = new SearchConstraints();
-            // sc.setMaxResults(new Long(100));
+            String repairs = "1 2 3";
+            String priceAdjusts = "4 5 6";
 
-            // DFAgentDescription[] results = DFService.search(this, template, sc);
-            DFAgentDescription[] results = DFService.search(this, template);
+            // send list of repairs and price adjustments.
+            ACLMessage request = new ACLMessage(ACLMessage.INFORM);
+            request.setContent(repairs + " ; " + priceAdjusts);
+            request.addReceiver(station.getAID());
+            send(request);
 
-            Logger.info(getLocalName(), "Starting Contract with Technicians...");
-            this.addBehaviour(new RequestRepair(results));
-        } catch (FIPAException fe) {
-            fe.printStackTrace();
+            // wait for reply...
+            ACLMessage reply = receive(mt);
+
+            // Remove informed malfunctions, which will be solved in the next day.
+            // Process the informed prices: consider increasing/decreasing maximum prices set.
+
+            // Investigate new malfunctions, generating new stack of repairs.
+            // Define repair time for each malfunction (between 9H and 18H, say).
+
+            Logger.info(getLocalName(), "Finished behaviour...");
         }
     }
-
-    @Override
-    protected void takeDown() {
-        callback.run();
-    }
-
-    public boolean compareTechnicianMessages(TechnicianMessage msg1, TechnicianMessage msg2) {
-        switch (clientType) {
-        case CLIENT_TYPE_1:
-            return msg1.getRepairPrice() < msg2.getRepairPrice();
-        case CLIENT_TYPE_2:
-            return msg1.getStartRepairTime() < msg2.getStartRepairTime();
-        case CLIENT_TYPE_3:
-            return ((msg1.getStartRepairTime() - this.requestSendTime) * 0.05
-                    + msg1.getRepairPrice())
-                < ((msg2.getStartRepairTime() - this.requestSendTime) * 0.05
-                   + msg2.getRepairPrice());
-        case CLIENT_TYPE_4:
-            return ((msg1.getStartRepairTime() - this.requestSendTime) + msg1.getRepairPrice())
-                < ((msg2.getStartRepairTime() - this.requestSendTime) + msg2.getRepairPrice());
-        }
-        return true;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
-    public MalfunctionType getMalfunctionType() {
-        return malfunctionType;
-    }
-
-    public ClientType getClientType() {
-        return clientType;
-    }
-
-    public double getRequestSendTime() {
-        return requestSendTime;
-    }
-
-    public interface Callback { public void run(); }
 }

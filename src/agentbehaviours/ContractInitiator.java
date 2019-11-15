@@ -1,14 +1,15 @@
 package agentbehaviours;
 
-import agents.Client;
+import java.util.Enumeration;
+import java.util.Vector;
+
+import agents.OldClient;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetInitiator;
-import java.util.Enumeration;
-import java.util.Vector;
 import message.TechnicianMessage;
 import utils.Logger;
 
@@ -16,13 +17,13 @@ public class ContractInitiator extends ContractNetInitiator {
     private int nResponders;
     private DFAgentDescription[] agents;
 
-    final Client myClient;
+    final OldClient myClient;
 
     public ContractInitiator(Agent a, ACLMessage msg, DFAgentDescription[] agents) {
         super(a, msg);
         this.agents = agents;
         this.nResponders = agents.length;
-        this.myClient = (Client) myAgent;
+        this.myClient = (OldClient) myAgent;
     }
 
     // Warning: Useless function because we will use handleAllResponses
