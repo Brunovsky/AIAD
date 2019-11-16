@@ -87,10 +87,10 @@ public class Technician extends Agent {
             message.addReceiver(company);
             send(message);
 
-            while(response == null) {
-                block();
-                response = receive();
-            }
+//            while(response == null) {
+//                block();
+//                response = receive();
+//            }
             ACLMessage responseMessage = blockingReceive(mt);
 
             String responseContent = responseMessage.getContent();

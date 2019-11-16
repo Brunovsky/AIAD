@@ -11,7 +11,11 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import message.ClientRequest;
+import static message.Message.*;
 import utils.Logger;
+
+import java.util.HashMap;
 
 public class Client extends Agent {
     private static final long serialVersionUID = 5090227891936996896L;
@@ -37,14 +41,16 @@ public class Client extends Agent {
         addBehaviour(sequential);
     }
 
-    private String generateNewRepairs() {
+    private HashMap<Integer, ClientRequest> generateNewRepairs() {
         // ...
-        return "wingardium";
+        //return "wingardium";
+        return new HashMap<>();
     }
 
-    private String evaluateAdjustments() {
+    private HashMap<Integer, Double> evaluateAdjustments() {
         // ...
-        return "leviosa";
+        //return "leviosa";
+        return new HashMap<>();
     }
 
     class ClientDay extends Behaviour {
@@ -54,8 +60,8 @@ public class Client extends Agent {
         public void action() {
             MessageTemplate acl, onto;
 
-            String repairs = generateNewRepairs();
-            String adjustments = evaluateAdjustments();
+            HashMap<Integer, ClientRequest> repairs = generateNewRepairs();
+            HashMap<Integer, Double> adjustments = evaluateAdjustments();
 
             // wait for request message
             onto = MatchOntology("prompt-client-malfunctions");
@@ -69,7 +75,7 @@ public class Client extends Agent {
             // answer message
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
-            reply.setContent(repairs + "\n" + adjustments);
+            reply.setContent(getClientMalFunctionRequestMessage(repairs, adjustments));
             send(reply);
 
             // wait for assignments...
