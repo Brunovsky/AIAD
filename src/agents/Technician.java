@@ -1,9 +1,7 @@
 package agents;
 
-import static jade.lang.acl.MessageTemplate.MatchOntology;
-import static jade.lang.acl.MessageTemplate.MatchPerformative;
-import static jade.lang.acl.MessageTemplate.MatchSender;
-import static jade.lang.acl.MessageTemplate.and;
+import static agents.Technician.State.*;
+import static jade.lang.acl.MessageTemplate.*;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -12,6 +10,11 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import simulation.World;
+import types.WorkLog;
 import utils.Logger;
 import utils.TimeBoard;
 
@@ -19,10 +22,13 @@ public class Technician extends Agent {
     private static final long serialVersionUID = 2763283727137639385L;
 
     private final String id;
-    private AID homeStation, company, station;
+    private final AID homeStation;
+    private final AID company, station;
 
-    private TimeBoard timeBoard;
+    private final Map<Integer, WorkLog> history;
     private State state;
+
+    public enum State { WORKING, MOVING, UNEMPLOYED }
 
     public Technician(String id, AID homeStation, AID company) {
         assert id != null && homeStation != null && company != null;
@@ -31,10 +37,11 @@ public class Technician extends Agent {
         this.company = company;
         this.station = homeStation;
 
-        this.timeBoard = new TimeBoard();
-        this.state = State.UNEMPLOYED;
+        this.history = new HashMap<>();
+        this.state = UNEMPLOYED;
     }
 
+    @Override
     protected void setup() {
         Logger.info(getLocalName(), "Setup " + id);
 
@@ -44,15 +51,43 @@ public class Technician extends Agent {
         addBehaviour(sequential);
     }
 
+    @Override
     protected void takeDown() {
         Logger.warn(getLocalName(), "Technician Terminated!");
     }
 
-    public TimeBoard getTimeBoard() {
-        return timeBoard;
+    public AID getHomeStation() {
+        return homeStation;
     }
 
-    private enum State { LEADING, WORKING, MOVING, UNEMPLOYED }
+    public AID getStation() {
+        return station;
+    }
+
+    public AID getCompany() {
+        return company;
+    }
+
+    public State getWorkState() {
+        return state;
+    }
+
+    public double getSalary() {
+        // TODO LOGIC
+        return 1337.0;
+    }
+
+    // ***** DATA
+
+    private void createWorkLog(String worklog) {
+        int day = World.get().getDay();
+        int jobs = 0;    // ...
+        double cut = 0;  // ...
+        WorkLog log = new WorkLog(this, jobs, cut);
+        history.put(day, log);
+    }
+
+    // ***** BEHAVIOURS
 
     class TechnicianNight extends Behaviour {
         private static final long serialVersionUID = 3576074310971384343L;
@@ -72,9 +107,8 @@ public class Technician extends Agent {
                 block();
                 inform = receive(mt);
             }
-            String payment = inform.getContent();
-
-            // TODO LOGIC: store payment and job record
+            String worklog = inform.getContent();
+            createWorkLog(worklog);
         }
 
         @Override
@@ -110,6 +144,7 @@ public class Technician extends Agent {
 
             // TODO LOGIC: store contract record
 
+            state = WORKING;
             Logger.info(getLocalName(), "Initial employment @" + company.getLocalName());
         }
     }

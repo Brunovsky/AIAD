@@ -1,9 +1,6 @@
 package agents;
 
-import static jade.lang.acl.MessageTemplate.MatchOntology;
-import static jade.lang.acl.MessageTemplate.MatchPerformative;
-import static jade.lang.acl.MessageTemplate.and;
-import static jade.lang.acl.MessageTemplate.or;
+import static jade.lang.acl.MessageTemplate.*;
 
 import jade.core.AID;
 import jade.core.Agent;

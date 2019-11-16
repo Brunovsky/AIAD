@@ -1,8 +1,6 @@
 package agents;
 
-import static jade.lang.acl.MessageTemplate.MatchOntology;
-import static jade.lang.acl.MessageTemplate.MatchPerformative;
-import static jade.lang.acl.MessageTemplate.and;
+import static jade.lang.acl.MessageTemplate.*;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -73,6 +71,11 @@ public class Company extends Agent {
         addBehaviour(new CompanyNight());
     }
 
+    @Override
+    protected void takeDown() {
+        Logger.warn(getLocalName(), "Company Terminated!");
+    }
+
     private void registerDFService() {
         //  Register Company in yellow pages
         try {
@@ -105,11 +108,6 @@ public class Company extends Agent {
         } catch (FIPAException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    protected void takeDown() {
-        Logger.warn(getLocalName(), "Company Terminated!");
     }
 
     private class CompanyNight extends Behaviour {

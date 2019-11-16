@@ -1,8 +1,6 @@
 package agents;
 
-import static jade.lang.acl.MessageTemplate.MatchOntology;
-import static jade.lang.acl.MessageTemplate.MatchPerformative;
-import static jade.lang.acl.MessageTemplate.and;
+import static jade.lang.acl.MessageTemplate.*;
 import static message.Message.getClientMalFunctionRequestMessage;
 
 import agentbehaviours.SubscribeBehaviour;
