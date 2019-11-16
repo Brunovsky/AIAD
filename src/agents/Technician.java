@@ -14,7 +14,6 @@ import java.util.Map;
 import agents.strategies.TechnicianStrategy;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
@@ -38,7 +37,7 @@ public class Technician extends Agent {
     private Contract currentContract, nextContract;
     private State state;
 
-    public enum State { WORKING, MOVING, UNEMPLOYED }
+    public enum State { WORKING, UNEMPLOYED }
 
     public Technician(String id, AID homeStation, AID company, TechnicianStrategy strategy) {
         assert id != null && homeStation != null && company != null && strategy != null;
@@ -150,7 +149,7 @@ public class Technician extends Agent {
         }
     }
 
-    class TechnicianNight extends Behaviour {
+    class TechnicianNight extends OneShotBehaviour {
         private static final long serialVersionUID = 3576074310971384343L;
 
         private void unemployedAction() {
@@ -179,12 +178,6 @@ public class Technician extends Agent {
             } else {
                 workingAction();
             }
-        }
-
-        @Override
-        public boolean done() {
-            return false;
-            // return true on the final day
         }
     }
 

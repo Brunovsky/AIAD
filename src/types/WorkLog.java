@@ -31,10 +31,6 @@ public class WorkLog {
         return state == State.WORKING;
     }
 
-    public boolean moving() {
-        return state == State.MOVING;
-    }
-
     public boolean employed() {
         return state == State.UNEMPLOYED;
     }
