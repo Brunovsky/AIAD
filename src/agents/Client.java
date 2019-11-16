@@ -3,6 +3,9 @@ package agents;
 import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
+import static message.Message.getClientMalFunctionRequestMessage;
+
+import java.util.HashMap;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -11,6 +14,7 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import message.ClientRequest;
 import utils.Logger;
 
 public class Client extends Agent {
@@ -42,14 +46,12 @@ public class Client extends Agent {
         Logger.warn(getLocalName(), "Client Terminated!");
     }
 
-    private String generateNewRepairs() {
-        // ...
-        return "wingardium";
+    private HashMap<Integer, ClientRequest> generateNewRepairs() {
+        return new HashMap<>();
     }
 
-    private String evaluateAdjustments() {
-        // ...
-        return "leviosa";
+    private HashMap<Integer, Double> evaluateAdjustments() {
+        return new HashMap<>();
     }
 
     class ClientNight extends Behaviour {
@@ -59,8 +61,8 @@ public class Client extends Agent {
         public void action() {
             MessageTemplate acl, onto;
 
-            String repairs = generateNewRepairs();
-            String adjustments = evaluateAdjustments();
+            HashMap<Integer, ClientRequest> repairs = generateNewRepairs();
+            HashMap<Integer, Double> adjustments = evaluateAdjustments();
 
             // wait for request message
             onto = MatchOntology("prompt-client-malfunctions");
@@ -74,7 +76,7 @@ public class Client extends Agent {
             // answer message
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
-            reply.setContent(repairs + "\n" + adjustments);
+            reply.setContent(getClientMalFunctionRequestMessage(repairs, adjustments));
             send(reply);
 
             // wait for assignments...

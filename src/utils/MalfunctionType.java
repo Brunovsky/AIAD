@@ -3,19 +3,29 @@ package utils;
 public enum MalfunctionType {
     // Malfunction type defines repair duration and price
 
-    HARD,
-    MEDIUM,
-    EASY;
+    HARD(0),
+    MEDIUM(1),
+    EASY(2);
 
-    public int index() {
-        switch (this) {
-        case HARD:
-            return 0;
-        case MEDIUM:
-            return 1;
-        case EASY:
-            return 2;
+    private final int value;
+
+    MalfunctionType(final int value) {
+        this.value = value;
+    }
+
+    public static MalfunctionType make(int value){
+        switch (value){
+            case 0:
+                return HARD;
+            case 1:
+                return MEDIUM;
+            case 2:
+                return EASY;
         }
-        return 0;
+        return EASY;
+    }
+
+    public int getValue() {
+        return value;
     }
 }

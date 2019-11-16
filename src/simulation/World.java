@@ -67,11 +67,11 @@ public abstract class World {
     }
 
     public double malfunctionDuration(MalfunctionType type) {
-        return repairDurations[type.index()];
+        return repairDurations[type.getValue()];
     }
 
     public double malfunctionPrice(MalfunctionType type) {
-        return repairBasePrices[type.index()];
+        return repairBasePrices[type.getValue()];
     }
 
     public double travelDuration(double distance) {
