@@ -18,7 +18,6 @@ import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 import utils.ClientType;
-import utils.Location;
 import utils.MalfunctionType;
 import utils.TechnicianType;
 import utils.TimeBoard;
