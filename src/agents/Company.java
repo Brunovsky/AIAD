@@ -5,18 +5,18 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 import static jade.lang.acl.MessageTemplate.or;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
-import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.HashMap;
+import java.util.Map;
 import strategies.company.AllocStrategy;
 import strategies.company.PaymentStrategy;
 import strategies.company.TechDistributionStrategy;
@@ -114,6 +114,76 @@ public class Company extends Agent {
     @Override
     protected void takeDown() {
         Logger.warn(getLocalName(), "Company Terminated!");
+    }
+
+    private class CompanyNight extends Behaviour {
+        private static final long serialVersionUID = 6059838822925652797L;
+
+        private void replyStation(ACLMessage message) {
+            AID station = message.getSender();
+            assert stations.containsKey(station);
+
+            // TODO LOGIC: Generate all proposals
+            String proposals = new String();
+
+            ACLMessage reply = message.createReply();
+            reply.setPerformative(ACLMessage.INFORM);
+            reply.setContent(proposals);
+            send(reply);
+        }
+
+        private void informTechnicians(ACLMessage message) {
+            AID station = message.getSender();
+            assert stations.containsKey(station);
+
+            String accepted = message.getContent();
+            // TODO LOGIC: Process all accepted proposals
+
+            // TODO COMMS: repeat for each technician
+            {
+                // TODO LOGIC: find payment for technician.
+                String payment = "";
+                ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
+                inform.setOntology("client-payment");
+                inform.setContent(payment);
+                send(inform);
+            }
+        }
+
+        @Override
+        public void action() {
+            MessageTemplate acl, onto;
+
+            // TODO COMMS: repeat for each station.
+            {
+                onto = MatchOntology("inform-company-jobs");
+                acl = MatchPerformative(ACLMessage.REQUEST);
+                ACLMessage request = receive(and(onto, acl));  // Protocol A
+                while (request == null) {
+                    block();
+                    request = receive(and(onto, acl));
+                }
+                replyStation(request);  // Protocol B
+            }
+
+            // TODO COMMS: repeat for each station.
+            {
+                onto = MatchOntology("inform-company-assignment");
+                acl = MatchPerformative(ACLMessage.INFORM);
+                ACLMessage inform = receive(and(onto, acl));  // Protocol C
+                while (inform == null) {
+                    block();
+                    inform = receive(and(onto, acl));
+                }
+                informTechnicians(inform);  // Protocol D
+            }
+        }
+
+        @Override
+        public boolean done() {
+            return false;
+            // return true on the final day
+        }
     }
 
     private class SubscriptionListener extends CyclicBehaviour {
