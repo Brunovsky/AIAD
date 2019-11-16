@@ -6,6 +6,7 @@ import static jade.lang.acl.MessageTemplate.and;
 import static jade.lang.acl.MessageTemplate.or;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -24,6 +25,7 @@ import utils.Logger;
 public class Company extends Agent {
     private static final String serviceName = "Company_";
     private static final String serviceType = "companyservice";
+    private static final String companyOnto = "company-subscription";
 
     private final String id;
     private HashMap<AID, String> technicians;
@@ -69,6 +71,13 @@ public class Company extends Agent {
     protected void setup() {
         Logger.info(getLocalName(), "Setup");
 
+        registerDFService();
+        findStations();
+
+        addBehaviour(new SubscriptionListener(this, companyOnto, technicians));
+    }
+
+    private void registerDFService() {
         //  Register Company in yellow pages
         try {
             DFAgentDescription dfd = new DFAgentDescription();
@@ -83,7 +92,9 @@ public class Company extends Agent {
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }
+    }
 
+    private void findStations() {
         //  Search for Stations and notify them
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription templateSd = new ServiceDescription();
@@ -98,8 +109,6 @@ public class Company extends Agent {
         } catch (FIPAException e) {
             e.printStackTrace();
         }
-
-        addBehaviour(new SubscriptionListener(this, "company-subscription", technicians));
     }
 
     @Override
@@ -107,13 +116,13 @@ public class Company extends Agent {
         Logger.warn(getLocalName(), "Company Terminated!");
     }
 
-    class SubscriptionListener extends CyclicBehaviour {
+    private class SubscriptionListener extends CyclicBehaviour {
         private static final long serialVersionUID = 9068977292715279066L;
 
         private final MessageTemplate mt;
-        private final HashMap<AID, String> subscribers;
+        private final Map<AID, String> subscribers;
 
-        SubscriptionListener(Agent a, String ontology, HashMap<AID, String> subscribers) {
+        SubscriptionListener(Agent a, String ontology, Map<AID, String> subscribers) {
             super(a);
             this.subscribers = subscribers;
 
@@ -125,22 +134,21 @@ public class Company extends Agent {
 
         @Override
         public void action() {
-            ACLMessage message = receive(mt);
+            ACLMessage message = myAgent.receive(mt);
             while (message == null) {
                 block();
                 return;
             }
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
-                this.subscribers.put(message.getSender(), "");
+                this.subscribers.putIfAbsent(message.getSender(), new String());
             } else /* ACLMessage.CANCEL */ {
                 this.subscribers.remove(message.getSender());
             }
 
             message.createReply();
             message.setPerformative(ACLMessage.CONFIRM);
-            message.setContent(salary + " ; " + contractBonus + " ; " + contractTime);
-            send(message);
+            myAgent.send(message);
         }
     }
 }

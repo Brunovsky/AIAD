@@ -24,19 +24,23 @@ import utils.Logger;
 
 public class Station extends Agent {
     private static final long serialVersionUID = 3322670743911601747L;
+    private static final String clientSub = "client-station-subscription";
+    private static final String companySub = "company-station-subscription";
+    private static final String technicianSub = "technician-station-subscription";
 
     private final String id;
-    private final HashMap<AID, Integer> clients;
-    private final HashMap<AID, Integer> technicians;
+    private final HashMap<AID, String> clients;
+    private final HashMap<AID, String> technicians;
+    private final HashMap<AID, String> companies;
 
     public Station(String id) {
         assert id != null;
         this.id = id;
         this.clients = new HashMap<>();
         this.technicians = new HashMap<>();
+        this.companies = new HashMap<>();
 
-        // TODO LOGIC: replace Integer with a proper data structure for state tracking
-        // TODO LOGIC: technicians probably don't need state tracking, but clients do
+        // TODO LOGIC: replace String with a proper data structure for state tracking
     }
 
     @Override
@@ -45,8 +49,9 @@ public class Station extends Agent {
 
         registerDFService();
 
-        addBehaviour(new SubscriptionListener(this, "client-subscription", clients));
-        addBehaviour(new SubscriptionListener(this, "technician-subscription", technicians));
+        addBehaviour(new SubscriptionListener(this, clientSub, clients));
+        addBehaviour(new SubscriptionListener(this, companySub, companies));
+        addBehaviour(new SubscriptionListener(this, technicianSub, technicians));
 
         // TODO COMMS: in a loop, in this order (during the night)
         addBehaviour(new FetchNewMalfunctions(this));
@@ -75,29 +80,29 @@ public class Station extends Agent {
     }
 
     private ACLMessage prepareClientPromptMessage() {
-        ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
+        ACLMessage message = new ACLMessage(ACLMessage.REQUEST);  // Protocol A
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology("prompt-client-malfunctions");
         for (AID client : clients.keySet()) message.addReceiver(client);
         return message;
     }
 
-    private ACLMessage prepareTechnicianInformMessage() {
-        ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
+    private ACLMessage prepareCompanyQueryMessage() {
+        ACLMessage message = new ACLMessage(ACLMessage.REQUEST);  // Protocol C
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-        message.setOntology("inform-technician-jobs");
-        for (AID technician : technicians.keySet()) message.addReceiver(technician);
+        message.setOntology("inform-company-jobs");
+        for (AID company : companies.keySet()) message.addReceiver(company);
         return message;
     }
 
-    class FetchNewMalfunctions extends AchieveREInitiator {
+    private class FetchNewMalfunctions extends AchieveREInitiator {
         private static final long serialVersionUID = 8662470226125479639L;
 
         public FetchNewMalfunctions(Agent a) {
             super(a, prepareClientPromptMessage());
         }
 
-        @Override
+        @Override  // Protocol B
         protected void handleInform(ACLMessage inform) {
             AID client = inform.getSender();
             assert clients.containsKey(client);
@@ -109,28 +114,32 @@ public class Station extends Agent {
         }
     }
 
-    class AssignJobs extends AchieveREInitiator {
+    private class AssignJobs extends AchieveREInitiator {
         private static final long serialVersionUID = -6775360046825661442L;
 
         AssignJobs(Agent a) {
-            super(a, prepareTechnicianInformMessage());
+            super(a, prepareCompanyQueryMessage());
         }
 
+        // E
+        private void informCompany(AID company, String content) {
+            ACLMessage message = new ACLMessage(ACLMessage.INFORM);
+            message.setOntology("inform-company-assignment");
+            message.addReceiver(company);
+            message.setContent(content);
+            send(message);
+        }
+
+        // F
         private void informClient(AID client, String content) {
             ACLMessage message = new ACLMessage(ACLMessage.INFORM);
             message.setOntology("inform-client-assignment");
             message.addReceiver(client);
+            message.setContent(content);
             send(message);
         }
 
-        private void informTechnician(AID technician, String content) {
-            ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-            message.setOntology("inform-technician-assignment");
-            message.addReceiver(technician);
-            send(message);
-        }
-
-        @Override
+        @Override  // Protocol D
         protected void handleAllResultNotifications(Vector resultNotifications) {
             Map<Long, AID> assignment;
 
@@ -145,13 +154,13 @@ public class Station extends Agent {
         }
     }
 
-    class SubscriptionListener extends CyclicBehaviour {
+    private class SubscriptionListener extends CyclicBehaviour {
         private static final long serialVersionUID = 9068977292715279066L;
 
         private final MessageTemplate mt;
-        private final Map<AID, Integer> subscribers;
+        private final Map<AID, String> subscribers;
 
-        SubscriptionListener(Agent a, String ontology, Map<AID, Integer> subscribers) {
+        SubscriptionListener(Agent a, String ontology, Map<AID, String> subscribers) {
             super(a);
             this.subscribers = subscribers;
 
@@ -159,25 +168,27 @@ public class Station extends Agent {
             MessageTemplate unsubscribe = MatchPerformative(ACLMessage.CANCEL);
             MessageTemplate onto = MatchOntology(ontology);
             this.mt = and(or(subscribe, unsubscribe), onto);
+
+            subscribers.keySet();
         }
 
         @Override
         public void action() {
-            ACLMessage message = receive(mt);
+            ACLMessage message = myAgent.receive(mt);
             while (message == null) {
                 block();
                 return;
             }
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
-                this.subscribers.putIfAbsent(message.getSender(), 0);
+                this.subscribers.putIfAbsent(message.getSender(), new String());
             } else /* ACLMessage.CANCEL */ {
                 this.subscribers.remove(message.getSender());
             }
 
             message.createReply();
             message.setPerformative(ACLMessage.CONFIRM);
-            send(message);
+            myAgent.send(message);
         }
     }
 }

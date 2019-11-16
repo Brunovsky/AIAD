@@ -7,10 +7,11 @@ import static message.Message.getClientMalFunctionRequestMessage;
 
 import java.util.HashMap;
 
+import agentbehaviours.SubscribeBehaviour;
+import agentbehaviours.UnsubscribeBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -19,6 +20,7 @@ import utils.Logger;
 
 public class Client extends Agent {
     private static final long serialVersionUID = 5090227891936996896L;
+    private static final String subscriptionOnto = "client-station-subscription";
 
     private final String id;
     private AID station;
@@ -34,9 +36,9 @@ public class Client extends Agent {
         Logger.info(getLocalName(), "Setup");
 
         SequentialBehaviour sequential = new SequentialBehaviour(this);
-        sequential.addSubBehaviour(new ClientSubscribe());
+        sequential.addSubBehaviour(new SubscribeBehaviour(this, station, subscriptionOnto));
         sequential.addSubBehaviour(new ClientNight());
-        sequential.addSubBehaviour(new ClientUnsubscribe());
+        sequential.addSubBehaviour(new UnsubscribeBehaviour(this, station, subscriptionOnto));
 
         addBehaviour(sequential);
     }
@@ -64,7 +66,7 @@ public class Client extends Agent {
             HashMap<Integer, ClientRequest> repairs = generateNewRepairs();
             HashMap<Integer, Double> adjustments = evaluateAdjustments();
 
-            // wait for request message
+            // Protocol A: wait for request message
             onto = MatchOntology("prompt-client-malfunctions");
             acl = MatchPerformative(ACLMessage.REQUEST);
             ACLMessage request = receive(and(onto, acl));
@@ -73,13 +75,13 @@ public class Client extends Agent {
                 request = receive(and(onto, acl));
             }
 
-            // answer message
+            // Protocol B: answer message
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
             reply.setContent(getClientMalFunctionRequestMessage(repairs, adjustments));
             send(reply);
 
-            // wait for assignments...
+            // Protocol C: wait for assignments...
             onto = MatchOntology("inform-client-assignment");
             acl = MatchPerformative(ACLMessage.INFORM);
             ACLMessage assign = receive(and(onto, acl));
@@ -94,50 +96,8 @@ public class Client extends Agent {
 
         @Override
         public boolean done() {
-            return true;
-            // return false in the final day to unsubscribe.
-        }
-    }
-
-    class ClientSubscribe extends OneShotBehaviour {
-        private static final long serialVersionUID = -3848576838699802376L;
-
-        @Override
-        public void action() {
-            MessageTemplate acl = MatchPerformative(ACLMessage.CONFIRM);
-            MessageTemplate onto = MatchOntology("client-subscription");
-
-            ACLMessage subscribe = new ACLMessage(ACLMessage.SUBSCRIBE);
-            subscribe.setOntology("client-subscription");
-            subscribe.addReceiver(station);
-            send(subscribe);
-
-            ACLMessage confirm = receive(and(onto, acl));
-            while (confirm == null) {
-                block();
-                confirm = receive(and(onto, acl));
-            }
-        }
-    }
-
-    class ClientUnsubscribe extends OneShotBehaviour {
-        private static final long serialVersionUID = 2345418834603455376L;
-
-        @Override
-        public void action() {
-            MessageTemplate confirm = MatchPerformative(ACLMessage.CONFIRM);
-            MessageTemplate onto = MatchOntology("client-subscription");
-            MessageTemplate mt = and(confirm, onto);
-
-            ACLMessage subscribe = new ACLMessage(ACLMessage.CANCEL);
-            subscribe.setOntology("client-subscription");
-            subscribe.addReceiver(station);
-            send(subscribe);
-
-            ACLMessage reply = receive(mt);
-            if (reply == null) {
-                Logger.warn(getLocalName(), "Did not receive unsubscription confirmation");
-            }
+            return false;
+            // return true in the final day to unsubscribe.
         }
     }
 }

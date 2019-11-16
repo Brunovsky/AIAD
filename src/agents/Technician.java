@@ -181,7 +181,7 @@ public class Technician extends Agent {
     class SubscribeCompany extends OneShotBehaviour {
         private static final long serialVersionUID = -8275431706452650634L;
 
-        private static final String ontology = "technician-subscription";
+        private static final String ontology = "technician-station-subscription";
 
         @Override
         public void action() {
@@ -217,10 +217,10 @@ public class Technician extends Agent {
         }
     }
 
-    public class UnsubscribeCompany extends OneShotBehaviour {
+    class UnsubscribeCompany extends OneShotBehaviour {
         private static final long serialVersionUID = 6478009297894126000L;
 
-        String ontology = "company-subscription";
+        private static final String ontology = "company-subscription";
 
         @Override
         public void action() {
@@ -259,10 +259,10 @@ public class Technician extends Agent {
         @Override
         public void action() {
             MessageTemplate acl = MatchPerformative(ACLMessage.CONFIRM);
-            MessageTemplate onto = MatchOntology("technician-subscription");
+            MessageTemplate onto = MatchOntology("technician-station-subscription");
 
             ACLMessage subscribe = new ACLMessage(ACLMessage.SUBSCRIBE);
-            subscribe.setOntology("technician-subscription");
+            subscribe.setOntology("technician-station-subscription");
             subscribe.addReceiver(station);
             send(subscribe);
 
@@ -286,10 +286,10 @@ public class Technician extends Agent {
         @Override
         public void action() {
             MessageTemplate acl = MatchPerformative(ACLMessage.CONFIRM);
-            MessageTemplate onto = MatchOntology("technician-subscription");
+            MessageTemplate onto = MatchOntology("technician-station-subscription");
 
             ACLMessage subscribe = new ACLMessage(ACLMessage.CANCEL);
-            subscribe.setOntology("technician-subscription");
+            subscribe.setOntology("technician-station-subscription");
             subscribe.addReceiver(station);
             send(subscribe);
 
