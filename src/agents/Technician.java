@@ -1,7 +1,14 @@
 package agents;
 
-import static agents.Technician.State.*;
-import static jade.lang.acl.MessageTemplate.*;
+import static agents.Technician.State.UNEMPLOYED;
+import static agents.Technician.State.WORKING;
+import static jade.lang.acl.MessageTemplate.MatchOntology;
+import static jade.lang.acl.MessageTemplate.MatchPerformative;
+import static jade.lang.acl.MessageTemplate.MatchSender;
+import static jade.lang.acl.MessageTemplate.and;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -10,13 +17,9 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import simulation.World;
 import types.WorkLog;
 import utils.Logger;
-import utils.TimeBoard;
 
 public class Technician extends Agent {
     private static final long serialVersionUID = 2763283727137639385L;

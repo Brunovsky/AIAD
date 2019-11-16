@@ -1,7 +1,11 @@
 package agents;
 
-import static jade.lang.acl.MessageTemplate.*;
+import static jade.lang.acl.MessageTemplate.MatchOntology;
+import static jade.lang.acl.MessageTemplate.MatchPerformative;
+import static jade.lang.acl.MessageTemplate.and;
 import static message.Message.getClientMalFunctionRequestMessage;
+
+import java.util.HashMap;
 
 import agentbehaviours.SubscribeBehaviour;
 import agentbehaviours.UnsubscribeBehaviour;
@@ -11,7 +15,6 @@ import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import java.util.HashMap;
 import message.ClientRequest;
 import utils.Logger;
 

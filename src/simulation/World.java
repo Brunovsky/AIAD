@@ -1,7 +1,5 @@
 package simulation;
 
-import utils.MalfunctionType;
-
 public abstract class World {
     private static World world;
 

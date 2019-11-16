@@ -1,6 +1,6 @@
 package types;
 
-import static agents.Technician.State.*;
+import static agents.Technician.State.UNEMPLOYED;
 
 import agents.Technician;
 import agents.Technician.State;
