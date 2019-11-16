@@ -1,13 +1,12 @@
-package agentbehaviours;
-
-import java.io.IOException;
+package agentbehaviours.old;
 
 import agents.OldClient;
 import jade.core.AID;
 import jade.core.behaviours.Behaviour;
-import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
+import java.io.IOException;
 import message.ClientMessage;
 
 public class RequestRepair extends Behaviour {

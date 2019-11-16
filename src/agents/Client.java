@@ -5,8 +5,6 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 import static message.Message.getClientMalFunctionRequestMessage;
 
-import java.util.HashMap;
-
 import agentbehaviours.SubscribeBehaviour;
 import agentbehaviours.UnsubscribeBehaviour;
 import jade.core.AID;
@@ -15,6 +13,7 @@ import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.HashMap;
 import message.ClientRequest;
 import utils.Logger;
 
@@ -33,7 +32,7 @@ public class Client extends Agent {
 
     @Override
     protected void setup() {
-        Logger.info(getLocalName(), "Setup");
+        Logger.info(getLocalName(), "Setup " + id);
 
         SequentialBehaviour sequential = new SequentialBehaviour(this);
         sequential.addSubBehaviour(new SubscribeBehaviour(this, station, subscriptionOnto));
@@ -97,7 +96,7 @@ public class Client extends Agent {
         @Override
         public boolean done() {
             return false;
-            // return true in the final day to unsubscribe.
+            // return true on the final day.
         }
     }
 }

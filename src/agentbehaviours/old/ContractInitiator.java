@@ -1,7 +1,4 @@
-package agentbehaviours;
-
-import java.util.Enumeration;
-import java.util.Vector;
+package agentbehaviours.old;
 
 import agents.OldClient;
 import jade.core.AID;
@@ -10,6 +7,8 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetInitiator;
+import java.util.Enumeration;
+import java.util.Vector;
 import message.TechnicianMessage;
 import utils.Logger;
 

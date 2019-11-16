@@ -1,6 +1,4 @@
-package agentbehaviours;
-
-import java.io.IOException;
+package agentbehaviours.old;
 
 import agents.OldTechnician;
 import jade.core.Agent;
@@ -9,6 +7,7 @@ import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.ContractNetResponder;
+import java.io.IOException;
 import message.TechnicianMessage;
 import utils.Logger;
 import utils.RepairSlot;

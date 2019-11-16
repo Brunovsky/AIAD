@@ -3,7 +3,6 @@ package agents;
 import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
-import static jade.lang.acl.MessageTemplate.or;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -23,10 +22,6 @@ import strategies.company.TechDistributionStrategy;
 import utils.Logger;
 
 public class Company extends Agent {
-    private static final String serviceName = "Company_";
-    private static final String serviceType = "companyservice";
-    private static final String companyOnto = "company-subscription";
-
     private final String id;
     private HashMap<AID, String> technicians;
     private HashMap<AID, String> stations;
@@ -69,12 +64,13 @@ public class Company extends Agent {
 
     @Override
     protected void setup() {
-        Logger.info(getLocalName(), "Setup");
+        Logger.info(getLocalName(), "Setup " + id);
 
         registerDFService();
         findStations();
 
-        addBehaviour(new SubscriptionListener(this, companyOnto, technicians));
+        addBehaviour(new SubscriptionListener(this, "initial-employment", technicians));
+        addBehaviour(new CompanyNight());
     }
 
     private void registerDFService() {
@@ -144,7 +140,7 @@ public class Company extends Agent {
                 // TODO LOGIC: find payment for technician.
                 String payment = "";
                 ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
-                inform.setOntology("client-payment");
+                inform.setOntology("company-payment");
                 inform.setContent(payment);
                 send(inform);
             }
@@ -197,28 +193,30 @@ public class Company extends Agent {
             this.subscribers = subscribers;
 
             MessageTemplate subscribe = MatchPerformative(ACLMessage.SUBSCRIBE);
-            MessageTemplate unsubscribe = MatchPerformative(ACLMessage.CANCEL);
             MessageTemplate onto = MatchOntology(ontology);
-            this.mt = and(or(subscribe, unsubscribe), onto);
+            this.mt = and(subscribe, onto);
         }
 
         @Override
         public void action() {
-            ACLMessage message = myAgent.receive(mt);
+            ACLMessage message = receive(mt);
             while (message == null) {
                 block();
                 return;
             }
 
+            // TODO LOGIC: fill with initial contract
+            String initialContract = "";
+
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
+                // TODO LOGIC: initial data structure
                 this.subscribers.putIfAbsent(message.getSender(), new String());
-            } else /* ACLMessage.CANCEL */ {
-                this.subscribers.remove(message.getSender());
             }
 
             message.createReply();
             message.setPerformative(ACLMessage.CONFIRM);
-            myAgent.send(message);
+            message.setContent(initialContract);
+            send(message);
         }
     }
 }

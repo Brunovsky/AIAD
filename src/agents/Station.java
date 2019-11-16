@@ -5,21 +5,20 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 import static jade.lang.acl.MessageTemplate.or;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
-
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
-import jade.domain.FIPAException;
-import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREInitiator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
 import utils.Logger;
 
 public class Station extends Agent {
@@ -45,7 +44,7 @@ public class Station extends Agent {
 
     @Override
     protected void setup() {
-        Logger.info(getLocalName(), "Setup");
+        Logger.info(getLocalName(), "Setup " + id);
 
         registerDFService();
 
@@ -80,7 +79,7 @@ public class Station extends Agent {
     }
 
     private ACLMessage prepareClientPromptMessage() {
-        ACLMessage message = new ACLMessage(ACLMessage.REQUEST);  // Protocol A
+        ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology("prompt-client-malfunctions");
         for (AID client : clients.keySet()) message.addReceiver(client);
@@ -88,7 +87,7 @@ public class Station extends Agent {
     }
 
     private ACLMessage prepareCompanyQueryMessage() {
-        ACLMessage message = new ACLMessage(ACLMessage.REQUEST);  // Protocol C
+        ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology("inform-company-jobs");
         for (AID company : companies.keySet()) message.addReceiver(company);
@@ -99,7 +98,7 @@ public class Station extends Agent {
         private static final long serialVersionUID = 8662470226125479639L;
 
         public FetchNewMalfunctions(Agent a) {
-            super(a, prepareClientPromptMessage());
+            super(a, prepareClientPromptMessage());  // Protocol A
         }
 
         @Override  // Protocol B
@@ -118,39 +117,35 @@ public class Station extends Agent {
         private static final long serialVersionUID = -6775360046825661442L;
 
         AssignJobs(Agent a) {
-            super(a, prepareCompanyQueryMessage());
+            super(a, prepareCompanyQueryMessage());  // Protocol C
         }
 
-        // E
         private void informCompany(AID company, String content) {
             ACLMessage message = new ACLMessage(ACLMessage.INFORM);
             message.setOntology("inform-company-assignment");
             message.addReceiver(company);
             message.setContent(content);
-            send(message);
+            send(message);  // Protocol E
         }
 
-        // F
         private void informClient(AID client, String content) {
             ACLMessage message = new ACLMessage(ACLMessage.INFORM);
             message.setOntology("inform-client-assignment");
             message.addReceiver(client);
             message.setContent(content);
-            send(message);
+            send(message);  // Protocol F
         }
 
         @Override  // Protocol D
         protected void handleAllResultNotifications(Vector resultNotifications) {
-            Map<Long, AID> assignment;
-
             // TODO LOGIC: read 'resultNotifications' contents, compare with the repair cache,
             // TODO LOGIC: and assign technicians to jobs.
 
-            // TODO COMMS: then inform each client. Some contents will be empty (no assignments).
+            // TODO COMMS: then inform each client. Some contents will be 'empty' (no assignments).
             // informClient(client, content)
 
-            // TODO COMMS: then inform each technician. Some contents will be empty.
-            // informTechnician(technician, content)
+            // TODO COMMS: then inform each technician. Some contents will be 'empty'.
+            // informCompany(company, content)
         }
     }
 
@@ -174,7 +169,7 @@ public class Station extends Agent {
 
         @Override
         public void action() {
-            ACLMessage message = myAgent.receive(mt);
+            ACLMessage message = receive(mt);
             while (message == null) {
                 block();
                 return;
@@ -188,7 +183,7 @@ public class Station extends Agent {
 
             message.createReply();
             message.setPerformative(ACLMessage.CONFIRM);
-            myAgent.send(message);
+            send(message);
         }
     }
 }
