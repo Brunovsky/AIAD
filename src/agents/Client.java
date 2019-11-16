@@ -26,15 +26,20 @@ public class Client extends Agent {
     }
 
     @Override
-    public void setup() {
+    protected void setup() {
         Logger.info(getLocalName(), "Setup");
 
         SequentialBehaviour sequential = new SequentialBehaviour(this);
         sequential.addSubBehaviour(new ClientSubscribe());
-        sequential.addSubBehaviour(new ClientDay());
+        sequential.addSubBehaviour(new ClientNight());
         sequential.addSubBehaviour(new ClientUnsubscribe());
 
         addBehaviour(sequential);
+    }
+
+    @Override
+    protected void takeDown() {
+        Logger.warn(getLocalName(), "Client Terminated!");
     }
 
     private String generateNewRepairs() {
@@ -47,7 +52,7 @@ public class Client extends Agent {
         return "leviosa";
     }
 
-    class ClientDay extends Behaviour {
+    class ClientNight extends Behaviour {
         private static final long serialVersionUID = 2838271060454701293L;
 
         @Override

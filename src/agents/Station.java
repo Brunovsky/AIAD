@@ -40,7 +40,7 @@ public class Station extends Agent {
     }
 
     @Override
-    public void setup() {
+    protected void setup() {
         Logger.info(getLocalName(), "Setup");
 
         registerDFService();
@@ -50,7 +50,12 @@ public class Station extends Agent {
 
         // TODO COMMS: in a loop, in this order (during the night)
         addBehaviour(new FetchNewMalfunctions(this));
-        addBehaviour(new AssignTechnicians(this));
+        addBehaviour(new AssignJobs(this));
+    }
+
+    @Override
+    protected void takeDown() {
+        Logger.warn(getLocalName(), "Station Terminated!");
     }
 
     private void registerDFService() {
@@ -96,7 +101,7 @@ public class Station extends Agent {
         protected void handleInform(ACLMessage inform) {
             AID client = inform.getSender();
             assert clients.containsKey(client);
-            Object content = inform.getContent();
+            String content = inform.getContent();
 
             // TODO LOGIC: read 'content' and update the repairs cache.
             // Content is "REPAIRS\nADJUSTMENTS" but this can be changed.
@@ -104,10 +109,10 @@ public class Station extends Agent {
         }
     }
 
-    class AssignTechnicians extends AchieveREInitiator {
+    class AssignJobs extends AchieveREInitiator {
         private static final long serialVersionUID = -6775360046825661442L;
 
-        AssignTechnicians(Agent a) {
+        AssignJobs(Agent a) {
             super(a, prepareTechnicianInformMessage());
         }
 
@@ -115,6 +120,13 @@ public class Station extends Agent {
             ACLMessage message = new ACLMessage(ACLMessage.INFORM);
             message.setOntology("inform-client-assignment");
             message.addReceiver(client);
+            send(message);
+        }
+
+        private void informTechnician(AID technician, String content) {
+            ACLMessage message = new ACLMessage(ACLMessage.INFORM);
+            message.setOntology("inform-technician-assignment");
+            message.addReceiver(technician);
             send(message);
         }
 
@@ -127,6 +139,9 @@ public class Station extends Agent {
 
             // TODO COMMS: then inform each client. Some contents will be empty (no assignments).
             // informClient(client, content)
+
+            // TODO COMMS: then inform each technician. Some contents will be empty.
+            // informTechnician(technician, content)
         }
     }
 
@@ -151,7 +166,7 @@ public class Station extends Agent {
             ACLMessage message = receive(mt);
             while (message == null) {
                 block();
-                message = receive(mt);
+                return;
             }
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
