@@ -5,8 +5,11 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import agentbehaviours.SubscribeBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -17,50 +20,42 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import strategies.company.AllocStrategy;
-import strategies.company.PaymentStrategy;
-import strategies.company.TechDistributionStrategy;
+import strategies.company.CompanyStrategy;
+import types.Contract;
+import types.Proposal;
+import types.StationHistory;
+import types.TechnicianHistory;
+import types.WorkFinance;
 import utils.Logger;
 
 public class Company extends Agent {
+    private static final long serialVersionUID = -4840612670786798770L;
+
     private final String id;
-    private HashMap<AID, String> technicians;
-    private HashMap<AID, String> stations;
 
-    private PaymentStrategy paymentStrategy;
-    private AllocStrategy allocStrategy;
-    private TechDistributionStrategy techDistributionStrategy;
+    private final Set<AID> activeTechnicians;
+    private final Map<AID, TechnicianHistory> technicianHistory;
 
-    /**
-     * € Technicians receive per month
-     */
-    private double salary;
+    private final Set<AID> activeStations;
+    private final Map<AID, StationHistory> stationHistory;
+    private final Map<AID, Set<AID>> stationTechnicians;
+    private final Map<String, AID> stationNames;  // can't parse AID from message
 
-    /**
-     * € Technicians receive per Repair
-     */
-    public double repairCommission;
+    private final CompanyStrategy strategy;
 
-    /**
-     * € Technicians receive per joining the Company
-     */
-    private double contractBonus;
-
-    /**
-     * Time Technicians have to be in the Company
-     */
-    private double contractTime;
-
-    public Company(String id, String companyName, TechDistributionStrategy techDistributionStrategy,
-                   PaymentStrategy paymentStrategyParam, AllocStrategy allocStrategyParam) {
-        assert id != null && companyName != null;
-        technicians = new HashMap<AID, String>();
-        stations = new HashMap<AID, String>();
-
+    public Company(String id, CompanyStrategy strategy) {
+        assert id != null;
         this.id = id;
-        this.techDistributionStrategy = techDistributionStrategy;
-        this.paymentStrategy = paymentStrategy;
-        this.allocStrategy = allocStrategy;
+
+        this.activeTechnicians = new HashSet<>();
+        this.technicianHistory = new HashMap<>();
+
+        this.activeStations = new HashSet<>();
+        this.stationHistory = new HashMap<>();
+        this.stationTechnicians = new HashMap<>();
+        this.stationNames = new HashMap<>();
+
+        this.strategy = strategy;
     }
 
     @Override
@@ -70,8 +65,8 @@ public class Company extends Agent {
         registerDFService();
         findStations();
 
-        addBehaviour(new SubscriptionListener(this, "initial-employment", technicians));
-        addBehaviour(new CompanyNight());
+        addBehaviour(new SubscriptionListener(this));
+        addBehaviour(new CompanyNight(this));
     }
 
     @Override
@@ -79,8 +74,8 @@ public class Company extends Agent {
         Logger.warn(getLocalName(), "Company Terminated!");
     }
 
+    // Register the company in yellow pages
     private void registerDFService() {
-        //  Register Company in yellow pages
         try {
             DFAgentDescription dfd = new DFAgentDescription();
             dfd.setName(getAID());
@@ -96,8 +91,8 @@ public class Company extends Agent {
         }
     }
 
+    // Subscribe to all stations and record a list of them.
     private void findStations() {
-        //  Search for Stations and notify them
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription templateSd = new ServiceDescription();
         templateSd.setType("station");
@@ -106,71 +101,86 @@ public class Company extends Agent {
         try {
             DFAgentDescription[] stations = DFService.search(this, template);
             for (DFAgentDescription stationDescriptor : stations) {
-                this.stations.put(stationDescriptor.getName(), "");
+                AID station = stationDescriptor.getName();
+                stationHistory.put(station, new StationHistory(station));
+                stationNames.put(station.getLocalName(), station);
+                addBehaviour(new SubscribeBehaviour(this, station, "company-subscription"));
             }
         } catch (FIPAException e) {
             e.printStackTrace();
         }
     }
 
+    // ***** BEHAVIOURS
+
     private class CompanyNight extends Behaviour {
         private static final long serialVersionUID = 6059838822925652797L;
 
+        private HashMap<AID, Proposal> proposals;
+
+        CompanyNight(Agent a) {
+            super(a);
+        }
+
         private void replyStation(ACLMessage message) {
             AID station = message.getSender();
-            assert stations.containsKey(station);
+            assert activeStations.contains(station);
+            String availableJobs = message.getContent();
+            int technicians = stationTechnicians.get(station).size();
 
-            // TODO LOGIC: Generate all proposals
-            String proposals = new String();
+            Proposal proposal = strategy.makeProposal(technicians, availableJobs);
+            proposals.put(station, proposal);
 
             ACLMessage reply = message.createReply();
             reply.setPerformative(ACLMessage.INFORM);
-            reply.setContent(proposals);
+            reply.setContent(proposal.make());
             send(reply);
         }
 
         private void informTechnicians(ACLMessage message) {
             AID station = message.getSender();
-            assert stations.containsKey(station);
+            assert activeStations.contains(station);
 
-            String accepted = message.getContent();
-            // TODO LOGIC: Process all accepted proposals
+            Proposal accepted = Proposal.from(message);
 
-            // TODO COMMS: repeat for each technician
+            // TODO LOGIC: (Loop) Pay each technician.
             {
+                WorkFinance payment = new WorkFinance();
                 // TODO LOGIC: find payment for technician.
-                String payment = "";
                 ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
                 inform.setOntology("company-payment");
-                inform.setContent(payment);
+                inform.setContent(payment.make());
                 send(inform);
             }
         }
 
         @Override
         public void action() {
-            MessageTemplate acl, onto;
+            proposals = new HashMap<>();
+            MessageTemplate acl, onto, mt;
 
-            // TODO COMMS: repeat for each station.
-            {
-                onto = MatchOntology("inform-company-jobs");
-                acl = MatchPerformative(ACLMessage.REQUEST);
-                ACLMessage request = receive(and(onto, acl));  // Protocol A
+            onto = MatchOntology("inform-company-jobs");
+            acl = MatchPerformative(ACLMessage.REQUEST);
+            mt = and(onto, acl);
+            for (AID station : activeStations) {
+                MessageTemplate from = MessageTemplate.MatchSender(station);
+                ACLMessage request = receive(and(mt, from));  // Protocol A
                 while (request == null) {
                     block();
-                    request = receive(and(onto, acl));
+                    request = receive(and(mt, from));
                 }
                 replyStation(request);  // Protocol B
             }
 
-            // TODO COMMS: repeat for each station.
-            {
-                onto = MatchOntology("inform-company-assignment");
-                acl = MatchPerformative(ACLMessage.INFORM);
-                ACLMessage inform = receive(and(onto, acl));  // Protocol C
+            onto = MatchOntology("inform-company-assignment");
+            acl = MatchPerformative(ACLMessage.INFORM);
+            mt = and(onto, acl);
+            for (AID station : activeStations) {
+                MessageTemplate from = MessageTemplate.MatchSender(station);
+                ACLMessage inform = receive(and(mt, from));  // Protocol C
                 while (inform == null) {
                     block();
-                    inform = receive(and(onto, acl));
+                    inform = receive(and(mt, from));
                 }
                 informTechnicians(inform);  // Protocol D
             }
@@ -187,14 +197,12 @@ public class Company extends Agent {
         private static final long serialVersionUID = 9068977292715279066L;
 
         private final MessageTemplate mt;
-        private final Map<AID, String> subscribers;
 
-        SubscriptionListener(Agent a, String ontology, Map<AID, String> subscribers) {
+        SubscriptionListener(Agent a) {
             super(a);
-            this.subscribers = subscribers;
 
             MessageTemplate subscribe = MatchPerformative(ACLMessage.SUBSCRIBE);
-            MessageTemplate onto = MatchOntology(ontology);
+            MessageTemplate onto = MatchOntology("initial-employment");
             this.mt = and(subscribe, onto);
         }
 
@@ -206,17 +214,17 @@ public class Company extends Agent {
                 return;
             }
 
-            // TODO LOGIC: fill with initial contract
-            String initialContract = "";
+            AID technician = message.getSender();
+            Contract initialContract = strategy.initialContract();
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
-                // TODO LOGIC: initial data structure
-                this.subscribers.putIfAbsent(message.getSender(), new String());
+                activeTechnicians.add(technician);
+                technicianHistory.put(technician, new TechnicianHistory(technician));
             }
 
             message.createReply();
             message.setPerformative(ACLMessage.CONFIRM);
-            message.setContent(initialContract);
+            message.setContent(initialContract.make());
             send(message);
         }
     }

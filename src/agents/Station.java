@@ -95,6 +95,8 @@ public class Station extends Agent {
         return message;
     }
 
+    // ***** BEHAVIOURS
+
     private class FetchNewMalfunctions extends AchieveREInitiator {
         private static final long serialVersionUID = 8662470226125479639L;
 

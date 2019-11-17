@@ -31,7 +31,8 @@ public class SimpleTechnicianStrategy extends TechnicianStrategy {
         int day = World.get().getDay();
         Contract cp = technician.getCurrentContract();
 
-        AID company = cp.company, station = technician.getHomeStation();
+        AID company = cp.company;
+        String station = technician.getHomeStation().getLocalName();
         double salary = cp.salary * 1.02;
         double percentage = cp.percentage;
         int start = Math.max(cp.end + 1, day);

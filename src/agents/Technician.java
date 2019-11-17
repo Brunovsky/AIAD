@@ -28,7 +28,8 @@ public class Technician extends Agent {
 
     private final String id;
     private final AID homeStation;
-    private AID station, company;
+    private AID company;
+    private String stationName;
 
     private final TechnicianStrategy strategy;
 
@@ -43,7 +44,7 @@ public class Technician extends Agent {
         assert id != null && homeStation != null && company != null && strategy != null;
         this.id = id;
         this.homeStation = homeStation;
-        this.station = homeStation;
+        this.stationName = homeStation.getLocalName();
         this.company = company;
 
         this.strategy = strategy;
@@ -72,10 +73,6 @@ public class Technician extends Agent {
 
     public AID getHomeStation() {
         return homeStation;
-    }
-
-    public AID getStation() {
-        return station;
     }
 
     public AID getCompany() {
@@ -132,7 +129,7 @@ public class Technician extends Agent {
             currentContract = nextContract;
             nextContract = null;
             company = currentContract.company;
-            station = currentContract.station;
+            stationName = currentContract.station;
         }
     }
 
