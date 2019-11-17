@@ -14,6 +14,7 @@ import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import simulation.World;
 import strategies.ClientStrategy;
 import strategies.ClientStrategy1;
 import types.ClientRepairs;
@@ -23,7 +24,6 @@ import utils.Logger;
 
 public class Client extends Agent {
     private static final long serialVersionUID = 5090227891936996896L;
-    private static final String subscriptionOnto = "client-station-subscription";
 
     private final String id;
     private AID station;
@@ -38,6 +38,7 @@ public class Client extends Agent {
         this.id = id;
         this.station = station;
         this.repairId = 0;
+
         repairsHistory = new HashMap<>();     // repairs done
         dayRequestRepairs = new HashMap<>();  // repairs for the day
 
@@ -48,6 +49,8 @@ public class Client extends Agent {
     @Override
     protected void setup() {
         Logger.info(getLocalName(), "Setup " + id);
+
+        String subscriptionOnto = World.get().getClientStationService();
 
         SequentialBehaviour sequential = new SequentialBehaviour(this);
         sequential.addSubBehaviour(new SubscribeBehaviour(this, station, subscriptionOnto));
@@ -72,7 +75,7 @@ public class Client extends Agent {
             repairId += strategy.generateNewRepairs(dayRequestRepairs, repairId);
 
             // Protocol A: wait for request message
-            onto = MatchOntology("prompt-client-malfunctions");
+            onto = MatchOntology(World.get().getPromptClient());
             acl = MatchPerformative(ACLMessage.REQUEST);
             ACLMessage request = receive(and(onto, acl));
             while (request == null) {
@@ -87,7 +90,7 @@ public class Client extends Agent {
             send(reply);
 
             // Protocol C: wait for assignments...
-            onto = MatchOntology("inform-client-assignment");
+            onto = MatchOntology(World.get().getInformClient());
             acl = MatchPerformative(ACLMessage.INFORM);
             ACLMessage assign = receive(and(onto, acl));
             while (assign == null) {

@@ -21,6 +21,7 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import simulation.World;
 import strategies.company.CompanyStrategy;
 import types.Contract;
 import types.JobList;
@@ -84,7 +85,7 @@ public class Company extends Agent {
             dfd.setName(getAID());
             ServiceDescription sd = new ServiceDescription();
             sd.setName("company" + id);  // Necessary?????
-            sd.setType("company");
+            sd.setType(World.get().getCompanyType());
 
             dfd.addServices(sd);
 
@@ -98,7 +99,7 @@ public class Company extends Agent {
     private void findStations() {
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription templateSd = new ServiceDescription();
-        templateSd.setType("station");
+        templateSd.setType(World.get().getStationType());
         template.addServices(templateSd);
 
         try {
@@ -107,7 +108,7 @@ public class Company extends Agent {
                 AID station = stationDescriptor.getName();
                 stationHistory.put(station, new StationHistory(station));
                 stationNames.put(station.getLocalName(), station);
-                addBehaviour(new SubscribeBehaviour(this, station, "company-subscription"));
+                addBehaviour(new SubscribeBehaviour(this, station, World.get().getCompanySubscription()));
             }
         } catch (FIPAException e) {
             e.printStackTrace();
@@ -133,7 +134,7 @@ public class Company extends Agent {
         public void action() {
             MessageTemplate onto, acl, mt;
 
-            onto = MatchOntology("technician-offer-contract");
+            onto = MatchOntology(World.get().getTechnicianOfferContract());
             acl = MatchPerformative(ACLMessage.PROPOSE);
             mt = and(onto, acl);
             ACLMessage propose = receive(mt);
@@ -217,7 +218,7 @@ public class Company extends Agent {
                 earned -= techCut + salary;
 
                 ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
-                inform.setOntology("company-payment");
+                inform.setOntology(World.get().getCompanyPayment());
                 inform.setContent(payment.make());
                 send(inform);
             }
@@ -228,7 +229,7 @@ public class Company extends Agent {
             proposals = new HashMap<>();
             MessageTemplate acl, onto, mt;
 
-            onto = MatchOntology("inform-company-jobs");
+            onto = MatchOntology(World.get().getInformCompanyJobs());
             acl = MatchPerformative(ACLMessage.REQUEST);
             mt = and(onto, acl);
             for (AID station : activeStations) {
@@ -241,7 +242,7 @@ public class Company extends Agent {
                 replyStation(request);  // Protocol B
             }
 
-            onto = MatchOntology("inform-company-assignment");
+            onto = MatchOntology(World.get().getInformCompanyAssignment());
             acl = MatchPerformative(ACLMessage.INFORM);
             mt = and(onto, acl);
             for (AID station : activeStations) {
@@ -272,7 +273,7 @@ public class Company extends Agent {
             super(a);
 
             MessageTemplate subscribe = MatchPerformative(ACLMessage.SUBSCRIBE);
-            MessageTemplate onto = MatchOntology("initial-employment");
+            MessageTemplate onto = MatchOntology(World.get().getInitialEmployment());
             this.mt = and(subscribe, onto);
         }
 
