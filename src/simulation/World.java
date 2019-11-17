@@ -31,10 +31,11 @@ public abstract class World {
 
     // Stations
     int S;
+    StationsDesc[] stations;
 
     // Companies
     int Co;
-    //CompaniesDesc[] companies;
+    CompaniesDesc[] companies;
 
     private static World world;
 
@@ -97,6 +98,19 @@ public abstract class World {
 
     public String getCompanyStationService() {
         return companyStationService;
+    }
+
+    void assertValid(){
+        assert T>0 && Cl>0 && S>0 && Co>0;
+
+        assert technicians != null && clients != null && stations != null && companies != null;
+
+        int t = 0, cl = 0, s = 0, co = 0;
+        for (TechniciansDesc tech : technicians) t += tech.number;
+        for (ClientsDesc client : clients) c += client.number;
+        for (StationsDesc station : stations) c += station.number;
+        for (int num : clientNumbers) d += num;
+        assert T == t && C == c && C == d;
     }
 
 }

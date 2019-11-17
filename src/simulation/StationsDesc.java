@@ -1,25 +1,13 @@
 package simulation;
 
 public class StationsDesc {
-    private int numberStations;
-    private int numberTechnicians;
-    private int numberClients;
+    public int number;
+    public int numberTechnicians;
+    public int numberClients;
 
-    public StationsDesc(int numberStations, int numberTechnicians, int numberClients) {
-        this.numberStations = numberStations;
+    public StationsDesc(int number, int numberTechnicians, int numberClients) {
+        this.number = number;
         this.numberTechnicians = numberTechnicians;
         this.numberClients = numberClients;
-    }
-
-    public int getNumberStations() {
-        return numberStations;
-    }
-
-    public int getNumberTechnicians() {
-        return numberTechnicians;
-    }
-
-    public int getNumberClients() {
-        return numberClients;
     }
 }
