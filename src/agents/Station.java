@@ -25,14 +25,14 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREInitiator;
+import simulation.World;
 import types.Repair;
 import utils.Logger;
 
 public class Station extends Agent {
     private static final long serialVersionUID = 3322670743911601747L;
-    private static final String clientSub = "client-station-subscription";
-    private static final String companySub = "company-station-subscription";
-    private static final String technicianSub = "technician-station-subscription";
+    private static String clientSub;
+    private static String companySub;
 
     private final String id;
     private final Set<AID> clients;
@@ -45,6 +45,9 @@ public class Station extends Agent {
         this.clients = new HashSet<>();
         this.companies = new HashSet<>();
         this.repairsQueue = new HashMap<>();
+        companySub = World.get().getCompanyStationService();
+
+        clientSub = World.get().getClientStationService();
 
         // TODO LOGIC: replace String with a proper data structure for state tracking
     }
@@ -73,7 +76,7 @@ public class Station extends Agent {
         dfd.setName(getAID());
         ServiceDescription sd = new ServiceDescription();
         sd.setName("station-" + id);
-        sd.setType("station");
+        sd.setType(World.get().getStationType());
 
         dfd.addServices(sd);
 
@@ -87,7 +90,7 @@ public class Station extends Agent {
     private ACLMessage prepareClientPromptMessage() {
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-        message.setOntology("prompt-client-malfunctions");
+        message.setOntology(World.get().getPromptClient());
         for (AID client : clients) message.addReceiver(client);
         return message;
     }
@@ -95,7 +98,7 @@ public class Station extends Agent {
     private ACLMessage prepareCompanyQueryMessage() {
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-        message.setOntology("inform-company-jobs");
+        message.setOntology(World.get().getInformCompanyJobs());
         for (AID company : companies) message.addReceiver(company);
         return message;
     }
@@ -145,7 +148,7 @@ public class Station extends Agent {
 
         private void informCompany(AID company, String content) {
             ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-            message.setOntology("inform-company-assignment");
+            message.setOntology(World.get().getInformCompanyAssignment());
             message.addReceiver(company);
             message.setContent(content);
             send(message);  // Protocol E
@@ -153,7 +156,7 @@ public class Station extends Agent {
 
         private void informClient(AID client, String content) {
             ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-            message.setOntology("inform-client-assignment");
+            message.setOntology(World.get().getInformClient());
             message.addReceiver(client);
             message.setContent(content);
             send(message);  // Protocol F

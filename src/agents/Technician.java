@@ -30,7 +30,6 @@ public class Technician extends Agent {
     private final String id;
     private final AID homeStation;
     private AID company;
-    private String stationName;
 
     private final TechnicianStrategy strategy;
 
@@ -45,7 +44,6 @@ public class Technician extends Agent {
         assert id != null && homeStation != null && company != null && strategy != null;
         this.id = id;
         this.homeStation = homeStation;
-        this.stationName = homeStation.getLocalName();
         this.company = company;
 
         this.strategy = strategy;
@@ -131,7 +129,6 @@ public class Technician extends Agent {
             currentContract = nextContract;
             nextContract = null;
             company = currentContract.company;
-            stationName = currentContract.station;
             state = WORKING;
         }
     }
@@ -161,7 +158,7 @@ public class Technician extends Agent {
         private void workingAction() {
             MessageTemplate acl, onto, mt;
 
-            onto = MatchOntology("company-payment");
+            onto = MatchOntology(World.get().getCompanyPayment());
             acl = MatchPerformative(ACLMessage.INFORM);
             mt = and(and(onto, acl), MatchSender(company));
             ACLMessage inform = receive(mt);  // Protocol A
@@ -184,10 +181,11 @@ public class Technician extends Agent {
 
     private class InitialEmployment extends OneShotBehaviour {
         private static final long serialVersionUID = -8275421706452630634L;
-        private static final String ontology = "initial-employment";
+        private String ontology;
 
         @Override
         public void action() {
+            ontology = World.get().getInitialEmployment();
             MessageTemplate onto, acl, mt;
 
             ACLMessage message = new ACLMessage(ACLMessage.SUBSCRIBE);
