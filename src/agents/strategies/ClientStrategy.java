@@ -1,7 +1,12 @@
 package agents.strategies;
 
-public class ClientStrategy {
+import types.ClientRequest;
 
-    // gerar reparações
-    // criar classes que fazem implements desta
+import java.util.HashMap;
+
+public interface ClientStrategy {
+
+    public HashMap<Integer, ClientRequest> generateNewRepairs(int repairId);
+
+    public HashMap<Integer, Double> evaluateAdjustments(HashMap<Integer, ClientRequest> adjustments);
 }

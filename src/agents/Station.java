@@ -6,6 +6,7 @@ import static jade.lang.acl.MessageTemplate.and;
 import static jade.lang.acl.MessageTemplate.or;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 
@@ -20,6 +21,10 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREInitiator;
+import types.ClientRequest;
+import static message.Messages.*;
+
+import types.Repair;
 import utils.Logger;
 
 public class Station extends Agent {
@@ -32,6 +37,7 @@ public class Station extends Agent {
     private final HashMap<AID, String> clients;
     private final HashMap<AID, String> technicians;
     private final HashMap<AID, String> companies;
+    private HashMap<AID, HashMap<Integer, ClientRequest>> repairsQueue;
 
     public Station(String id) {
         assert id != null;
@@ -39,6 +45,7 @@ public class Station extends Agent {
         this.clients = new HashMap<>();
         this.technicians = new HashMap<>();
         this.companies = new HashMap<>();
+        this.repairsQueue = new HashMap<>();
 
         // TODO LOGIC: replace String with a proper data structure for state tracking
     }
@@ -110,8 +117,23 @@ public class Station extends Agent {
             assert clients.containsKey(client);
             String content = inform.getContent();
 
-            // TODO LOGIC: read 'content' and update the repairs cache.
-            // Content is "REPAIRS\nADJUSTMENTS" but this can be changed.
+            HashMap<Integer, Double> newAdjustments = parseClientAdjustmentMessage(content);
+            if(newAdjustments.size() != 0 && repairsQueue.containsKey(client)){
+                HashMap<Integer, ClientRequest> clientUnresolvedRepairs = repairsQueue.get(client);
+                Iterator it = newAdjustments.entrySet().iterator();
+                while (it.hasNext()){
+                    Map.Entry pair = (Map.Entry) it.next();
+                    clientUnresolvedRepairs.get(pair.getKey()).setMaxPrice((Double) pair.getValue());
+                }
+            }
+
+            HashMap<Integer, ClientRequest> newRequests = parseClientRequestMessage(content);
+            if(repairsQueue.containsKey(client)){
+                repairsQueue.get(client).putAll(newRequests);
+            } else{
+                repairsQueue.put(client, newRequests);
+            }
+
             // TODO COMMS: verify this does indeed finish when all clients respond.
         }
     }
@@ -145,10 +167,17 @@ public class Station extends Agent {
             // TODO LOGIC: and assign technicians to jobs.
 
             // TODO COMMS: then inform each client. Some contents will be 'empty' (no assignments).
+            // DO THIS FOR EACH CLIENT
+
+            // clientsRepairs is a HashMap<Integer, Repair>, Integer it's the clients repair id
+            // HashMap<Integer, Repair> clientsRepairs = new HashMap<>();
+            // String content = getClientResponseMessage(clientsRepairs);
             // informClient(client, content)
 
             // TODO COMMS: then inform each technician. Some contents will be 'empty'.
             // informCompany(company, content)
+
+            // TODO COMMS: remove from repairsQueue the repairs resolved, just leave the ones with no assignments
         }
     }
 
