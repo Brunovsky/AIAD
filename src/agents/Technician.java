@@ -7,10 +7,6 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 import agents.strategies.TechnicianStrategy;
 import jade.core.AID;
 import jade.core.Agent;
@@ -18,8 +14,12 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import simulation.World;
 import types.Contract;
+import types.WorkFinance;
 import types.WorkLog;
 import utils.Logger;
 
@@ -102,17 +102,18 @@ public class Technician extends Agent {
 
     // ***** DATA
 
-    private void createWorkLog(String worklog) {
+    private void createWorkLog(WorkFinance finance) {
         int day = World.get().getDay();
-        int jobs = 0;    // ...
-        double cut = 0;  // ...
+        int jobs = finance.jobs;
+        double cut = finance.cut;
+        assert finance.salary == currentContract.salary;
         WorkLog log = new WorkLog(this, currentContract, jobs, cut);
         workHistory.put(day, log);
     }
 
     private void createEmptyWorkLog() {
         int day = World.get().getDay();
-        WorkLog log = new WorkLog(this, null, 0, 0);
+        WorkLog log = new WorkLog(this);
         workHistory.put(day, log);
     }
 
@@ -130,6 +131,7 @@ public class Technician extends Agent {
             nextContract = null;
             company = currentContract.company;
             stationName = currentContract.station;
+            state = WORKING;
         }
     }
 
@@ -142,7 +144,9 @@ public class Technician extends Agent {
 
             Contract renewed = strategy.renewalContract();
 
-            // Propose renewed...
+            // TODO COMMS: propose renewal to parent company
+            //
+            // otherwise propose renewal contract to other companies
         }
     }
 
@@ -164,8 +168,7 @@ public class Technician extends Agent {
                 block();
                 inform = receive(mt);
             }
-            String worklog = inform.getContent();
-            createWorkLog(worklog);
+            createWorkLog(WorkFinance.from(inform));
         }
 
         @Override

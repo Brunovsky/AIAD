@@ -27,6 +27,10 @@ public class WorkLog {
         this.cut = cut;
     }
 
+    public WorkLog(Technician technician) {
+        this(technician, null, 0, 0);
+    }
+
     public boolean working() {
         return state == State.WORKING;
     }

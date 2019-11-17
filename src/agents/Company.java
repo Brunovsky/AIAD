@@ -2,12 +2,8 @@ package agents;
 
 import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
+import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import agentbehaviours.SubscribeBehaviour;
 import jade.core.AID;
@@ -15,11 +11,15 @@ import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
-import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import strategies.company.CompanyStrategy;
 import types.Contract;
 import types.Proposal;
@@ -67,6 +67,7 @@ public class Company extends Agent {
 
         addBehaviour(new SubscriptionListener(this));
         addBehaviour(new CompanyNight(this));
+        addBehaviour(new ReceiveContractProposals(this));
     }
 
     @Override
@@ -113,6 +114,46 @@ public class Company extends Agent {
 
     // ***** BEHAVIOURS
 
+    private class ReceiveContractProposals extends Behaviour {
+        private static final long serialVersionUID = -3009146208732453520L;
+
+        ReceiveContractProposals(Agent a) {
+            super(a);
+        }
+
+        @Override
+        public void action() {
+            MessageTemplate onto, acl, mt;
+
+            onto = MatchOntology("technician-offer-contract");
+            acl = MatchPerformative(ACLMessage.PROPOSE);
+            mt = and(onto, acl);
+            ACLMessage propose = receive(mt);
+            while (propose == null) {
+                block();
+                propose = receive(mt);
+            }
+
+            AID technician = propose.getSender();
+            if (!activeTechnicians.contains(technician)) return;
+            Contract contract = Contract.from(myAgent.getAID(), technician, propose);
+
+            ACLMessage reply = propose.createReply();
+            reply.setContent(propose.getContent());
+            if (strategy.acceptContractProposal(contract)) {
+                reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+            } else {
+                reply.setPerformative(ACLMessage.REFUSE);
+            }
+            send(reply);
+        }
+
+        @Override
+        public boolean done() {
+            return false;
+        }
+    }
+
     private class CompanyNight extends Behaviour {
         private static final long serialVersionUID = 6059838822925652797L;
 
@@ -125,6 +166,7 @@ public class Company extends Agent {
         private void replyStation(ACLMessage message) {
             AID station = message.getSender();
             assert activeStations.contains(station);
+
             String availableJobs = message.getContent();
             int technicians = stationTechnicians.get(station).size();
 
@@ -143,10 +185,13 @@ public class Company extends Agent {
 
             Proposal accepted = Proposal.from(message);
 
-            // TODO LOGIC: (Loop) Pay each technician.
+            // TODO LOGIC: compute technicians' cut.
+
+            // TODO LOGIC: (Loop) Pay each technician after distributing jobs.
             {
                 WorkFinance payment = new WorkFinance();
                 // TODO LOGIC: find payment for technician.
+
                 ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
                 inform.setOntology("company-payment");
                 inform.setContent(payment.make());
@@ -163,7 +208,7 @@ public class Company extends Agent {
             acl = MatchPerformative(ACLMessage.REQUEST);
             mt = and(onto, acl);
             for (AID station : activeStations) {
-                MessageTemplate from = MessageTemplate.MatchSender(station);
+                MessageTemplate from = MatchSender(station);
                 ACLMessage request = receive(and(mt, from));  // Protocol A
                 while (request == null) {
                     block();
@@ -176,7 +221,7 @@ public class Company extends Agent {
             acl = MatchPerformative(ACLMessage.INFORM);
             mt = and(onto, acl);
             for (AID station : activeStations) {
-                MessageTemplate from = MessageTemplate.MatchSender(station);
+                MessageTemplate from = MatchSender(station);
                 ACLMessage inform = receive(and(mt, from));  // Protocol C
                 while (inform == null) {
                     block();
