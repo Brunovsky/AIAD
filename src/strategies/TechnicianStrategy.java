@@ -1,4 +1,4 @@
-package agents.strategies;
+package strategies;
 
 import agents.Technician;
 import types.Contract;

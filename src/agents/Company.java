@@ -5,21 +5,22 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import agentbehaviours.SubscribeBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
+import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import strategies.company.CompanyStrategy;
 import types.Contract;
 import types.Proposal;
@@ -140,7 +141,7 @@ public class Company extends Agent {
 
             ACLMessage reply = propose.createReply();
             reply.setContent(propose.getContent());
-            if (strategy.acceptContractProposal(contract)) {
+            if (strategy.acceptContractOffer(contract)) {
                 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
             } else {
                 reply.setPerformative(ACLMessage.REFUSE);

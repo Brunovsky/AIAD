@@ -12,15 +12,14 @@ import java.util.Map;
 
 import agentbehaviours.SubscribeBehaviour;
 import agentbehaviours.UnsubscribeBehaviour;
-import agents.strategies.ClientStrategy;
-import agents.strategies.ClientStrategy1;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import types.ClientRequest;
+import strategies.ClientStrategy;
+import strategies.ClientStrategy1;
 import types.Repair;
 import utils.Logger;
 
@@ -33,8 +32,8 @@ public class Client extends Agent {
 
     private int repairId;
     private HashMap<Integer, Repair> repairsHistory;
-    private HashMap<Integer, ClientRequest> dayRequestRepairs;
-    private HashMap<Integer, ClientRequest> requestAdjustments;
+    private HashMap<Integer, Repair> dayRequestRepairs;
+    private HashMap<Integer, Repair> requestAdjustments;
     ClientStrategy strategy;
 
     public Client(String id, AID station) {
@@ -42,9 +41,9 @@ public class Client extends Agent {
         this.id = id;
         this.station = station;
         this.repairId = 0;
-        repairsHistory = new HashMap<>(); // repairs done
-        dayRequestRepairs = new HashMap<>(); // repairs for the day
-        requestAdjustments = new HashMap<>(); // repairs that need an adjustments
+        repairsHistory = new HashMap<>();      // repairs done
+        dayRequestRepairs = new HashMap<>();   // repairs for the day
+        requestAdjustments = new HashMap<>();  // repairs that need an adjustments
 
         // TODO Choose strategy, maybe send as a parameter in Client contructor
         strategy = new ClientStrategy1();
@@ -67,8 +66,8 @@ public class Client extends Agent {
         Logger.warn(getLocalName(), "Client Terminated!");
     }
 
-    private HashMap<Integer, ClientRequest> generateNewRepairs() {
-        HashMap<Integer, ClientRequest> newRepairs = strategy.generateNewRepairs(repairId);
+    private HashMap<Integer, Repair> generateNewRepairs() {
+        HashMap<Integer, Repair> newRepairs = strategy.generateNewRepairs(repairId);
         repairId += newRepairs.size();
         return newRepairs;
     }
@@ -84,7 +83,7 @@ public class Client extends Agent {
         public void action() {
             MessageTemplate acl, onto;
 
-            HashMap<Integer, ClientRequest> repairs = generateNewRepairs();
+            HashMap<Integer, Repair> repairs = generateNewRepairs();
             HashMap<Integer, Double> adjustments = evaluateAdjustments();
 
             // Protocol A: wait for request message
@@ -111,22 +110,21 @@ public class Client extends Agent {
                 assign = receive(and(onto, acl));
             }
 
-            HashMap<Integer, Repair> assignedRepairs = parseClientResponseMessage(assign.getContent());
+            HashMap<Integer, Repair> assignedRepairs = parseClientResponseMessage(
+                assign.getContent());
 
             // adding all repairs who have a technician assigned to history
             repairsHistory.putAll(assignedRepairs);
 
-
-
             Iterator it = assignedRepairs.entrySet().iterator();
-            while (it.hasNext()){
+            while (it.hasNext()) {
                 Map.Entry pair = (Map.Entry) it.next();
                 // remove repairs already assigned by a technician from all day repairs requests
                 dayRequestRepairs.remove(pair.getKey());
             }
 
             // move remaining repairs from day repairs to need adjustments list
-            if(dayRequestRepairs.size() != 0){
+            if (dayRequestRepairs.size() != 0) {
                 requestAdjustments.putAll(dayRequestRepairs);
             }
 

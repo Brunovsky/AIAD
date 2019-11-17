@@ -4,10 +4,14 @@ import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 import static jade.lang.acl.MessageTemplate.or;
+import static message.Messages.parseClientAdjustmentMessage;
+import static message.Messages.parseClientRequestMessage;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 
 import jade.core.AID;
@@ -21,9 +25,6 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREInitiator;
-import types.ClientRequest;
-import static message.Messages.*;
-
 import types.Repair;
 import utils.Logger;
 
@@ -34,17 +35,15 @@ public class Station extends Agent {
     private static final String technicianSub = "technician-station-subscription";
 
     private final String id;
-    private final HashMap<AID, String> clients;
-    private final HashMap<AID, String> technicians;
-    private final HashMap<AID, String> companies;
-    private HashMap<AID, HashMap<Integer, ClientRequest>> repairsQueue;
+    private final Set<AID> clients;
+    private final Set<AID> companies;
+    private HashMap<AID, HashMap<Integer, Repair>> repairsQueue;
 
     public Station(String id) {
         assert id != null;
         this.id = id;
-        this.clients = new HashMap<>();
-        this.technicians = new HashMap<>();
-        this.companies = new HashMap<>();
+        this.clients = new HashSet<>();
+        this.companies = new HashSet<>();
         this.repairsQueue = new HashMap<>();
 
         // TODO LOGIC: replace String with a proper data structure for state tracking
@@ -58,7 +57,6 @@ public class Station extends Agent {
 
         addBehaviour(new SubscriptionListener(this, clientSub, clients));
         addBehaviour(new SubscriptionListener(this, companySub, companies));
-        addBehaviour(new SubscriptionListener(this, technicianSub, technicians));
 
         // TODO COMMS: in a loop, in this order (during the night)
         addBehaviour(new FetchNewMalfunctions(this));
@@ -90,7 +88,7 @@ public class Station extends Agent {
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology("prompt-client-malfunctions");
-        for (AID client : clients.keySet()) message.addReceiver(client);
+        for (AID client : clients) message.addReceiver(client);
         return message;
     }
 
@@ -98,7 +96,7 @@ public class Station extends Agent {
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology("inform-company-jobs");
-        for (AID company : companies.keySet()) message.addReceiver(company);
+        for (AID company : companies) message.addReceiver(company);
         return message;
     }
 
@@ -114,23 +112,23 @@ public class Station extends Agent {
         @Override  // Protocol B
         protected void handleInform(ACLMessage inform) {
             AID client = inform.getSender();
-            assert clients.containsKey(client);
+            assert clients.contains(client);
             String content = inform.getContent();
 
             HashMap<Integer, Double> newAdjustments = parseClientAdjustmentMessage(content);
-            if(newAdjustments.size() != 0 && repairsQueue.containsKey(client)){
-                HashMap<Integer, ClientRequest> clientUnresolvedRepairs = repairsQueue.get(client);
+            if (newAdjustments.size() != 0 && repairsQueue.containsKey(client)) {
+                HashMap<Integer, Repair> clientUnresolvedRepairs = repairsQueue.get(client);
                 Iterator it = newAdjustments.entrySet().iterator();
-                while (it.hasNext()){
+                while (it.hasNext()) {
                     Map.Entry pair = (Map.Entry) it.next();
-                    clientUnresolvedRepairs.get(pair.getKey()).setMaxPrice((Double) pair.getValue());
+                    clientUnresolvedRepairs.get(pair.getKey()).setPrice((Double) pair.getValue());
                 }
             }
 
-            HashMap<Integer, ClientRequest> newRequests = parseClientRequestMessage(content);
-            if(repairsQueue.containsKey(client)){
+            HashMap<Integer, Repair> newRequests = parseClientRequestMessage(content);
+            if (repairsQueue.containsKey(client)) {
                 repairsQueue.get(client).putAll(newRequests);
-            } else{
+            } else {
                 repairsQueue.put(client, newRequests);
             }
 
@@ -164,20 +162,20 @@ public class Station extends Agent {
         @Override  // Protocol D
         protected void handleAllResultNotifications(Vector resultNotifications) {
             // TODO LOGIC: read 'resultNotifications' contents, compare with the repair cache,
-            // TODO LOGIC: and assign technicians to jobs.
 
             // TODO COMMS: then inform each client. Some contents will be 'empty' (no assignments).
             // DO THIS FOR EACH CLIENT
 
             // clientsRepairs is a HashMap<Integer, Repair>, Integer it's the clients repair id
             // HashMap<Integer, Repair> clientsRepairs = new HashMap<>();
-            // String content = getClientResponseMessage(clientsRepairs);
+            // String contentClient = getClientResponseMessage(clientsRepairs);
+
+            // TODO COMMS:
+            // informCompany(company, content)
             // informClient(client, content)
 
-            // TODO COMMS: then inform each technician. Some contents will be 'empty'.
-            // informCompany(company, content)
-
-            // TODO COMMS: remove from repairsQueue the repairs resolved, just leave the ones with no assignments
+            // TODO COMMS: remove from repairsQueue the repairs resolved, just leave the ones with
+            // no assignments
         }
     }
 
@@ -185,9 +183,9 @@ public class Station extends Agent {
         private static final long serialVersionUID = 9068977292715279066L;
 
         private final MessageTemplate mt;
-        private final Map<AID, String> subscribers;
+        private final Set<AID> subscribers;
 
-        SubscriptionListener(Agent a, String ontology, Map<AID, String> subscribers) {
+        SubscriptionListener(Agent a, String ontology, Set<AID> subscribers) {
             super(a);
             this.subscribers = subscribers;
 
@@ -195,8 +193,6 @@ public class Station extends Agent {
             MessageTemplate unsubscribe = MatchPerformative(ACLMessage.CANCEL);
             MessageTemplate onto = MatchOntology(ontology);
             this.mt = and(or(subscribe, unsubscribe), onto);
-
-            subscribers.keySet();
         }
 
         @Override
@@ -208,7 +204,7 @@ public class Station extends Agent {
             }
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
-                this.subscribers.putIfAbsent(message.getSender(), new String());
+                this.subscribers.add(message.getSender());
             } else /* ACLMessage.CANCEL */ {
                 this.subscribers.remove(message.getSender());
             }

@@ -1,4 +1,4 @@
-package agents.strategies;
+package strategies;
 
 import jade.core.AID;
 import simulation.World;
