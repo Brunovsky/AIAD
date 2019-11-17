@@ -1,11 +1,11 @@
 package strategies;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import types.Repair;
 
 public interface ClientStrategy {
-    public HashMap<Integer, Repair> generateNewRepairs(int repairId);
+    public void evaluateAdjustments(Map<Integer, Repair> dayRequestRepairs);
 
-    public HashMap<Integer, Double> evaluateAdjustments(HashMap<Integer, Repair> adjustments);
+    public int generateNewRepairs(Map<Integer, Repair> dayRequestRepairs, int repairId);
 }

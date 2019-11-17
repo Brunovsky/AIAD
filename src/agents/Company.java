@@ -24,6 +24,7 @@ import jade.lang.acl.MessageTemplate;
 import simulation.World;
 import strategies.company.CompanyStrategy;
 import types.Contract;
+import types.JobList;
 import types.Proposal;
 import types.StationHistory;
 import types.TechnicianHistory;
@@ -114,6 +115,12 @@ public class Company extends Agent {
         }
     }
 
+    // ***** UTILITIES
+
+    private int numTechniciansInStation(AID station) {
+        return stationTechnicians.get(station).size();
+    }
+
     // ***** BEHAVIOURS
 
     private class ReceiveContractProposals extends Behaviour {
@@ -137,16 +144,14 @@ public class Company extends Agent {
             }
 
             AID technician = propose.getSender();
-            if (!activeTechnicians.contains(technician)) return;
             Contract contract = Contract.from(myAgent.getAID(), technician, propose);
+
+            // TODO SIMPLIFICATION
+            assert activeTechnicians.contains(technician);
 
             ACLMessage reply = propose.createReply();
             reply.setContent(propose.getContent());
-            if (strategy.acceptContractOffer(contract)) {
-                reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-            } else {
-                reply.setPerformative(ACLMessage.REFUSE);
-            }
+            reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
             send(reply);
         }
 
@@ -169,30 +174,48 @@ public class Company extends Agent {
             AID station = message.getSender();
             assert activeStations.contains(station);
 
-            String availableJobs = message.getContent();
-            int technicians = stationTechnicians.get(station).size();
+            int technicians = numTechniciansInStation(station);
 
-            Proposal proposal = strategy.makeProposal(technicians, availableJobs);
-            proposals.put(station, proposal);
+            if (technicians > 0) {
+                JobList jobList = JobList.from(message);
+                Proposal proposal = strategy.makeProposal(technicians, jobList);
+                proposals.put(station, proposal);
 
-            ACLMessage reply = message.createReply();
-            reply.setPerformative(ACLMessage.INFORM);
-            reply.setContent(proposal.make());
-            send(reply);
+                ACLMessage reply = message.createReply();
+                reply.setPerformative(ACLMessage.INFORM);
+                reply.setContent(proposal.make());
+                send(reply);
+            } else {
+                stationHistory.get(station).add(null, null);
+
+                ACLMessage reply = message.createReply();
+                reply.setPerformative(ACLMessage.REFUSE);
+                send(reply);
+            }
         }
 
         private void informTechnicians(ACLMessage message) {
             AID station = message.getSender();
             assert activeStations.contains(station);
 
-            Proposal accepted = Proposal.from(message);
+            int technicians = numTechniciansInStation(station);
 
-            // TODO LOGIC: compute technicians' cut.
+            Proposal proposed = proposals.get(station);  // TODO STATISTICS
+            Proposal accepted = Proposal.from(myAgent.getAID(), message);
+            stationHistory.get(station).add(proposed, accepted);
 
-            // TODO LOGIC: (Loop) Pay each technician after distributing jobs.
-            {
-                WorkFinance payment = new WorkFinance();
-                // TODO LOGIC: find payment for technician.
+            int jobs = accepted.totalJobs() > 0 ? 1 : 0;
+            double cut = accepted.totalEarnings() / technicians;
+            double earned = accepted.totalEarnings();
+
+            for (AID technician : stationTechnicians.get(station)) {
+                Contract contract = technicianHistory.get(technician).currentContract();
+
+                double salary = contract.salary;
+                double techCut = contract.percentage * cut;
+                WorkFinance payment = new WorkFinance(1, jobs, salary, techCut, 0);
+
+                earned -= techCut + salary;
 
                 ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
                 inform.setOntology(World.get().getCompanyPayment());
@@ -223,6 +246,7 @@ public class Company extends Agent {
             acl = MatchPerformative(ACLMessage.INFORM);
             mt = and(onto, acl);
             for (AID station : activeStations) {
+                if (numTechniciansInStation(station) == 0) continue;
                 MessageTemplate from = MatchSender(station);
                 ACLMessage inform = receive(and(mt, from));  // Protocol C
                 while (inform == null) {
@@ -236,7 +260,7 @@ public class Company extends Agent {
         @Override
         public boolean done() {
             return false;
-            // return true on the final day
+            // TODO ORCHESTRATION: return true on the final day
         }
     }
 
