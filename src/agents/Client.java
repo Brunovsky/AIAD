@@ -18,6 +18,7 @@ import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import simulation.World;
 import strategies.ClientStrategy;
 import strategies.ClientStrategy1;
 import types.Repair;
@@ -25,7 +26,7 @@ import utils.Logger;
 
 public class Client extends Agent {
     private static final long serialVersionUID = 5090227891936996896L;
-    private static final String subscriptionOnto = "client-station-subscription";
+    private static String subscriptionOnto;
 
     private final String id;
     private AID station;
@@ -44,7 +45,7 @@ public class Client extends Agent {
         repairsHistory = new HashMap<>();      // repairs done
         dayRequestRepairs = new HashMap<>();   // repairs for the day
         requestAdjustments = new HashMap<>();  // repairs that need an adjustments
-
+        subscriptionOnto = World.get().getClientStationService();
         // TODO Choose strategy, maybe send as a parameter in Client contructor
         strategy = new ClientStrategy1();
     }
@@ -87,7 +88,7 @@ public class Client extends Agent {
             HashMap<Integer, Double> adjustments = evaluateAdjustments();
 
             // Protocol A: wait for request message
-            onto = MatchOntology("prompt-client-malfunctions");
+            onto = MatchOntology(World.get().getPromptClient());
             acl = MatchPerformative(ACLMessage.REQUEST);
             ACLMessage request = receive(and(onto, acl));
             while (request == null) {
@@ -102,7 +103,7 @@ public class Client extends Agent {
             send(reply);
 
             // Protocol C: wait for assignments...
-            onto = MatchOntology("inform-client-assignment");
+            onto = MatchOntology(World.get().getInformClient());
             acl = MatchPerformative(ACLMessage.INFORM);
             ACLMessage assign = receive(and(onto, acl));
             while (assign == null) {
