@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public class TechnicianMessage implements Serializable {
 
-    // Message response from Technician to Client
+    // Messages response from Technician to Client
     private double repairPrice;
     private double startRepairTime;
 
