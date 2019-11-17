@@ -1,6 +1,7 @@
 package strategies.company;
 
 import types.Contract;
+import types.JobList;
 import types.Proposal;
 
 public class SimpleCompanyStrategy extends CompanyStrategy {
@@ -10,7 +11,8 @@ public class SimpleCompanyStrategy extends CompanyStrategy {
     }
 
     @Override
-    public Proposal makeProposal(int technicians, String message) {
+    public Proposal makeProposal(int technicians, JobList jobList) {
+        // Prefer hard tasks
         return null;
     }
 

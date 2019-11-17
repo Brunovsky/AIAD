@@ -1,25 +1,18 @@
 package strategies;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import types.Repair;
 
 public class ClientStrategy2 implements ClientStrategy {
     @Override
-    public HashMap<Integer, Repair> generateNewRepairs(int repairId) {
-        HashMap<Integer, Repair> newRepairs = new HashMap<>();
-
-        // TODO STRATEGY implement
-
-        return newRepairs;
+    public void evaluateAdjustments(Map<Integer, Repair> dayRequestRepairs) {
+        // TODO Auto-generated method stub
     }
 
     @Override
-    public HashMap<Integer, Double> evaluateAdjustments(HashMap<Integer, Repair> adjustments) {
-        HashMap<Integer, Double> needsAdjustments = new HashMap<>();
-
-        // TODO STRATEGY implement
-
-        return needsAdjustments;
+    public int generateNewRepairs(Map<Integer, Repair> dayRequestRepairs, int repairId) {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }
