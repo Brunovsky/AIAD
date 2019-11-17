@@ -9,23 +9,31 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import agents.OldClient;
-import agents.OldTechnician;
+import agents.Client;
+import agents.Company;
+import agents.Station;
+import agents.Technician;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
-import utils.ClientType;
+import strategies.ClientStrategy;
+import strategies.TechnicianStrategy;
+import strategies.company.CompanyStrategy;
 import utils.MalfunctionType;
-import utils.TechnicianType;
-import utils.TimeBoard;
 
 public class Simulation {
-    private Map<TechnicianType, ArrayList<OldTechnician>> technicianMap;
-    private ArrayList<OldTechnician> technicianAgents;
-    private ArrayList<OldClient> clientAgents;
+
+    private ArrayList<Technician> technicianAgents;
+    private ArrayList<Client> clientAgents;
+    private ArrayList<Station> stationAgents;
+    private ArrayList<Company> companyAgents;
+
+    private Map<ClientStrategy, ArrayList<Technician>> clientMap;
+    private Map<CompanyStrategy, ArrayList<Technician>> companyMap;
+    private Map<TechnicianStrategy, ArrayList<Technician>> technicianMap;
 
     private Runtime runtime;
     private Profile profile;
@@ -33,25 +41,31 @@ public class Simulation {
 
     public static void main(String[] args) {
         System.out.print("\033[H\033[2J");
-        World.set(new PortoWorld());
+        //World.set(new PortoWorld());
         new Simulation();
     }
 
     public Simulation() {
-        technicianMap = new HashMap<>();
         technicianAgents = new ArrayList<>();
         clientAgents = new ArrayList<>();
+        stationAgents = new ArrayList<>();
+        companyAgents = new ArrayList<>();
 
         runtime = Runtime.instance();
         profile = new ProfileImpl(true);
         container = runtime.createAgentContainer(profile);
 
-        launchTechnicians();
+        launchStations();
         launchClients();
+        launchTechnicians();
+        launchCompanies();
         printStatistics();
 
         try {
-            for (OldTechnician technician : technicianAgents) technician.doDelete();
+            for (Technician technician : technicianAgents) technician.doDelete();
+            for (Company company : companyAgents) company.doDelete();
+            for (Client client : clientAgents) client.doDelete();
+            for (Station station : stationAgents) station.doDelete();
             container.kill();
             runtime.shutDown();
         } catch (StaleProxyException e) {
@@ -61,7 +75,7 @@ public class Simulation {
 
     private double findEndTime() {
         double endTime = 0;
-        for (OldTechnician technician : technicianAgents) {
+        for (Technician technician : technicianAgents) {
             double tempEndTime = technician.getTimeBoard().getLastSlotEndTime();
             if (endTime < tempEndTime) {
                 endTime = tempEndTime;
@@ -73,7 +87,7 @@ public class Simulation {
     private void printStatistics() {  // get last technician endtime
         double endTime = findEndTime();
 
-        for (OldTechnician technician : technicianAgents) {
+        for (Technician technician : technicianAgents) {
             TimeBoard timeBoard = technician.getTimeBoard();
 
             System.out.println("> Technician " + technician.getLocalName());
@@ -133,43 +147,28 @@ public class Simulation {
     }
 
     /**
-     * Launch all world technicians
+     * Launch all world stations
      */
-    private boolean launchTechnicians() {
-        int[] indices = new int[World.get().T];
-        for (int i = 0; i < World.get().T; ++i) indices[i] = i;
-        shuffle(indices);
+    private boolean launchStations() {
 
+        int[] indices = new int[World.get().S];
         int i = 0;
 
-        for (TechniciansDesc entry : World.get().technicians) {
-            TechnicianType personality = entry.personality;
-            technicianMap.putIfAbsent(personality, new ArrayList<>());
+        for (i = 0; i < World.get().S; ++i) {
+            String id = "station_" + (i + 1);
 
-            for (int j = 0; j < entry.number; ++j, ++i) {
-                double theta = (2.0 * indices[i]) * Math.PI / (double) World.get().T;
+            Station station = new Station(id);
 
-                String id = "technician_" + (i + 1);
-                double x = World.get().technicianRadius * Math.cos(theta);
-                double y = World.get().technicianRadius * Math.sin(theta);
-                Location location = new Location(x, y);
-
-                OldTechnician technician = new OldTechnician(location, personality);
-
-                try {
-                    AgentController ac = container.acceptNewAgent(id, technician);
-                    ac.start();
-                } catch (StaleProxyException e) {
-                    e.printStackTrace();
-                    return false;
-                }
-
-                technicianMap.get(personality).add(technician);
-                technicianAgents.add(technician);
+            try {
+                AgentController ac = container.acceptNewAgent(id, station);
+                ac.start();
+            } catch (StaleProxyException e) {
+                e.printStackTrace();
+                return false;
             }
-        }
 
-        return true;
+            stationAgents.add(station);
+        }
     }
 
     /**
@@ -177,32 +176,23 @@ public class Simulation {
      * locations.
      */
     private boolean launchClients() {
-        int[][] indices = new int[World.get().C][2];
-        ClientType personalities[] = new ClientType[World.get().C];
+        int[] indices = new int[World.get().C];
+        ClientStrategy strategies[] = new ClientStrategy[World.get().C];
         MalfunctionType types[] = new MalfunctionType[World.get().C];
 
-        fillArrays(indices, personalities, types);
         shuffle(indices);
         shuffle(personalities);
         shuffle(types);
 
-        ClientWaiter waiter = new ClientWaiter();
-
         for (int i = 0; i < World.get().C; ++i) {
-            int circle = indices[i][0], k = indices[i][1];
-            double radius = World.get().clientRadius[circle];
-            double n = (double) World.get().clientNumbers[circle];
-            double theta = (2.0 * k) * Math.PI / n;
 
             String id = "client_" + (i + 1);
-            double x = radius * Math.cos(theta);
-            double y = radius * Math.sin(theta);
-            Location location = new Location(x, y);
-            ClientType personality = personalities[i];
-            double time = World.get().period * i;
+
+            ClientStrategy personality = personalities[i];
+
             MalfunctionType malfunction = types[i];
 
-            OldClient client = new OldClient(location, malfunction, time, personality, waiter);
+            Client client = new Client(location, malfunction, time, personality, waiter);
 
             try {
                 AgentController ac = container.acceptNewAgent(id, client);
@@ -221,7 +211,51 @@ public class Simulation {
         return true;
     }
 
-    public class ClientWaiter implements OldClient.Callback {
+    /**
+     * Launch all world companies
+     */
+    private boolean launchCompanies() {
+        return false;
+    }
+
+    private boolean launchTechnicians() {
+        int[] indices = new int[World.get().T];
+        for (int i = 0; i < World.get().T; ++i) indices[i] = i;
+        shuffle(indices);
+
+        int i = 0;
+
+        for (TechniciansDesc entry : World.get().technicians) {
+            TechnicianStrategy personality = entry.personality;
+            technicianMap.putIfAbsent(personality, new ArrayList<>());
+
+            for (int j = 0; j < entry.number; ++j, ++i) {
+                double theta = (2.0 * indices[i]) * Math.PI / (double) World.get().T;
+
+                String id = "technician_" + (i + 1);
+                double x = World.get().technicianRadius * Math.cos(theta);
+                double y = World.get().technicianRadius * Math.sin(theta);
+                Location location = new Location(x, y);
+
+                Technician technician = new Technician(location, personality);
+
+                try {
+                    AgentController ac = container.acceptNewAgent(id, technician);
+                    ac.start();
+                } catch (StaleProxyException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+
+                technicianMap.get(personality).add(technician);
+                technicianAgents.add(technician);
+            }
+        }
+
+        return true;
+    }
+
+    public class ClientWaiter implements Client.Callback {
         private Lock lock;
         private Condition condition;
 
