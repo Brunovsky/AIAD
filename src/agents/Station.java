@@ -4,12 +4,12 @@ import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 import static jade.lang.acl.MessageTemplate.or;
-import static message.Messages.parseClientAdjustmentMessage;
-import static message.Messages.parseClientRequestMessage;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -26,13 +26,17 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREInitiator;
 import simulation.World;
+import types.ClientRepairs;
+import types.JobList;
+import types.Proposal;
 import types.Repair;
+import types.RepairKey;
+import types.RepairList;
 import utils.Logger;
+import utils.MalfunctionType;
 
 public class Station extends Agent {
     private static final long serialVersionUID = 3322670743911601747L;
-    private static String clientSub;
-    private static String companySub;
 
     private final String id;
     private final Set<AID> clients;
@@ -45,9 +49,6 @@ public class Station extends Agent {
         this.clients = new HashSet<>();
         this.companies = new HashSet<>();
         this.repairsQueue = new HashMap<>();
-        companySub = World.get().getCompanyStationService();
-
-        clientSub = World.get().getClientStationService();
 
         // TODO LOGIC: replace String with a proper data structure for state tracking
     }
@@ -58,6 +59,8 @@ public class Station extends Agent {
 
         registerDFService();
 
+        String clientSub = World.get().getClientStationService();
+        String companySub = World.get().getCompanyStationService();
         addBehaviour(new SubscriptionListener(this, clientSub, clients));
         addBehaviour(new SubscriptionListener(this, companySub, companies));
 
@@ -96,11 +99,59 @@ public class Station extends Agent {
     }
 
     private ACLMessage prepareCompanyQueryMessage() {
+        easy = groupRepairs(MalfunctionType.EASY);
+        medium = groupRepairs(MalfunctionType.MEDIUM);
+        hard = groupRepairs(MalfunctionType.HARD);
+        JobList jobs = new JobList(easy.length, medium.length, hard.length);
+
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology(World.get().getInformCompanyJobs());
+        message.setContent(jobs.make());
         for (AID company : companies) message.addReceiver(company);
         return message;
+    }
+
+    // ***** UTILITIES
+
+    class Assignment {
+        final Map<AID, Proposal> proposals;
+        final Map<AID, Proposal> assignments;
+        final Map<AID, RepairList> repairs;
+
+        Assignment(Map<AID, Proposal> proposals) {
+            this.proposals = proposals;
+            this.assignments = new HashMap<>();
+            this.repairs = new HashMap<>();
+        }
+    }
+
+    private RepairKey[] easy, medium, hard;
+
+    private RepairKey[] groupRepairs(MalfunctionType type) {
+        ArrayList<RepairKey> list = new ArrayList<>();
+
+        for (AID client : repairsQueue.keySet()) {
+            HashMap<Integer, Repair> repairs = repairsQueue.get(client);
+            for (Integer id : repairs.keySet()) {
+                Repair repair = repairs.get(id);
+                if (type.equals(repair.getMalfunctionType())) {
+                    list.add(new RepairKey(client, id));
+                }
+            }
+        }
+
+        RepairKey[] array = (RepairKey[]) list.toArray();
+        Arrays.sort(array, new Comparator<RepairKey>() {
+            @Override
+            public int compare(RepairKey lhs, RepairKey rhs) {
+                double l = repairsQueue.get(lhs.client).get(lhs.id).getPrice();
+                double r = repairsQueue.get(rhs.client).get(rhs.id).getPrice();
+                return l > r ? -1 : l < r ? 1 : 0;
+            }
+        });
+
+        return array;
     }
 
     // ***** BEHAVIOURS
@@ -116,23 +167,12 @@ public class Station extends Agent {
         protected void handleInform(ACLMessage inform) {
             AID client = inform.getSender();
             assert clients.contains(client);
-            String content = inform.getContent();
+            ClientRepairs repairs = ClientRepairs.from(inform);
 
-            HashMap<Integer, Double> newAdjustments = parseClientAdjustmentMessage(content);
-            if (newAdjustments.size() != 0 && repairsQueue.containsKey(client)) {
-                HashMap<Integer, Repair> clientUnresolvedRepairs = repairsQueue.get(client);
-                Iterator it = newAdjustments.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry pair = (Map.Entry) it.next();
-                    clientUnresolvedRepairs.get(pair.getKey()).setPrice((Double) pair.getValue());
-                }
-            }
+            if (!repairsQueue.containsKey(client)) repairsQueue.put(client, new HashMap<>());
 
-            HashMap<Integer, Repair> newRequests = parseClientRequestMessage(content);
-            if (repairsQueue.containsKey(client)) {
-                repairsQueue.get(client).putAll(newRequests);
-            } else {
-                repairsQueue.put(client, newRequests);
+            for (int id : repairs.list.keySet()) {
+                repairsQueue.get(client).put(id, repairs.list.get(id));
             }
 
             // TODO COMMS: verify this does indeed finish when all clients respond.
@@ -146,39 +186,46 @@ public class Station extends Agent {
             super(a, prepareCompanyQueryMessage());  // Protocol C
         }
 
-        private void informCompany(AID company, String content) {
+        private void informCompany(AID company, Proposal content) {
             ACLMessage message = new ACLMessage(ACLMessage.INFORM);
             message.setOntology(World.get().getInformCompanyAssignment());
             message.addReceiver(company);
-            message.setContent(content);
+            message.setContent(content.make());
             send(message);  // Protocol E
         }
 
-        private void informClient(AID client, String content) {
+        private void informClient(AID client, RepairList content) {
             ACLMessage message = new ACLMessage(ACLMessage.INFORM);
             message.setOntology(World.get().getInformClient());
             message.addReceiver(client);
-            message.setContent(content);
+            message.setContent(content.make());
             send(message);  // Protocol F
         }
 
         @Override  // Protocol D
         protected void handleAllResultNotifications(Vector resultNotifications) {
-            // TODO LOGIC: read 'resultNotifications' contents, compare with the repair cache,
+            int N = resultNotifications.size();
+            ACLMessage[] messages = new ACLMessage[N];
+            resultNotifications.copyInto(messages);
 
-            // TODO COMMS: then inform each client. Some contents will be 'empty' (no assignments).
-            // DO THIS FOR EACH CLIENT
+            Map<AID, Proposal> proposals = new HashMap<>();
+            for (int i = 0; i < N; ++i) {
+                AID company = messages[i].getSender();
+                proposals.put(company, Proposal.from(company, messages[i]));
+            }
 
-            // clientsRepairs is a HashMap<Integer, Repair>, Integer it's the clients repair id
-            // HashMap<Integer, Repair> clientsRepairs = new HashMap<>();
-            // String contentClient = getClientResponseMessage(clientsRepairs);
+            Assignment assignment = new Assignment(proposals);
 
-            // TODO COMMS:
-            // informCompany(company, content)
-            // informClient(client, content)
+            for (AID company : assignment.assignments.keySet()) {
+                Proposal proposal = assignment.assignments.get(company);
+                informCompany(company, proposal);
+            }
 
-            // TODO COMMS: remove from repairsQueue the repairs resolved, just leave the ones with
-            // no assignments
+            for (AID client : assignment.repairs.keySet()) {
+                RepairList list = assignment.repairs.get(client);
+                informClient(client, list);
+                for (int id : list.ids) repairsQueue.get(client).remove(id);
+            }
         }
     }
 

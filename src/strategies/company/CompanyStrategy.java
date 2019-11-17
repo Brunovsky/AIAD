@@ -2,6 +2,7 @@ package strategies.company;
 
 import agents.Company;
 import types.Contract;
+import types.JobList;
 import types.Proposal;
 
 public abstract class CompanyStrategy {
@@ -19,7 +20,7 @@ public abstract class CompanyStrategy {
 
     // possibility: counter-offer
 
-    public abstract Proposal makeProposal(int technicians, String message);
+    public abstract Proposal makeProposal(int technicians, JobList jobList);
 
     public abstract Performance evaluatePerformance();
 }
