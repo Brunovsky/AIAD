@@ -1,3 +1,4 @@
+
 package strategies;
 
 import jade.core.AID;
@@ -6,7 +7,7 @@ import types.Contract;
 import types.JobList;
 import types.Proposal;
 
-public class SimpleCompanyStrategy extends CompanyStrategy {
+public class UmNomeParaMeter extends CompanyStrategy {
     @Override
     public Contract initialContract(AID technician, AID station) {
         String stationName = station.getLocalName();
@@ -24,15 +25,15 @@ public class SimpleCompanyStrategy extends CompanyStrategy {
 
         if (technicians == 0) return null;
 
-        proposal.easyPrice = 10;
-        proposal.mediumPrice = 20;
-        proposal.hardPrice = 30;
+        proposal.easyPrice = 20;
+        proposal.mediumPrice = 40;
+        proposal.hardPrice = 60;
 
-        if (technicians >= jobList.easy) {
-            technicians -= jobList.easy;
-            proposal.easy = jobList.easy;
+        if (technicians >= jobList.hard) {
+            technicians -= jobList.hard;
+            proposal.hard = jobList.hard;
         } else {
-            proposal.easy = technicians;
+            proposal.hard = technicians;
             return proposal;
         }
 
@@ -44,11 +45,11 @@ public class SimpleCompanyStrategy extends CompanyStrategy {
             return proposal;
         }
 
-        if (technicians >= jobList.hard) {
-            technicians -= jobList.hard;
-            proposal.hard = jobList.hard;
+        if (technicians >= jobList.easy) {
+            technicians -= jobList.easy;
+            proposal.easy = jobList.easy;
         } else {
-            proposal.hard = technicians;
+            proposal.easy = technicians;
             return proposal;
         }
 
