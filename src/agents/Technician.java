@@ -103,10 +103,8 @@ public class Technician extends Agent {
 
     private void createWorkLog(WorkFinance finance) {
         int day = World.get().getDay();
-        int jobs = finance.jobs;
-        double cut = finance.cut;
         assert finance.salary == currentContract.salary;
-        WorkLog log = new WorkLog(this, currentContract, jobs, cut);
+        WorkLog log = new WorkLog(this, currentContract, finance);
         workHistory.put(day, log);
     }
 
@@ -142,9 +140,24 @@ public class Technician extends Agent {
 
             Contract renewed = strategy.renewalContract();
 
-            // TODO COMMS: propose renewal to parent company
-            //
-            // otherwise propose renewal contract to other companies
+            ACLMessage message = new ACLMessage(ACLMessage.PROPOSE);
+            message.setOntology(World.get().getTechnicianOfferContract());
+            message.setContent(renewed.make());
+            send(message);
+
+            // TODO SIMPLIFICATION
+            MessageTemplate onto, acl, mt;
+            onto = MatchOntology(World.get().getTechnicianOfferContract());
+            acl = MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
+            mt = and(onto, acl);
+            ACLMessage reply = receive(mt);
+            while (reply == null) {
+                block();
+                reply = receive(mt);
+            }
+
+            contractHistory.add(renewed);
+            nextContract = renewed;
         }
     }
 

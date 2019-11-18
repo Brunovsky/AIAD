@@ -13,22 +13,20 @@ public class WorkLog {
     public final int day;
 
     public final State state;
-    public final int jobs;
-    public final double cut;
+    public final WorkFinance finance;
 
-    public WorkLog(Technician technician, Contract contract, int jobs, double cut) {
+    public WorkLog(Technician technician, Contract contract, WorkFinance finance) {
         this.technician = technician;
         this.contract = contract;  // may be null, when unemployed
 
         this.day = World.get().getDay();
 
         this.state = technician.getWorkState();
-        this.jobs = jobs;
-        this.cut = cut;
+        this.finance = finance;
     }
 
     public WorkLog(Technician technician) {
-        this(technician, null, 0, 0);
+        this(technician, null, new WorkFinance(1));
     }
 
     public boolean working() {
@@ -37,9 +35,5 @@ public class WorkLog {
 
     public boolean employed() {
         return state == State.UNEMPLOYED;
-    }
-
-    public boolean atHomeStation() {
-        return contract == null || contract.station.equals(technician.getHomeStation());
     }
 }
