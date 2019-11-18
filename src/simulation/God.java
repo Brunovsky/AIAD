@@ -17,17 +17,24 @@ import jade.lang.acl.ACLMessage;
 import utils.Logger;
 
 public class God extends Agent {
+    private static final long serialVersionUID = -2050222210117180499L;
+
     public final Lock lock = new ReentrantLock();
     public final Set<AID> day = new HashSet<>();
     public final Set<AID> night = new HashSet<>();
 
-    private static final God god = new God();
-    private static final int PERIOD = 5000, SETUP = 150000;
+    private static final int PERIOD = 4000, SETUP = 9000;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> dayFuture, nightFuture;
     private final Lock simLock = new ReentrantLock();
     private final Condition simWaiter = simLock.newCondition();
+
+    private static God god;
+
+    public static void renew() {
+        god = new God();
+    }
 
     public static God get() {
         return god;
@@ -72,7 +79,7 @@ public class God extends Agent {
     }
 
     public void wakeup(Set<AID> sleeping, String ontology) {
-        ACLMessage message = new ACLMessage(ACLMessage.INFORM_REF);
+        ACLMessage message = new ACLMessage(ACLMessage.INFORM);
         for (AID agent : sleeping) message.addReceiver(agent);
         message.setOntology(ontology);
         send(message);
@@ -88,10 +95,9 @@ public class God extends Agent {
 
             try {
                 lock.lock();
-                if (night.size() < total) {
-                    Logger.warn("GOD", "Only " + night.size() + " agents (out of " + total
-                                           + ") waiting for night");
-                }
+                Logger.warn("god",
+                            night.size() + " agents (out of " + total + ") waiting for night");
+
                 wakeup(night, "simulation-night");
             } finally {
                 night.clear();
@@ -111,10 +117,8 @@ public class God extends Agent {
 
             try {
                 lock.lock();
-                if (day.size() < total) {
-                    Logger.warn("GOD", "Only " + day.size() + " agents (out of " + total
-                                           + ") waiting for day");
-                }
+                Logger.warn("god", day.size() + " agents (out of " + total + ") waiting for day");
+
                 wakeup(day, "simulation-day");
             } finally {
                 day.clear();

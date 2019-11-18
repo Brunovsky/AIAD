@@ -6,16 +6,16 @@ import static jade.lang.acl.MessageTemplate.and;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import utils.Logger;
 
-public class SubscribeBehaviour extends OneShotBehaviour {
+public class SubscribeBehaviour extends WaitingBehaviour {
     private static final long serialVersionUID = 5101487004586828719L;
 
     private final AID post;
     private final String ontology;
+
+    private boolean subscribed = false;
 
     public SubscribeBehaviour(Agent a, AID post, String ontology) {
         super(a);
@@ -25,24 +25,20 @@ public class SubscribeBehaviour extends OneShotBehaviour {
 
     @Override
     public void action() {
-        MessageTemplate acl = MatchPerformative(ACLMessage.CONFIRM);
-        MessageTemplate onto = MatchOntology(ontology);
-
-        ACLMessage subscribe = new ACLMessage(ACLMessage.SUBSCRIBE);
-        subscribe.setOntology(ontology);
-        subscribe.addReceiver(post);
-        myAgent.send(subscribe);
-
-        Logger.error(myAgent.getLocalName(),
-                     "[" + ontology + "] Subscribing to " + post.getLocalName());
-
-        ACLMessage confirm = myAgent.receive(and(onto, acl));
-        while (confirm == null) {
-            block();
-            confirm = myAgent.receive(and(onto, acl));
+        if (!subscribed) {
+            ACLMessage subscribe = new ACLMessage(ACLMessage.SUBSCRIBE);
+            subscribe.setOntology(ontology);
+            subscribe.addReceiver(post);
+            myAgent.send(subscribe);
+            subscribed = true;
         }
 
-        Logger.error(myAgent.getLocalName(),
-                     "[" + ontology + "] Subscribed to " + post.getLocalName());
+        MessageTemplate acl = MatchPerformative(ACLMessage.CONFIRM);
+        MessageTemplate onto = MatchOntology(ontology);
+        ACLMessage confirm = myAgent.receive(and(onto, acl));
+        if (confirm != null)
+            finalize();
+        else
+            block();
     }
 }

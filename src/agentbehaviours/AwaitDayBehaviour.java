@@ -1,13 +1,12 @@
 package agentbehaviours;
 
 import jade.core.Agent;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import simulation.God;
 import utils.Logger;
 
-public class AwaitDayBehaviour extends OneShotBehaviour {
+public class AwaitDayBehaviour extends WaitingBehaviour {
     private static final long serialVersionUID = -6431251470507539025L;
 
     public AwaitDayBehaviour(Agent a) {
@@ -16,15 +15,15 @@ public class AwaitDayBehaviour extends OneShotBehaviour {
 
     @Override
     public void action() {
-        Logger.info(myAgent.getLocalName(), "Waiting for day...");
+        Logger.white(myAgent.getLocalName(), "Waiting for day...");
 
         God.get().awaitDay(myAgent.getAID());
 
         MessageTemplate mt = MessageTemplate.MatchOntology("simulation-day");
         ACLMessage message = myAgent.receive(mt);
-        while (message == null) {
+        if (message != null)
+            finalize();
+        else
             block();
-            message = myAgent.receive(mt);
-        }
     }
 }

@@ -19,7 +19,7 @@ public class UniformClientStrategy extends ClientStrategy {
     }
 
     @Override
-    public int generateNewRepairs(Map<Integer, Repair> dayRequestRepairs, int repairId) {
+    public int generateNewJobs(Map<Integer, Repair> dayRequestRepairs, int repairId) {
         Random rand = ThreadLocalRandom.current();
         int numberRequests = rand.nextInt(6);  // TODO CONSTANTS
         for (int i = 0; i < numberRequests; i++) {

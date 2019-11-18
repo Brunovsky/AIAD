@@ -4,6 +4,8 @@ import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 
+import java.util.HashMap;
+
 import agentbehaviours.AwaitDayBehaviour;
 import agentbehaviours.AwaitNightBehaviour;
 import agentbehaviours.SequentialLoopBehaviour;
@@ -12,10 +14,8 @@ import agentbehaviours.WaitingBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
-import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import java.util.HashMap;
 import simulation.World;
 import strategies.ClientStrategy;
 import types.ClientRepairs;
@@ -84,7 +84,8 @@ public class Client extends Agent {
         @Override
         public void action() {
             strategy.evaluateAdjustments(dayRequestRepairs);
-            repairId += strategy.generateNewRepairs(dayRequestRepairs, repairId);
+            repairId += strategy.generateNewJobs(dayRequestRepairs, repairId);
+            Logger.yellow(id, "Generated new jobs");
         }
     }
 
@@ -113,6 +114,8 @@ public class Client extends Agent {
             reply.setContent(new ClientRepairs(dayRequestRepairs).make());
             send(reply);
 
+            Logger.yellow(id, "Sent set of repairs to station upon request");
+
             finalize();
         }
     }
@@ -130,7 +133,7 @@ public class Client extends Agent {
             MessageTemplate onto = MatchOntology(World.get().getInformClient());
             MessageTemplate acl = MatchPerformative(ACLMessage.INFORM);
             ACLMessage assign = receive(and(onto, acl));
-            while (assign == null) {
+            if (assign == null) {
                 block();
                 return;
             }
@@ -142,6 +145,8 @@ public class Client extends Agent {
                 Repair repair = dayRequestRepairs.remove(id);
                 repairsHistory.put(id, repair);
             }
+
+            Logger.yellow(id, "Received repair updates from station (" + list.ids.size() + ")");
 
             finalize();
         }

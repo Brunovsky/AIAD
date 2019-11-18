@@ -6,15 +6,16 @@ import static jade.lang.acl.MessageTemplate.and;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
-public class UnsubscribeBehaviour extends OneShotBehaviour {
+public class UnsubscribeBehaviour extends WaitingBehaviour {
     private static final long serialVersionUID = 5101487004586828719L;
 
     private final AID post;
     private final String ontology;
+
+    private boolean unsubscribed = false;
 
     public UnsubscribeBehaviour(Agent a, AID post, String ontology) {
         super(a);
@@ -24,18 +25,20 @@ public class UnsubscribeBehaviour extends OneShotBehaviour {
 
     @Override
     public void action() {
+        if (!unsubscribed) {
+            ACLMessage subscribe = new ACLMessage(ACLMessage.CANCEL);
+            subscribe.setOntology(ontology);
+            subscribe.addReceiver(post);
+            myAgent.send(subscribe);
+            unsubscribed = true;
+        }
+
         MessageTemplate acl = MatchPerformative(ACLMessage.CONFIRM);
         MessageTemplate onto = MatchOntology(ontology);
-
-        ACLMessage subscribe = new ACLMessage(ACLMessage.CANCEL);
-        subscribe.setOntology(ontology);
-        subscribe.addReceiver(post);
-        myAgent.send(subscribe);
-
         ACLMessage confirm = myAgent.receive(and(onto, acl));
-        while (confirm == null) {
+        if (confirm != null)
+            finalize();
+        else
             block();
-            confirm = myAgent.receive(and(onto, acl));
-        }
     }
 }

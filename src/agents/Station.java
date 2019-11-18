@@ -4,21 +4,6 @@ import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 
-import agentbehaviours.AwaitNightBehaviour;
-import agentbehaviours.SequentialLoopBehaviour;
-import jade.core.AID;
-import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.ParallelBehaviour;
-import jade.core.behaviours.SequentialBehaviour;
-import jade.domain.DFService;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
-import jade.domain.FIPANames;
-import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREInitiator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +13,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+
+import agentbehaviours.AwaitNightBehaviour;
+import agentbehaviours.SequentialLoopBehaviour;
+import jade.core.AID;
+import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+import jade.proto.AchieveREInitiator;
 import simulation.World;
 import types.ClientRepairs;
 import types.JobList;
@@ -56,7 +55,7 @@ public class Station extends Agent {
 
     @Override
     protected void setup() {
-        Logger.info(id, "Setup " + id);
+        Logger.green(id, "Setup " + id);
 
         String clientSub = World.get().getClientStationService();
         String companySub = World.get().getCompanyStationService();
@@ -66,8 +65,9 @@ public class Station extends Agent {
         // Background
         addBehaviour(new SubscriptionListener(this, clientSub, clients));
         addBehaviour(new SubscriptionListener(this, companySub, companies));
-        // Night
+
         SequentialLoopBehaviour loop = new SequentialLoopBehaviour(this);
+        // Night
         loop.addSubBehaviour(new AwaitNightBehaviour(this));
         loop.addSubBehaviour(new FetchNewMalfunctions(this));
         loop.addSubBehaviour(new AssignJobs(this));
@@ -76,7 +76,7 @@ public class Station extends Agent {
 
     @Override
     protected void takeDown() {
-        Logger.warn(id, "Station Terminated!");
+        Logger.green(id, "Station Terminated!");
     }
 
     private void registerDFService() {
@@ -97,6 +97,8 @@ public class Station extends Agent {
     }
 
     private ACLMessage prepareClientPromptMessage() {
+        Logger.green(id, "Running client prompts...");
+
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology(World.get().getPromptClient());
@@ -105,6 +107,8 @@ public class Station extends Agent {
     }
 
     private ACLMessage prepareCompanyQueryMessage() {
+        Logger.green(id, "Running company queries...");
+
         JobList jobList = prepareJobList();
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
@@ -263,6 +267,13 @@ public class Station extends Agent {
 
         @Override  // Protocol D
         protected void handleAllResultNotifications(Vector resultNotifications) {
+            StringBuilder builder = new StringBuilder();
+            builder.append("List of clients subscribed:\n");
+            for (AID client : clients) builder.append(client.getLocalName() + "\n");
+            builder.append("List of companies subscribed:\n");
+            for (AID company : companies) builder.append(company.getLocalName() + "\n");
+            Logger.green(id, builder.toString());
+
             int N = resultNotifications.size();
             ACLMessage[] messages = new ACLMessage[N];
             resultNotifications.copyInto(messages);
@@ -308,12 +319,12 @@ public class Station extends Agent {
         @Override
         public void action() {
             ACLMessage message = receive(mt);
-            while (message == null) {
+            if (message == null) {
                 block();
                 return;
             }
 
-            Logger.info(id, ontology + " = Subscribe from " + message.getSender().getLocalName());
+            Logger.green(id, ontology + " = Subscribe from " + message.getSender().getLocalName());
             this.subscribers.add(message.getSender());
 
             ACLMessage reply = message.createReply();

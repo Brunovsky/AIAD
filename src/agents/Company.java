@@ -5,7 +5,11 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
-import agentbehaviours.AwaitDayBehaviour;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import agentbehaviours.AwaitNightBehaviour;
 import agentbehaviours.SequentialLoopBehaviour;
 import agentbehaviours.SubscribeBehaviour;
@@ -14,18 +18,12 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
-import jade.core.behaviours.ParallelBehaviour;
-import jade.core.behaviours.SequentialBehaviour;
 import jade.domain.DFService;
+import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import simulation.World;
 import strategies.CompanyStrategy;
 import types.Contract;
@@ -69,7 +67,7 @@ public class Company extends Agent {
 
     @Override
     protected void setup() {
-        Logger.info(id, "Setup " + id);
+        Logger.red(id, "Setup " + id);
 
         registerDFService();
         findStations();
@@ -87,7 +85,7 @@ public class Company extends Agent {
 
     @Override
     protected void takeDown() {
-        Logger.warn(id, "Company Terminated!");
+        Logger.red(id, "Company Terminated!");
     }
 
     // Register the company in yellow pages
@@ -152,7 +150,7 @@ public class Company extends Agent {
             MessageTemplate onto = MatchOntology(World.get().getTechnicianOfferContract());
             MessageTemplate acl = MatchPerformative(ACLMessage.PROPOSE);
             ACLMessage propose = receive(and(onto, acl));
-            while (propose == null) {
+            if (propose == null) {
                 block();
                 return;
             }
@@ -191,6 +189,8 @@ public class Company extends Agent {
                 block();
                 return;
             }
+
+            Logger.red(id, "Received job list from station " + station.getLocalName());
 
             int technicians = numTechniciansInStation(station);
 
@@ -241,6 +241,8 @@ public class Company extends Agent {
                 return;
             }
 
+            Logger.red(id, "Received accepted jobs from station " + station.getLocalName());
+
             int technicians = numTechniciansInStation(station);
 
             Proposal accepted = Proposal.from(myAgent.getAID(), message);
@@ -258,7 +260,8 @@ public class Company extends Agent {
 
                 double salary = contract.salary;
                 double techCut = contract.percentage * cut;
-                WorkFinance payment = new WorkFinance(1, haveJobs, salary, techCut, 0);
+                double sum = salary + techCut;
+                WorkFinance payment = new WorkFinance(1, haveJobs, salary, techCut, sum);
 
                 history.add(payment);
 
@@ -315,11 +318,11 @@ public class Company extends Agent {
         @Override
         public void action() {
             ACLMessage message = receive(mt);
-            while (message == null) {
+            if (message == null) {
                 block();
                 return;
             }
-            Logger.info(id, ontology + " = Subscribe from " + message.getSender().getLocalName());
+            Logger.red(id, ontology + " = Subscribe from " + message.getSender().getLocalName());
 
             AID technician = message.getSender();
             AID station = stationNames.get(message.getContent());

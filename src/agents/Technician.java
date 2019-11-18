@@ -7,18 +7,18 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import agentbehaviours.AwaitDayBehaviour;
 import agentbehaviours.AwaitNightBehaviour;
 import agentbehaviours.SequentialLoopBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
-import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import simulation.World;
 import strategies.TechnicianStrategy;
 import types.Contract;
@@ -60,12 +60,10 @@ public class Technician extends Agent {
 
     @Override
     protected void setup() {
-        Logger.info(id, "Setup " + id);
-
-        SequentialBehaviour all = new SequentialBehaviour(this);
+        Logger.blue(id, "Setup " + id);
 
         // Setup
-        all.addSubBehaviour(new InitialEmployment(this));
+        addBehaviour(new InitialEmployment(this));
 
         SequentialLoopBehaviour loop = new SequentialLoopBehaviour(this);
         // Night
@@ -75,12 +73,12 @@ public class Technician extends Agent {
         loop.addSubBehaviour(new AwaitDayBehaviour(this));
         loop.addSubBehaviour(new ProposeRenewal(this));
         loop.addSubBehaviour(new MoveToNextContract(this));
-        addBehaviour(all);
+        addBehaviour(loop);
     }
 
     @Override
     protected void takeDown() {
-        Logger.warn(id, "Technician Terminated!");
+        Logger.blue(id, "Technician Terminated!");
     }
 
     public AID getHomeStation() {
@@ -150,7 +148,9 @@ public class Technician extends Agent {
             // TODO SIMPLIFICATION
             MessageTemplate onto = MatchOntology(World.get().getTechnicianOfferContract());
             MessageTemplate acl = MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
-            ACLMessage reply = blockingReceive(and(onto, acl));
+            /* ACLMessage reply = */ blockingReceive(and(onto, acl));
+
+            Logger.blue(id, "Received company confirmation of contract renewal");
 
             contractHistory.add(renewed);
             nextContract = renewed;
@@ -179,6 +179,8 @@ public class Technician extends Agent {
                 nextContract = null;
                 state = WORKING;
             }
+
+            Logger.blue(id, "Moved to next contract");
         }
     }
 
@@ -200,7 +202,10 @@ public class Technician extends Agent {
             acl = MatchPerformative(ACLMessage.INFORM);
             mt = and(and(onto, acl), MatchSender(company));
             ACLMessage inform = blockingReceive(mt);  // Protocol A
-            createWorkLog(WorkFinance.from(inform));
+            WorkFinance finance = WorkFinance.from(inform);
+            createWorkLog(finance);
+
+            Logger.blue(id, "Received payment from company, value of " + finance.earned);
         }
 
         @Override
@@ -238,7 +243,7 @@ public class Technician extends Agent {
             currentContract = contract;
             state = WORKING;
 
-            Logger.info(id, "Initial employment @" + company.getLocalName());
+            Logger.blue(id, "Initial employment @" + company.getLocalName());
         }
     }
 }

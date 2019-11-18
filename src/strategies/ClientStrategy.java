@@ -14,5 +14,5 @@ public abstract class ClientStrategy {
 
     public abstract void evaluateAdjustments(Map<Integer, Repair> dayRequestRepairs);
 
-    public abstract int generateNewRepairs(Map<Integer, Repair> dayRequestRepairs, int repairId);
+    public abstract int generateNewJobs(Map<Integer, Repair> dayRequestRepairs, int repairId);
 }

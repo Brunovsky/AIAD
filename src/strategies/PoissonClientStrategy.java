@@ -11,7 +11,7 @@ public class PoissonClientStrategy extends ClientStrategy {
     }
 
     @Override
-    public int generateNewRepairs(Map<Integer, Repair> dayRequestRepairs, int repairId) {
+    public int generateNewJobs(Map<Integer, Repair> dayRequestRepairs, int repairId) {
         // TODO Auto-generated method stub
         return 0;
     }
