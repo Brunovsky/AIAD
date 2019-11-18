@@ -22,14 +22,15 @@ public class ClientRepairs {
         for (int id : list.keySet()) {
             Repair repair = list.get(id);
             int value = repair.getMalfunctionType().getValue();
-            if (builder.length() > 0) builder.append(';');
+            if (builder.length() > 0) builder.append(':');
             builder.append(String.format("%d=%d=%f", id, value, repair.getPrice()));
         }
         return builder.toString();
     }
 
     public static ClientRepairs from(ACLMessage message) {
-        String[] parts = message.getContent().split(";|=");
+        String[] parts = message.getContent().split(":|=");
+        assert message.getContent().isEmpty() || (parts.length % 3) == 0;
         ClientRepairs repairs = new ClientRepairs();
         for (int i = 0; i + 2 < parts.length;) {
             int id = Integer.parseInt(parts[i++]);
