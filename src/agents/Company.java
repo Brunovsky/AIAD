@@ -13,8 +13,8 @@ import java.util.Set;
 import agentbehaviours.SubscribeBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -108,6 +108,7 @@ public class Company extends Agent {
             DFAgentDescription[] stations = DFService.search(this, template);
             for (DFAgentDescription stationDescriptor : stations) {
                 AID station = stationDescriptor.getName();
+                activeStations.add(station);
                 stationHistory.put(station, new StationHistory(station));
                 stationNames.put(station.getLocalName(), station);
                 addBehaviour(new SubscribeBehaviour(this, station, companySub));
@@ -125,7 +126,7 @@ public class Company extends Agent {
 
     // ***** BEHAVIOURS
 
-    private class ReceiveContractProposals extends Behaviour {
+    private class ReceiveContractProposals extends OneShotBehaviour {
         private static final long serialVersionUID = -3009146208732453520L;
 
         ReceiveContractProposals(Agent a) {
@@ -157,14 +158,9 @@ public class Company extends Agent {
             reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
             send(reply);
         }
-
-        @Override
-        public boolean done() {
-            return false;
-        }
     }
 
-    private class CompanyNight extends Behaviour {
+    private class CompanyNight extends OneShotBehaviour {
         private static final long serialVersionUID = 6059838822925652797L;
 
         private final HashMap<AID, Proposal> proposals;
@@ -273,12 +269,6 @@ public class Company extends Agent {
                 informTechnicians(inform);  // Protocol D
             }
         }
-
-        @Override
-        public boolean done() {
-            return false;
-            // TODO ORCHESTRATION: return true on the final day
-        }
     }
 
     private class SubscriptionListener extends CyclicBehaviour {
@@ -303,11 +293,13 @@ public class Company extends Agent {
             }
 
             AID technician = message.getSender();
-            Contract initialContract = strategy.initialContract();
+            AID station = stationNames.get(message.getContent());
+            Contract initialContract = strategy.initialContract(station);
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
                 activeTechnicians.add(technician);
                 technicianHistory.put(technician, new TechnicianHistory(technician));
+                stationTechnicians.get(station).add(technician);
             }
 
             message.createReply();

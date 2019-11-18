@@ -2,6 +2,7 @@ package types;
 
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
+import utils.MalfunctionType;
 
 public class Proposal {
     public final AID company;
@@ -23,6 +24,41 @@ public class Proposal {
     public String make() {
         return String.format("%d=%f:%d=%f:%d=%f", easy, easyPrice, medium, mediumPrice, hard,
                              hardPrice);
+    }
+
+    public int get(MalfunctionType type) {
+        switch (type) {
+        case EASY:
+            return easy;
+        case MEDIUM:
+            return medium;
+        case HARD:
+            return hard;
+        }
+        return -1;
+    }
+
+    public void add(MalfunctionType type, int num) {
+        switch (type) {
+        case EASY:
+            easy += num;
+        case MEDIUM:
+            medium += num;
+        case HARD:
+            hard += num;
+        }
+    }
+
+    public double getPrice(MalfunctionType type) {
+        switch (type) {
+        case EASY:
+            return easyPrice;
+        case MEDIUM:
+            return mediumPrice;
+        case HARD:
+            return hardPrice;
+        }
+        return -1;
     }
 
     public static Proposal from(AID company, ACLMessage message) {

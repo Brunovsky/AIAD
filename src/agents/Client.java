@@ -10,7 +10,7 @@ import agentbehaviours.SubscribeBehaviour;
 import agentbehaviours.UnsubscribeBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -65,7 +65,7 @@ public class Client extends Agent {
         Logger.warn(getLocalName(), "Client Terminated!");
     }
 
-    class ClientNight extends Behaviour {
+    class ClientNight extends OneShotBehaviour {
         private static final long serialVersionUID = 2838271060454701293L;
 
         @Override
@@ -106,12 +106,6 @@ public class Client extends Agent {
                 Repair repair = dayRequestRepairs.remove(id);
                 repairsHistory.put(id, repair);
             }
-        }
-
-        @Override
-        public boolean done() {
-            return false;
-            // TODO ORCHESTRATION: return true on the final day.
         }
     }
 }
