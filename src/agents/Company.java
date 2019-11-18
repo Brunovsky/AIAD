@@ -108,6 +108,7 @@ public class Company extends Agent {
             DFAgentDescription[] stations = DFService.search(this, template);
             for (DFAgentDescription stationDescriptor : stations) {
                 AID station = stationDescriptor.getName();
+                activeStations.add(station);
                 stationHistory.put(station, new StationHistory(station));
                 stationNames.put(station.getLocalName(), station);
                 addBehaviour(new SubscribeBehaviour(this, station, companySub));
@@ -303,11 +304,13 @@ public class Company extends Agent {
             }
 
             AID technician = message.getSender();
-            Contract initialContract = strategy.initialContract();
+            AID station = stationNames.get(message.getContent());
+            Contract initialContract = strategy.initialContract(station);
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
                 activeTechnicians.add(technician);
                 technicianHistory.put(technician, new TechnicianHistory(technician));
+                stationTechnicians.get(station).add(technician);
             }
 
             message.createReply();

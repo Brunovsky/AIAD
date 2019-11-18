@@ -1,6 +1,7 @@
 package strategies;
 
 import agents.Company;
+import jade.core.AID;
 import types.Contract;
 import types.JobList;
 import types.Proposal;
@@ -14,7 +15,7 @@ public abstract class CompanyStrategy {
         this.company = company;
     }
 
-    public abstract Contract initialContract();
+    public abstract Contract initialContract(AID station);
 
     public abstract Proposal makeProposal(int technicians, JobList jobList);
 }
