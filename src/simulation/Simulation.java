@@ -50,7 +50,7 @@ public class Simulation {
         technicianMap = new HashMap<>();
 
         runtime = Runtime.instance();
-        profile = new ProfileImpl(false);
+        profile = new ProfileImpl(true);
         container = runtime.createAgentContainer(profile);
 
         God.renew();

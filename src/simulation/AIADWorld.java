@@ -2,7 +2,7 @@ package simulation;
 
 public class AIADWorld extends World {
     public AIADWorld() {
-        numberDays = 10;
+        numberDays = 4;
 
         T = 20;
         technicians = new TechniciansDesc[] {

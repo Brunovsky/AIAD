@@ -143,9 +143,9 @@ public class Client extends Agent {
             RepairList list = RepairList.from(assign);
 
             for (int id : list.ids) {
-                assert dayRequestRepairs.containsKey(id);
+                // assert dayRequestRepairs.containsKey(id);
                 Repair repair = dayRequestRepairs.remove(id);
-                repairsHistory.put(id, repair);
+                repairsHistory.putIfAbsent(id, repair);
             }
 
             Logger.yellow(id, "Received repair updates from station (" + list.ids.size() + ")");

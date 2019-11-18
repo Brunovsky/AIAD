@@ -292,13 +292,6 @@ public class Station extends Agent {
 
         @Override  // Protocol D
         protected void handleAllResultNotifications(Vector resultNotifications) {
-            StringBuilder builder = new StringBuilder();
-            builder.append("List of clients subscribed:\n");
-            for (AID client : clients) builder.append(client.getLocalName() + "\n");
-            builder.append("List of companies subscribed:\n");
-            for (AID company : companies) builder.append(company.getLocalName() + "\n");
-            Logger.green(id, builder.toString());
-
             int N = resultNotifications.size();
             ACLMessage[] messages = new ACLMessage[N];
             resultNotifications.copyInto(messages);

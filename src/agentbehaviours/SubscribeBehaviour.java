@@ -24,6 +24,12 @@ public class SubscribeBehaviour extends WaitingBehaviour {
     }
 
     @Override
+    public void reset() {
+        subscribed = false;
+        super.reset();
+    }
+
+    @Override
     public void action() {
         if (!subscribed) {
             ACLMessage subscribe = new ACLMessage(ACLMessage.SUBSCRIBE);

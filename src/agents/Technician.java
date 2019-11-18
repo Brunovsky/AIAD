@@ -145,6 +145,8 @@ public class Technician extends Agent {
             message.setContent(renewed.make());
             send(message);
 
+            Logger.blue(id, "Proposing renewal to company " + company.getLocalName());
+
             // TODO SIMPLIFICATION
             MessageTemplate onto = MatchOntology(World.get().getTechnicianOfferContract());
             MessageTemplate acl = MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
@@ -196,11 +198,9 @@ public class Technician extends Agent {
         }
 
         private void workingAction() {
-            MessageTemplate acl, onto, mt;
-
-            onto = MatchOntology(World.get().getCompanyPayment());
-            acl = MatchPerformative(ACLMessage.INFORM);
-            mt = and(and(onto, acl), MatchSender(company));
+            MessageTemplate acl = MatchPerformative(ACLMessage.INFORM);
+            MessageTemplate onto = MatchOntology(World.get().getCompanyPayment());
+            MessageTemplate mt = and(and(onto, acl), MatchSender(company));
             ACLMessage inform = blockingReceive(mt);  // Protocol A
             WorkFinance finance = WorkFinance.from(inform);
             createWorkLog(finance);

@@ -229,9 +229,6 @@ public class Company extends Agent {
                 return;
             }
 
-            Logger.red(id, "Received job list from station " + station.getLocalName());
-            Logger.red(id, message.getContent());
-
             int technicians = numTechniciansInStation(station);
 
             if (technicians > 0) {
@@ -308,10 +305,13 @@ public class Company extends Agent {
                 totalSalaryPaid += salary;
                 totalCutPaid += techCut;
 
+                Logger.cyan(id, "Sent payment to technician " + technician.getLocalName());
+
                 // Protocol D
                 ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
                 inform.setOntology(World.get().getCompanyPayment());
                 inform.setContent(payment.make());
+                inform.addReceiver(technician);
                 send(inform);
             }
 
@@ -362,7 +362,6 @@ public class Company extends Agent {
                 block();
                 return;
             }
-            Logger.red(id, ontology + " = Subscribe from " + message.getSender().getLocalName());
 
             AID technician = message.getSender();
             AID station = stationNames.get(message.getContent());

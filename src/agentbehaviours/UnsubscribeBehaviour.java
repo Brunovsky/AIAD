@@ -24,6 +24,12 @@ public class UnsubscribeBehaviour extends WaitingBehaviour {
     }
 
     @Override
+    public void reset() {
+        unsubscribed = true;
+        super.reset();
+    }
+
+    @Override
     public void action() {
         if (!unsubscribed) {
             ACLMessage subscribe = new ACLMessage(ACLMessage.CANCEL);

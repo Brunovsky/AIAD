@@ -23,7 +23,7 @@ public class God extends Agent {
     public final Set<AID> day = new HashSet<>();
     public final Set<AID> night = new HashSet<>();
 
-    private static final int PERIOD = 6000, SETUP = 2500;
+    private static final int PERIOD = 3000, SETUP = 1500;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> dayFuture, nightFuture;
@@ -56,7 +56,7 @@ public class God extends Agent {
             e.printStackTrace();
             System.exit(2);
         } finally {
-            lock.unlock();
+            simLock.unlock();
         }
     }
 
@@ -95,9 +95,9 @@ public class God extends Agent {
 
             try {
                 lock.lock();
-                Logger.warn("god",
-                            night.size() + " agents (out of " + total + ") waiting for night");
-
+                String text = String.format("\n%d/%d waiting for night", night.size(), total);
+                Logger.purple("god", text);
+                Logger.purple("god", "Night | " + World.get().currentDay);
                 wakeup(night, "simulation-night");
             } finally {
                 night.clear();
@@ -117,8 +117,9 @@ public class God extends Agent {
 
             try {
                 lock.lock();
-                Logger.warn("god", day.size() + " agents (out of " + total + ") waiting for day");
-
+                String text = String.format("\n%d/%d waiting for day", night.size(), total);
+                Logger.purple("god", text);
+                Logger.purple("god", "Day | " + World.get().currentDay);
                 wakeup(day, "simulation-day");
             } finally {
                 day.clear();
@@ -132,7 +133,7 @@ public class God extends Agent {
         public void run() {
             try {
                 simLock.lock();
-                simWaiter.notifyAll();
+                simWaiter.signalAll();
             } finally {
                 simLock.unlock();
             }

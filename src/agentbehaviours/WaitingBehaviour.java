@@ -17,6 +17,12 @@ public abstract class WaitingBehaviour extends Behaviour {
     }
 
     @Override
+    public void reset() {
+        finalized = false;
+        super.reset();
+    }
+
+    @Override
     public boolean done() {
         return finalized;
     }
