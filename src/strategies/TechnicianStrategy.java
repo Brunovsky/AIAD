@@ -11,17 +11,6 @@ public abstract class TechnicianStrategy {
     }
 
     /**
-     * Compare two job offers put forward by two (not necessarily different) companies.
-     * Return the best one.
-     */
-    public abstract Contract bestJobOffer(Contract cp1, Contract cp2);
-
-    /**
-     * Decide if the job offer (next contract) proposed should be accepted.
-     */
-    public abstract boolean acceptJobOffer(Contract cp);
-
-    /**
      * Decide whether the technician's contract-seeking behaviour should be run today.
      * Return true to run the behaviour.
      */

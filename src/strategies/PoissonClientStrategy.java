@@ -4,7 +4,7 @@ import java.util.Map;
 
 import types.Repair;
 
-public class ClientStrategy2 implements ClientStrategy {
+public class PoissonClientStrategy extends ClientStrategy {
     @Override
     public void evaluateAdjustments(Map<Integer, Repair> dayRequestRepairs) {
         // TODO Auto-generated method stub

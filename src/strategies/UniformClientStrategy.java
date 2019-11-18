@@ -7,7 +7,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import types.Repair;
 import utils.MalfunctionType;
 
-public class ClientStrategy1 implements ClientStrategy {
+public class UniformClientStrategy extends ClientStrategy {
     @Override
     public void evaluateAdjustments(Map<Integer, Repair> dayRequestRepairs) {
         Random rand = ThreadLocalRandom.current();

@@ -7,7 +7,7 @@ import types.JobList;
 import types.Proposal;
 
 public abstract class CompanyStrategy {
-    protected Company company;
+    protected Company company = null;
 
     public enum Performance { VERY_GOOD, GOOD, NEUTRAL, BAD, VERY_BAD }
 
@@ -15,7 +15,7 @@ public abstract class CompanyStrategy {
         this.company = company;
     }
 
-    public abstract Contract initialContract(AID station);
+    public abstract Contract initialContract(AID technician, AID station);
 
     public abstract Proposal makeProposal(int technicians, JobList jobList);
 }

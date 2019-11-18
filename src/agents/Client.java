@@ -14,7 +14,7 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import simulation.World;
 import strategies.ClientStrategy;
-import strategies.ClientStrategy1;
+import strategies.UniformClientStrategy;
 import types.ClientRepairs;
 import types.Repair;
 import types.RepairList;
@@ -42,7 +42,7 @@ public class Client extends Agent {
         dayRequestRepairs = new HashMap<>();  // repairs for the day
 
         // TODO Choose strategy, maybe send as a parameter in Client contructor
-        strategy = new ClientStrategy1();
+        strategy = new UniformClientStrategy();
     }
 
     @Override
