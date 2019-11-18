@@ -33,11 +33,12 @@ public class Client extends Agent {
     private HashMap<Integer, Repair> dayRequestRepairs;
     ClientStrategy strategy;
 
-    public Client(String id, AID station) {
+    public Client(String id, ClientStrategy strategy, AID station) {
         assert id != null && station != null;
         this.id = id;
         this.station = station;
         this.repairId = 0;
+        this.strategy = strategy;
 
         repairsHistory = new HashMap<>();     // repairs done
         dayRequestRepairs = new HashMap<>();  // repairs for the day
