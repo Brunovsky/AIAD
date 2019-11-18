@@ -1,8 +1,8 @@
 package simulation;
 
 import strategies.ClientStrategy1;
+import strategies.SimpleCompanyStrategy;
 import strategies.SimpleTechnicianStrategy;
-import strategies.company.SimpleCompanyStrategy;
 
 public class AIADWorld extends World{
     public AIADWorld() {
