@@ -6,6 +6,8 @@ import strategies.company.SimpleCompanyStrategy;
 
 public class AIADWorld extends World{
     public AIADWorld() {
+        numberDays = 100;
+
         T=160;
         technicians = new TechniciansDesc[] {
                 new TechniciansDesc(160, new SimpleTechnicianStrategy())

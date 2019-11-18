@@ -21,6 +21,9 @@ public abstract class World {
     final String companySubscription = "company-subscription";
 
 
+    int numberDays;
+    int currentDay = 0;
+
     // Technicians
     int T;
     TechniciansDesc[] technicians;
@@ -49,7 +52,11 @@ public abstract class World {
     }
 
     public int getDay() {
-        return 1;  // TODO
+        return currentDay;
+    }
+
+    public void setDay(int currentDay) {
+        this.currentDay = currentDay;
     }
 
     public String getClientStationService() {
@@ -100,6 +107,10 @@ public abstract class World {
         return companyStationService;
     }
 
+    public int getNumberDays() {
+        return numberDays;
+    }
+
     void assertValid(){
         assert T>0 && Cl>0 && S>0 && Co>0;
 
@@ -107,10 +118,12 @@ public abstract class World {
 
         int t = 0, cl = 0, s = 0, co = 0;
         for (TechniciansDesc tech : technicians) t += tech.number;
-        for (ClientsDesc client : clients) c += client.number;
-        for (StationsDesc station : stations) c += station.number;
-        for (int num : clientNumbers) d += num;
-        assert T == t && C == c && C == d;
+        for (ClientsDesc client : clients) cl += client.number;
+        for (StationsDesc station : stations) s += station.number;
+        for (CompaniesDesc company : companies) co += company.number;
+        assert T == t && Cl == cl && S == s && Co == co;
+
+        assert currentDay <= numberDays;
     }
 
 }

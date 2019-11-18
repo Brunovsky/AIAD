@@ -13,6 +13,7 @@ import agents.Client;
 import agents.Company;
 import agents.Station;
 import agents.Technician;
+import jade.core.AID;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
@@ -41,7 +42,7 @@ public class Simulation {
 
     public static void main(String[] args) {
         System.out.print("\033[H\033[2J");
-        //World.set(new PortoWorld());
+        // World.set(new PortoWorld());
         new Simulation();
     }
 
@@ -125,11 +126,9 @@ public class Simulation {
     }
 
     // fill the arrays to be shuffled with the appropriate frequencies
-    private void fillArrays(int[][] indices, ClientType[] personalities, MalfunctionType[] types) {
-        for (int c = 0, i = 0; c < World.get().clientRadius.length; ++c) {
-            for (int n = 0; n < World.get().clientNumbers[c]; ++n, ++i) {
-                indices[i] = new int[] {c, n};
-            }
+    private void fillArrays(int[] indices, ClientStrategy[] strategies) {
+        for (int n = 0; n < World.get().clientNumbers[c]; ++n) {
+            indices[i] = new int[] {c, n};
         }
 
         int z = 0;
@@ -169,6 +168,7 @@ public class Simulation {
 
             stationAgents.add(station);
         }
+        return false;
     }
 
     /**
@@ -176,23 +176,39 @@ public class Simulation {
      * locations.
      */
     private boolean launchClients() {
-        int[] indices = new int[World.get().C];
-        ClientStrategy strategies[] = new ClientStrategy[World.get().C];
-        MalfunctionType types[] = new MalfunctionType[World.get().C];
+        int[] indices = new int[World.get().Cl];
+        ClientStrategy strategies[] = new ClientStrategy[World.get().Cl];
+        AID[] stations = new AID[World.get().Cl];
 
+        for (int n = 0; n < World.get().Cl; ++n) {
+            indices[n] = n;
+        }
+
+        int z = 0;
+        for (ClientsDesc entry : World.get().clients) {
+            for (int k = 0; k < entry.number; ++k, ++z) {
+                strategies[z] = entry.strategy;
+            }
+        }
+        
+        z = 0;
+        for (StationsDesc entry : World.get().stations) {
+            for (int k = 0; k < entry.number; ++k, ++z) {
+                stations[z] = entry.strategy;
+            }
+        }
+        
+        //fillArrays(indices, personalities, types);
         shuffle(indices);
-        shuffle(personalities);
-        shuffle(types);
+        shuffle(strategies);
 
-        for (int i = 0; i < World.get().C; ++i) {
+        for (int i = 0; i < World.get().Cl; ++i) {
 
             String id = "client_" + (i + 1);
 
-            ClientStrategy personality = personalities[i];
-
-            MalfunctionType malfunction = types[i];
-
-            Client client = new Client(location, malfunction, time, personality, waiter);
+            ClientStrategy strategy = strategies[i];
+            
+            Client client = new Client(id, strategy, station );
 
             try {
                 AgentController ac = container.acceptNewAgent(id, client);
