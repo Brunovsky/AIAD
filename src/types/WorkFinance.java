@@ -11,6 +11,10 @@ public class WorkFinance {
 
     public WorkFinance() {}
 
+    public WorkFinance(int days) {
+        this.days = 1;
+    }
+
     public WorkFinance(int days, int jobs, double salary, double cut, double earned) {
         this.days = days;
         this.jobs = jobs;

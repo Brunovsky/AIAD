@@ -22,7 +22,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import simulation.World;
-import strategies.company.CompanyStrategy;
+import strategies.CompanyStrategy;
 import types.Contract;
 import types.JobList;
 import types.Proposal;
@@ -102,13 +102,15 @@ public class Company extends Agent {
         templateSd.setType(World.get().getStationType());
         template.addServices(templateSd);
 
+        String companySub = World.get().getCompanySubscription();
+
         try {
             DFAgentDescription[] stations = DFService.search(this, template);
             for (DFAgentDescription stationDescriptor : stations) {
                 AID station = stationDescriptor.getName();
                 stationHistory.put(station, new StationHistory(station));
                 stationNames.put(station.getLocalName(), station);
-                addBehaviour(new SubscribeBehaviour(this, station, World.get().getCompanySubscription()));
+                addBehaviour(new SubscribeBehaviour(this, station, companySub));
             }
         } catch (FIPAException e) {
             e.printStackTrace();
@@ -145,6 +147,7 @@ public class Company extends Agent {
 
             AID technician = propose.getSender();
             Contract contract = Contract.from(myAgent.getAID(), technician, propose);
+            technicianHistory.get(technician).addContract(contract);
 
             // TODO SIMPLIFICATION
             assert activeTechnicians.contains(technician);
@@ -164,10 +167,11 @@ public class Company extends Agent {
     private class CompanyNight extends Behaviour {
         private static final long serialVersionUID = 6059838822925652797L;
 
-        private HashMap<AID, Proposal> proposals;
+        private final HashMap<AID, Proposal> proposals;
 
         CompanyNight(Agent a) {
             super(a);
+            this.proposals = new HashMap<>();
         }
 
         private void replyStation(ACLMessage message) {
@@ -187,6 +191,7 @@ public class Company extends Agent {
                 send(reply);
             } else {
                 stationHistory.get(station).add(null, null);
+                stationHistory.get(station).add(new WorkFinance(1));
 
                 ACLMessage reply = message.createReply();
                 reply.setPerformative(ACLMessage.REFUSE);
@@ -200,33 +205,45 @@ public class Company extends Agent {
 
             int technicians = numTechniciansInStation(station);
 
-            Proposal proposed = proposals.get(station);  // TODO STATISTICS
+            Proposal proposed = proposals.get(station);
             Proposal accepted = Proposal.from(myAgent.getAID(), message);
-            stationHistory.get(station).add(proposed, accepted);
 
-            int jobs = accepted.totalJobs() > 0 ? 1 : 0;
-            double cut = accepted.totalEarnings() / technicians;
-            double earned = accepted.totalEarnings();
+            final int haveJobs = accepted.totalJobs() > 0 ? 1 : 0;
+            final int jobs = accepted.totalJobs();
+            final double cut = accepted.totalEarnings() / technicians;
+
+            double totalSalaryPaid = 0.0;
+            double totalCutPaid = 0.0;
 
             for (AID technician : stationTechnicians.get(station)) {
-                Contract contract = technicianHistory.get(technician).currentContract();
+                TechnicianHistory history = technicianHistory.get(technician);
+                Contract contract = history.currentContract();
 
                 double salary = contract.salary;
                 double techCut = contract.percentage * cut;
-                WorkFinance payment = new WorkFinance(1, jobs, salary, techCut, 0);
+                WorkFinance payment = new WorkFinance(1, haveJobs, salary, techCut, 0);
 
-                earned -= techCut + salary;
+                history.add(payment);
+
+                totalSalaryPaid += salary;
+                totalCutPaid += techCut;
 
                 ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
                 inform.setOntology(World.get().getCompanyPayment());
                 inform.setContent(payment.make());
                 send(inform);
             }
+
+            final double earned = accepted.totalEarnings() - totalSalaryPaid - totalCutPaid;
+            WorkFinance finance = new WorkFinance(1, jobs, totalSalaryPaid, totalCutPaid, earned);
+
+            stationHistory.get(station).add(proposed, accepted);
+            stationHistory.get(station).add(finance);
         }
 
         @Override
         public void action() {
-            proposals = new HashMap<>();
+            proposals.clear();
             MessageTemplate acl, onto, mt;
 
             onto = MatchOntology(World.get().getInformCompanyJobs());

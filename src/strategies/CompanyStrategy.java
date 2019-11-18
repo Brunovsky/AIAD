@@ -1,4 +1,4 @@
-package strategies.company;
+package strategies;
 
 import agents.Company;
 import types.Contract;
@@ -16,11 +16,5 @@ public abstract class CompanyStrategy {
 
     public abstract Contract initialContract();
 
-    public abstract boolean acceptContractOffer(Contract contract);
-
-    // possibility: counter-offer
-
     public abstract Proposal makeProposal(int technicians, JobList jobList);
-
-    public abstract Performance evaluatePerformance();
 }

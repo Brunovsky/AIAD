@@ -1,6 +1,6 @@
 package simulation;
 
-import strategies.company.CompanyStrategy;
+import strategies.CompanyStrategy;
 
 public class CompaniesDesc {
     private int number;
