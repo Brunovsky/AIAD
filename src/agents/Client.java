@@ -53,14 +53,28 @@ public class Client extends Agent {
 
         // SETUP
         addBehaviour(new SubscribeBehaviour(this, station, subscriptionOnto));
+        addBehaviour(new GenerateNewRepairs());
 
         // NIGHT
         addBehaviour(new ClientNight());
+
+        // DAY
+        addBehaviour(new GenerateNewRepairs());
     }
 
     @Override
     protected void takeDown() {
         Logger.warn(getLocalName(), "Client Terminated!");
+    }
+
+    class GenerateNewRepairs extends OneShotBehaviour {
+        private static final long serialVersionUID = 4988514485354327443L;
+
+        @Override
+        public void action() {
+            strategy.evaluateAdjustments(dayRequestRepairs);
+            repairId += strategy.generateNewRepairs(dayRequestRepairs, repairId);
+        }
     }
 
     class ClientNight extends OneShotBehaviour {
@@ -69,9 +83,6 @@ public class Client extends Agent {
         @Override
         public void action() {
             MessageTemplate acl, onto;
-
-            strategy.evaluateAdjustments(dayRequestRepairs);
-            repairId += strategy.generateNewRepairs(dayRequestRepairs, repairId);
 
             // Protocol A: wait for request message
             onto = MatchOntology(World.get().getPromptClient());

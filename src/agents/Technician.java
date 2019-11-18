@@ -14,6 +14,7 @@ import java.util.Map;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import simulation.World;
@@ -65,7 +66,9 @@ public class Technician extends Agent {
         addBehaviour(new TechnicianNight());
 
         // DAY
-        addBehaviour(new FindNextContract());
+        SequentialBehaviour sequential = new SequentialBehaviour();
+        sequential.addSubBehaviour(new FindNextContract());
+        sequential.addSubBehaviour(new MoveToNextContract());
     }
 
     @Override
@@ -119,21 +122,6 @@ public class Technician extends Agent {
 
     // ***** BEHAVIOURS
 
-    class MoveToNextContract extends OneShotBehaviour {
-        private static final long serialVersionUID = -966288207328177898L;
-
-        @Override
-        public void action() {
-            assert nextContract != null;
-            if (currentContract != null) contractHistory.add(currentContract);
-
-            currentContract = nextContract;
-            nextContract = null;
-            company = currentContract.company;
-            state = WORKING;
-        }
-    }
-
     class FindNextContract extends OneShotBehaviour {
         private static final long serialVersionUID = 2433586834474062536L;
 
@@ -161,6 +149,27 @@ public class Technician extends Agent {
 
             contractHistory.add(renewed);
             nextContract = renewed;
+        }
+    }
+
+    class MoveToNextContract extends OneShotBehaviour {
+        private static final long serialVersionUID = -966288207328177898L;
+
+        @Override
+        public void action() {
+            int day = World.get().getDay();
+
+            if (currentContract != null && day == currentContract.end) {
+                contractHistory.add(currentContract);
+                currentContract = null;
+                state = UNEMPLOYED;
+            }
+
+            if (nextContract != null && day + 1 == nextContract.start) {
+                currentContract = nextContract;
+                nextContract = null;
+                state = WORKING;
+            }
         }
     }
 
@@ -218,11 +227,10 @@ public class Technician extends Agent {
                 reply = receive(mt);
             }
 
-            String content = reply.getContent();
-
-            // TODO LOGIC: store contract record
-
+            Contract contract = Contract.from(company, myAgent.getAID(), reply);
+            currentContract = contract;
             state = WORKING;
+
             Logger.info(getLocalName(), "Initial employment @" + company.getLocalName());
         }
     }

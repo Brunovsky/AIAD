@@ -88,7 +88,7 @@ public class Company extends Agent {
             DFAgentDescription dfd = new DFAgentDescription();
             dfd.setName(getAID());
             ServiceDescription sd = new ServiceDescription();
-            sd.setName("company" + id);  // Necessary?????
+            sd.setName("company-" + id);
             sd.setType(World.get().getCompanyType());
 
             dfd.addServices(sd);
@@ -96,6 +96,7 @@ public class Company extends Agent {
             DFService.register(this, dfd);
         } catch (FIPAException fe) {
             fe.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -298,7 +299,7 @@ public class Company extends Agent {
 
             AID technician = message.getSender();
             AID station = stationNames.get(message.getContent());
-            Contract initialContract = strategy.initialContract(station);
+            Contract initialContract = strategy.initialContract(technician, station);
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
                 activeTechnicians.add(technician);

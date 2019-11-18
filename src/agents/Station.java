@@ -18,6 +18,7 @@ import java.util.Vector;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
@@ -67,8 +68,9 @@ public class Station extends Agent {
         addBehaviour(new SubscriptionListener(this, companySub, companies));
 
         // NIGHT
-        addBehaviour(new FetchNewMalfunctions(this));
-        addBehaviour(new AssignJobs(this));
+        SequentialBehaviour sequential = new SequentialBehaviour();
+        sequential.addSubBehaviour(new FetchNewMalfunctions(this));
+        sequential.addSubBehaviour(new AssignJobs(this));
     }
 
     @Override
@@ -89,6 +91,7 @@ public class Station extends Agent {
             DFService.register(this, dfd);
         } catch (FIPAException e) {
             e.printStackTrace();
+            System.exit(1);
         }
     }
 

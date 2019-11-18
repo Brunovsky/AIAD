@@ -1,7 +1,6 @@
 package simulation;
 
 public abstract class World {
-
     // Services
     final String clientStationService = "client-station-subscription";
     final String companyStationService = "company-station-subscription";
@@ -20,10 +19,6 @@ public abstract class World {
     final String technicianOfferContract = "technician-offer-contract";
     final String companySubscription = "company-subscription";
 
-
-    int numberDays;
-    int currentDay = 0;
-
     // Technicians
     int T;
     TechniciansDesc[] technicians;
@@ -39,6 +34,10 @@ public abstract class World {
     // Companies
     int Co;
     CompaniesDesc[] companies;
+
+    // * State
+    int numberDays;
+    int currentDay;
 
     private static World world;
 
@@ -111,8 +110,12 @@ public abstract class World {
         return numberDays;
     }
 
-    void assertValid(){
-        assert T>0 && Cl>0 && S>0 && Co>0;
+    public int getTotalAgents() {
+        return S + Cl + Co + T;
+    }
+
+    void assertValid() {
+        assert T > 0 && Cl > 0 && S > 0 && Co > 0;
 
         assert technicians != null && clients != null && stations != null && companies != null;
 
@@ -125,5 +128,4 @@ public abstract class World {
 
         assert currentDay <= numberDays;
     }
-
 }

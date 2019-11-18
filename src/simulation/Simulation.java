@@ -5,15 +5,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import agents.Client;
 import agents.Company;
 import agents.Station;
 import agents.Technician;
-import jade.core.*;
+import jade.core.AID;
+import jade.core.Agent;
+import jade.core.Profile;
+import jade.core.ProfileImpl;
 import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
@@ -23,7 +23,6 @@ import strategies.CompanyStrategy;
 import strategies.TechnicianStrategy;
 
 public class Simulation {
-
     private ArrayList<Technician> technicianAgents;
     private ArrayList<Client> clientAgents;
     private ArrayList<Station> stationAgents;
@@ -96,7 +95,7 @@ public class Simulation {
         }
     }
 
-    private void launchAgent(String id, Agent agent){
+    private void launchAgent(String id, Agent agent) {
         try {
             AgentController ac = container.acceptNewAgent(id, agent);
             ac.start();
@@ -110,7 +109,6 @@ public class Simulation {
      * Launch all world stations
      */
     private void launchStations() {
-
         for (int i = 0; i < World.get().S; ++i) {
             String id = "station_" + (i + 1);
 
@@ -152,7 +150,6 @@ public class Simulation {
         shuffle(stations);
 
         for (int i = 0; i < World.get().Cl; ++i) {
-
             String id = "client_" + (i + 1);
 
             Client client = new Client(id, strategies[i], stations[i]);
@@ -174,7 +171,7 @@ public class Simulation {
         int z = 0;
         for (CompaniesDesc entry : World.get().companies) {
             companyMap.putIfAbsent(entry.strategy, new ArrayList<>());
-            for(int i = 0; i < entry.number; i++, z++){
+            for (int i = 0; i < entry.number; i++, z++) {
                 strategies[z] = entry.strategy;
             }
         }
@@ -202,7 +199,7 @@ public class Simulation {
         int z = 0;
         for (TechniciansDesc entry : World.get().technicians) {
             technicianMap.putIfAbsent(entry.strategy, new ArrayList<>());
-            for(int i = 0; i < entry.number; i++, z++){
+            for (int i = 0; i < entry.number; i++, z++) {
                 strategies[z] = entry.strategy;
             }
         }
@@ -244,39 +241,39 @@ public class Simulation {
         }
     }
 
-//    public class ClientWaiter implements Client.Callback {
-//        private Lock lock;
-//        private Condition condition;
-//
-//        private ClientWaiter() {
-//            lock = new ReentrantLock();
-//            condition = lock.newCondition();
-//        }
-//
-//        private boolean await() {
-//            try {
-//                lock.lock();
-//                condition.await();
-//                return true;
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//                return false;
-//            } finally {
-//                lock.unlock();
-//            }
-//        }
-//
-//        private void signal() {
-//            try {
-//                lock.lock();
-//                condition.signal();
-//            } finally {
-//                lock.unlock();
-//            }
-//        }
-//
-//        public void run() {
-//            signal();
-//        }
-//    }
+    //    public class ClientWaiter implements Client.Callback {
+    //        private Lock lock;
+    //        private Condition condition;
+    //
+    //        private ClientWaiter() {
+    //            lock = new ReentrantLock();
+    //            condition = lock.newCondition();
+    //        }
+    //
+    //        private boolean await() {
+    //            try {
+    //                lock.lock();
+    //                condition.await();
+    //                return true;
+    //            } catch (InterruptedException e) {
+    //                e.printStackTrace();
+    //                return false;
+    //            } finally {
+    //                lock.unlock();
+    //            }
+    //        }
+    //
+    //        private void signal() {
+    //            try {
+    //                lock.lock();
+    //                condition.signal();
+    //            } finally {
+    //                lock.unlock();
+    //            }
+    //        }
+    //
+    //        public void run() {
+    //            signal();
+    //        }
+    //    }
 }
