@@ -50,7 +50,7 @@ public class Simulation {
         technicianMap = new HashMap<>();
 
         runtime = Runtime.instance();
-        profile = new ProfileImpl(true);
+        profile = new ProfileImpl(false);
         container = runtime.createAgentContainer(profile);
 
         launchStations();
@@ -96,7 +96,7 @@ public class Simulation {
      * Launch all world stations
      */
     private void launchStations() {
-        for (int i = 0; i < World.get().S; ++i) {
+        for (int i = World.get().S - 1; i >= 0; --i) {
             String id = "station_" + (i + 1);
 
             Station station = new Station(id);
@@ -104,6 +104,13 @@ public class Simulation {
             launchAgent(id, station);
 
             stationAgents.add(station);
+
+            try {
+                Thread.sleep(450);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 
@@ -146,6 +153,12 @@ public class Simulation {
             launchAgent(id, client);
 
             clientAgents.add(client);
+            try {
+                Thread.sleep(450);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 
@@ -175,6 +188,13 @@ public class Simulation {
             launchAgent(id, company);
 
             companyAgents.add(company);
+
+            try {
+                Thread.sleep(450);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 
@@ -229,6 +249,13 @@ public class Simulation {
             launchAgent(id, technician);
 
             technicianAgents.add(technician);
+
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 
@@ -237,7 +264,7 @@ public class Simulation {
      * Await for the simulation to finish.
      */
     private void launchSimulation() {
-        God.get().run();
+        God.get().runSimulation();
         God.get().awaitWorld();
     }
 }

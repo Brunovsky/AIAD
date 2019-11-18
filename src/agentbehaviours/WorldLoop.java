@@ -1,7 +1,7 @@
 package agentbehaviours;
 
 import jade.core.behaviours.Behaviour;
-import simulation.World;
+import utils.Logger;
 
 public class WorldLoop extends Behaviour {
     private static final long serialVersionUID = -4829097119597629938L;
@@ -15,11 +15,12 @@ public class WorldLoop extends Behaviour {
 
     @Override
     public void action() {
+        Logger.info(myAgent.getLocalName(), "LOOP");
         child.action();
     }
 
     @Override
     public boolean done() {
-        return World.get().getDay() == World.get().getNumberDays();
+        return false;
     }
 }

@@ -2,6 +2,8 @@ package simulation;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -9,18 +11,20 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import jade.core.AID;
+import jade.core.Agent;
+import jade.lang.acl.ACLMessage;
 import utils.Logger;
 
-public class God {
+public class God extends Agent {
     public final Lock lock = new ReentrantLock();
-    public final Condition day = lock.newCondition();
-    public final Condition night = lock.newCondition();
+    public final Set<AID> day = new HashSet<>();
+    public final Set<AID> night = new HashSet<>();
 
     private static final God god = new God();
-    private static final int PERIOD = 2000, SETUP = 5000;
+    private static final int PERIOD = 5000, SETUP = 150000;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private int awaitingDay = 0, awaitingNight = 0;
     private ScheduledFuture<?> dayFuture, nightFuture;
     private final Lock simLock = new ReentrantLock();
     private final Condition simWaiter = simLock.newCondition();
@@ -29,7 +33,7 @@ public class God {
         return god;
     }
 
-    public void run() {
+    public void runSimulation() {
         World.get().currentDay = -1;
         SignalDay day = new SignalDay();
         SignalNight night = new SignalNight();
@@ -49,30 +53,29 @@ public class God {
         }
     }
 
-    public void awaitNight() {
+    public void awaitNight(AID me) {
         try {
             lock.lock();
-            ++awaitingNight;
-            night.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            System.exit(1);
+            night.add(me);
         } finally {
             lock.unlock();
         }
     }
 
-    public void awaitDay() {
+    public void awaitDay(AID me) {
         try {
             lock.lock();
-            ++awaitingDay;
-            day.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            System.exit(1);
+            day.add(me);
         } finally {
             lock.unlock();
         }
+    }
+
+    public void wakeup(Set<AID> sleeping, String ontology) {
+        ACLMessage message = new ACLMessage(ACLMessage.INFORM_REF);
+        for (AID agent : sleeping) message.addReceiver(agent);
+        message.setOntology(ontology);
+        send(message);
     }
 
     private class SignalNight implements Runnable {
@@ -85,13 +88,13 @@ public class God {
 
             try {
                 lock.lock();
-                if (awaitingNight < total) {
-                    Logger.warn("GOD", "Only " + awaitingNight + " agents (out of " + total
+                if (night.size() < total) {
+                    Logger.warn("GOD", "Only " + night.size() + " agents (out of " + total
                                            + ") waiting for night");
                 }
-                night.signalAll();
+                wakeup(night, "simulation-night");
             } finally {
-                awaitingNight = 0;
+                night.clear();
                 lock.unlock();
             }
         }
@@ -108,13 +111,13 @@ public class God {
 
             try {
                 lock.lock();
-                if (awaitingDay < total) {
-                    Logger.warn("GOD", "Only " + awaitingDay + " agents (out of " + total
+                if (day.size() < total) {
+                    Logger.warn("GOD", "Only " + day.size() + " agents (out of " + total
                                            + ") waiting for day");
                 }
-                night.signalAll();
+                wakeup(day, "simulation-day");
             } finally {
-                awaitingDay = 0;
+                day.clear();
                 lock.unlock();
             }
         }

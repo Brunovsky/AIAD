@@ -21,7 +21,7 @@ public class UniformClientStrategy extends ClientStrategy {
     @Override
     public int generateNewRepairs(Map<Integer, Repair> dayRequestRepairs, int repairId) {
         Random rand = ThreadLocalRandom.current();
-        int numberRequests = rand.nextInt(11);  // TODO CONSTANTS
+        int numberRequests = rand.nextInt(6);  // TODO CONSTANTS
         for (int i = 0; i < numberRequests; i++) {
             // TODO CONSTANTS: max price between 20 and 80
             double maxPrice = 20 + (80 - 20) * rand.nextDouble();

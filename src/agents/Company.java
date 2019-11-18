@@ -5,26 +5,27 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import agentbehaviours.AwaitDay;
-import agentbehaviours.AwaitNight;
+import agentbehaviours.AwaitDayBehaviour;
+import agentbehaviours.AwaitNightBehaviour;
+import agentbehaviours.SequentialLoopBehaviour;
 import agentbehaviours.SubscribeBehaviour;
-import agentbehaviours.WorldLoop;
+import agentbehaviours.WaitingBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.ParallelBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.domain.DFService;
-import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import simulation.World;
 import strategies.CompanyStrategy;
 import types.Contract;
@@ -70,22 +71,18 @@ public class Company extends Agent {
     protected void setup() {
         Logger.info(id, "Setup " + id);
 
-        // SETUP
         registerDFService();
         findStations();
+
+        // Background
         addBehaviour(new SubscriptionListener(this));
+        addBehaviour(new ReceiveContractProposals(this));
 
-        SequentialBehaviour sequential = new SequentialBehaviour(this);
-
-        // NIGHT
-        sequential.addSubBehaviour(new AwaitNight(this));
-        sequential.addSubBehaviour(new CompanyNight(this));
-
-        // DAY
-        sequential.addSubBehaviour(new AwaitDay(this));
-        sequential.addSubBehaviour(new ReceiveContractProposals(this));
-
-        addBehaviour(new WorldLoop(sequential));
+        SequentialLoopBehaviour loop = new SequentialLoopBehaviour(this);
+        // Night
+        loop.addSubBehaviour(new AwaitNightBehaviour(this));
+        loop.addSubBehaviour(new CompanyNight(this));
+        addBehaviour(loop);
     }
 
     @Override
@@ -118,7 +115,7 @@ public class Company extends Agent {
         templateSd.setType(World.get().getStationType());
         template.addServices(templateSd);
 
-        String companySub = World.get().getCompanySubscription();
+        String companySub = World.get().getCompanyStationService();
 
         try {
             DFAgentDescription[] stations = DFService.search(this, template);
@@ -127,6 +124,7 @@ public class Company extends Agent {
                 activeStations.add(station);
                 stationHistory.put(station, new StationHistory(station));
                 stationNames.put(station.getLocalName(), station);
+                stationTechnicians.put(station, new HashSet<>());
                 addBehaviour(new SubscribeBehaviour(this, station, companySub));
             }
         } catch (FIPAException e) {
@@ -142,7 +140,7 @@ public class Company extends Agent {
 
     // ***** BEHAVIOURS
 
-    private class ReceiveContractProposals extends OneShotBehaviour {
+    private class ReceiveContractProposals extends CyclicBehaviour {
         private static final long serialVersionUID = -3009146208732453520L;
 
         ReceiveContractProposals(Agent a) {
@@ -151,15 +149,12 @@ public class Company extends Agent {
 
         @Override
         public void action() {
-            MessageTemplate onto, acl, mt;
-
-            onto = MatchOntology(World.get().getTechnicianOfferContract());
-            acl = MatchPerformative(ACLMessage.PROPOSE);
-            mt = and(onto, acl);
-            ACLMessage propose = receive(mt);
+            MessageTemplate onto = MatchOntology(World.get().getTechnicianOfferContract());
+            MessageTemplate acl = MatchPerformative(ACLMessage.PROPOSE);
+            ACLMessage propose = receive(and(onto, acl));
             while (propose == null) {
                 block();
-                propose = receive(mt);
+                return;
             }
 
             AID technician = propose.getSender();
@@ -170,37 +165,46 @@ public class Company extends Agent {
             assert activeTechnicians.contains(technician);
 
             ACLMessage reply = propose.createReply();
-            reply.setContent(propose.getContent());
             reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+            reply.setContent(propose.getContent());
             send(reply);
         }
     }
 
-    private class CompanyNight extends OneShotBehaviour {
-        private static final long serialVersionUID = 6059838822925652797L;
+    private class ReceiveJobList extends WaitingBehaviour {
+        private static final long serialVersionUID = -5608877347217729029L;
 
-        private final HashMap<AID, Proposal> proposals;
+        private final AID station;
 
-        CompanyNight(Agent a) {
+        ReceiveJobList(Agent a, AID station) {
             super(a);
-            this.proposals = new HashMap<>();
+            this.station = station;
         }
 
-        private void replyStation(ACLMessage message) {
-            AID station = message.getSender();
-            assert activeStations.contains(station);
+        @Override
+        public void action() {
+            // Protocol A
+            MessageTemplate onto = MatchOntology(World.get().getInformCompanyJobs());
+            MessageTemplate acl = MatchPerformative(ACLMessage.REQUEST);
+            ACLMessage message = receive(and(and(onto, acl), MatchSender(station)));
+            if (message == null) {
+                block();
+                return;
+            }
 
             int technicians = numTechniciansInStation(station);
 
             if (technicians > 0) {
                 JobList jobList = JobList.from(message);
                 Proposal proposal = strategy.makeProposal(technicians, jobList);
-                proposals.put(station, proposal);
 
+                // Protocol B
                 ACLMessage reply = message.createReply();
                 reply.setPerformative(ACLMessage.INFORM);
                 reply.setContent(proposal.make());
                 send(reply);
+
+                addBehaviour(new ReceiveAcceptedJobs(myAgent, station, proposal));
             } else {
                 stationHistory.get(station).add(null, null);
                 stationHistory.get(station).add(new WorkFinance(1));
@@ -209,15 +213,36 @@ public class Company extends Agent {
                 reply.setPerformative(ACLMessage.REFUSE);
                 send(reply);
             }
+
+            finalize();
+        }
+    }
+
+    private class ReceiveAcceptedJobs extends WaitingBehaviour {
+        private static final long serialVersionUID = 239544247798867648L;
+
+        private final AID station;
+        private final Proposal proposed;
+
+        ReceiveAcceptedJobs(Agent a, AID station, Proposal proposed) {
+            super(a);
+            this.station = station;
+            this.proposed = proposed;
         }
 
-        private void informTechnicians(ACLMessage message) {
-            AID station = message.getSender();
-            assert activeStations.contains(station);
+        @Override
+        public void action() {
+            // Protocol C
+            MessageTemplate onto = MatchOntology(World.get().getInformCompanyAssignment());
+            MessageTemplate acl = MatchPerformative(ACLMessage.INFORM);
+            ACLMessage message = receive(and(and(onto, acl), MatchSender(station)));
+            if (message == null) {
+                block();
+                return;
+            }
 
             int technicians = numTechniciansInStation(station);
 
-            Proposal proposed = proposals.get(station);
             Proposal accepted = Proposal.from(myAgent.getAID(), message);
 
             final int haveJobs = accepted.totalJobs() > 0 ? 1 : 0;
@@ -240,6 +265,7 @@ public class Company extends Agent {
                 totalSalaryPaid += salary;
                 totalCutPaid += techCut;
 
+                // Protocol D
                 ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
                 inform.setOntology(World.get().getCompanyPayment());
                 inform.setContent(payment.make());
@@ -251,38 +277,22 @@ public class Company extends Agent {
 
             stationHistory.get(station).add(proposed, accepted);
             stationHistory.get(station).add(finance);
+
+            finalize();
+        }
+    }
+
+    private class CompanyNight extends OneShotBehaviour {
+        private static final long serialVersionUID = 6059838822925652797L;
+
+        CompanyNight(Agent a) {
+            super(a);
         }
 
         @Override
         public void action() {
-            proposals.clear();
-            MessageTemplate acl, onto, mt;
-
-            onto = MatchOntology(World.get().getInformCompanyJobs());
-            acl = MatchPerformative(ACLMessage.REQUEST);
-            mt = and(onto, acl);
             for (AID station : activeStations) {
-                MessageTemplate from = MatchSender(station);
-                ACLMessage request = receive(and(mt, from));  // Protocol A
-                while (request == null) {
-                    block();
-                    request = receive(and(mt, from));
-                }
-                replyStation(request);  // Protocol B
-            }
-
-            onto = MatchOntology(World.get().getInformCompanyAssignment());
-            acl = MatchPerformative(ACLMessage.INFORM);
-            mt = and(onto, acl);
-            for (AID station : activeStations) {
-                if (numTechniciansInStation(station) == 0) continue;
-                MessageTemplate from = MatchSender(station);
-                ACLMessage inform = receive(and(mt, from));  // Protocol C
-                while (inform == null) {
-                    block();
-                    inform = receive(and(mt, from));
-                }
-                informTechnicians(inform);  // Protocol D
+                addBehaviour(new ReceiveJobList(myAgent, station));
             }
         }
     }
@@ -291,12 +301,14 @@ public class Company extends Agent {
         private static final long serialVersionUID = 9068977292715279066L;
 
         private final MessageTemplate mt;
+        private final String ontology;
 
         SubscriptionListener(Agent a) {
             super(a);
+            this.ontology = World.get().getInitialEmployment();
 
             MessageTemplate subscribe = MatchPerformative(ACLMessage.SUBSCRIBE);
-            MessageTemplate onto = MatchOntology(World.get().getInitialEmployment());
+            MessageTemplate onto = MatchOntology(ontology);
             this.mt = and(subscribe, onto);
         }
 
@@ -307,21 +319,20 @@ public class Company extends Agent {
                 block();
                 return;
             }
+            Logger.info(id, ontology + " = Subscribe from " + message.getSender().getLocalName());
 
             AID technician = message.getSender();
             AID station = stationNames.get(message.getContent());
             Contract initialContract = strategy.initialContract(technician, station);
 
-            if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
-                activeTechnicians.add(technician);
-                technicianHistory.put(technician, new TechnicianHistory(technician));
-                stationTechnicians.get(station).add(technician);
-            }
+            activeTechnicians.add(technician);
+            technicianHistory.put(technician, new TechnicianHistory(technician));
+            stationTechnicians.get(station).add(technician);
 
-            message.createReply();
-            message.setPerformative(ACLMessage.CONFIRM);
-            message.setContent(initialContract.make());
-            send(message);
+            ACLMessage reply = message.createReply();
+            reply.setPerformative(ACLMessage.INFORM);
+            reply.setContent(initialContract.make());
+            send(reply);
         }
     }
 }

@@ -4,18 +4,18 @@ import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 
-import java.util.HashMap;
-
-import agentbehaviours.AwaitDay;
-import agentbehaviours.AwaitNight;
+import agentbehaviours.AwaitDayBehaviour;
+import agentbehaviours.AwaitNightBehaviour;
+import agentbehaviours.SequentialLoopBehaviour;
 import agentbehaviours.SubscribeBehaviour;
-import agentbehaviours.WorldLoop;
+import agentbehaviours.WaitingBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.HashMap;
 import simulation.World;
 import strategies.ClientStrategy;
 import types.ClientRepairs;
@@ -54,21 +54,19 @@ public class Client extends Agent {
 
         String clientSub = World.get().getClientStationService();
 
-        // SETUP
+        // Setup
         addBehaviour(new SubscribeBehaviour(this, station, clientSub));
         addBehaviour(new GenerateNewRepairs(this));
 
-        SequentialBehaviour sequential = new SequentialBehaviour(this);
-
-        // NIGHT
-        sequential.addSubBehaviour(new AwaitNight(this));
-        sequential.addSubBehaviour(new ClientNight(this));
-
-        // DAY
-        sequential.addSubBehaviour(new AwaitDay(this));
-        sequential.addSubBehaviour(new GenerateNewRepairs(this));
-
-        addBehaviour(new WorldLoop(sequential));
+        SequentialLoopBehaviour loop = new SequentialLoopBehaviour(this);
+        // Night
+        loop.addSubBehaviour(new AwaitNightBehaviour(this));
+        loop.addSubBehaviour(new AnswerStationPrompt(this));
+        loop.addSubBehaviour(new ReceiveRepairUpdates(this));
+        // Day
+        loop.addSubBehaviour(new AwaitDayBehaviour(this));
+        loop.addSubBehaviour(new GenerateNewRepairs(this));
+        addBehaviour(loop);
     }
 
     @Override
@@ -76,7 +74,7 @@ public class Client extends Agent {
         Logger.warn(id, "Client Terminated!");
     }
 
-    class GenerateNewRepairs extends OneShotBehaviour {
+    private class GenerateNewRepairs extends OneShotBehaviour {
         private static final long serialVersionUID = 4988514485354327443L;
 
         GenerateNewRepairs(Agent a) {
@@ -90,24 +88,23 @@ public class Client extends Agent {
         }
     }
 
-    class ClientNight extends OneShotBehaviour {
-        private static final long serialVersionUID = 2838271060454701293L;
+    private class AnswerStationPrompt extends WaitingBehaviour {
+        private static final long serialVersionUID = -9102240605267260487L;
 
-        ClientNight(Agent a) {
+        AnswerStationPrompt(Agent a) {
             super(a);
         }
 
         @Override
         public void action() {
-            MessageTemplate acl, onto;
+            MessageTemplate onto = MatchOntology(World.get().getPromptClient());
+            MessageTemplate acl = MatchPerformative(ACLMessage.REQUEST);
 
             // Protocol A: wait for request message
-            onto = MatchOntology(World.get().getPromptClient());
-            acl = MatchPerformative(ACLMessage.REQUEST);
             ACLMessage request = receive(and(onto, acl));
-            while (request == null) {
+            if (request == null) {
                 block();
-                request = receive(and(onto, acl));
+                return;
             }
 
             // Protocol B: answer message
@@ -116,13 +113,26 @@ public class Client extends Agent {
             reply.setContent(new ClientRepairs(dayRequestRepairs).make());
             send(reply);
 
+            finalize();
+        }
+    }
+
+    private class ReceiveRepairUpdates extends WaitingBehaviour {
+        private static final long serialVersionUID = -4937376307364576863L;
+
+        ReceiveRepairUpdates(Agent a) {
+            super(a);
+        }
+
+        @Override
+        public void action() {
             // Protocol C: wait for assignments...
-            onto = MatchOntology(World.get().getInformClient());
-            acl = MatchPerformative(ACLMessage.INFORM);
+            MessageTemplate onto = MatchOntology(World.get().getInformClient());
+            MessageTemplate acl = MatchPerformative(ACLMessage.INFORM);
             ACLMessage assign = receive(and(onto, acl));
             while (assign == null) {
                 block();
-                assign = receive(and(onto, acl));
+                return;
             }
 
             RepairList list = RepairList.from(assign);
@@ -132,6 +142,8 @@ public class Client extends Agent {
                 Repair repair = dayRequestRepairs.remove(id);
                 repairsHistory.put(id, repair);
             }
+
+            finalize();
         }
     }
 }

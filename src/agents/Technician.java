@@ -7,19 +7,18 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import agentbehaviours.AwaitDay;
-import agentbehaviours.AwaitNight;
-import agentbehaviours.WorldLoop;
+import agentbehaviours.AwaitDayBehaviour;
+import agentbehaviours.AwaitNightBehaviour;
+import agentbehaviours.SequentialLoopBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import simulation.World;
 import strategies.TechnicianStrategy;
 import types.Contract;
@@ -63,21 +62,20 @@ public class Technician extends Agent {
     protected void setup() {
         Logger.info(id, "Setup " + id);
 
-        // SETUP
-        addBehaviour(new InitialEmployment(this));
+        SequentialBehaviour all = new SequentialBehaviour(this);
 
-        SequentialBehaviour sequential = new SequentialBehaviour(this);
+        // Setup
+        all.addSubBehaviour(new InitialEmployment(this));
 
-        // NIGHT
-        sequential.addSubBehaviour(new AwaitNight(this));
-        sequential.addSubBehaviour(new TechnicianNight(this));
-
-        // DAY
-        sequential.addSubBehaviour(new AwaitDay(this));
-        sequential.addSubBehaviour(new FindNextContract(this));
-        sequential.addSubBehaviour(new MoveToNextContract(this));
-
-        addBehaviour(new WorldLoop(sequential));
+        SequentialLoopBehaviour loop = new SequentialLoopBehaviour(this);
+        // Night
+        loop.addSubBehaviour(new AwaitNightBehaviour(this));
+        loop.addSubBehaviour(new TechnicianNight(this));
+        // Day
+        loop.addSubBehaviour(new AwaitDayBehaviour(this));
+        loop.addSubBehaviour(new ProposeRenewal(this));
+        loop.addSubBehaviour(new MoveToNextContract(this));
+        addBehaviour(all);
     }
 
     @Override
@@ -131,10 +129,10 @@ public class Technician extends Agent {
 
     // ***** BEHAVIOURS
 
-    class FindNextContract extends OneShotBehaviour {
+    private class ProposeRenewal extends OneShotBehaviour {
         private static final long serialVersionUID = 2433586834474062536L;
 
-        FindNextContract(Agent a) {
+        ProposeRenewal(Agent a) {
             super(a);
         }
 
@@ -150,22 +148,16 @@ public class Technician extends Agent {
             send(message);
 
             // TODO SIMPLIFICATION
-            MessageTemplate onto, acl, mt;
-            onto = MatchOntology(World.get().getTechnicianOfferContract());
-            acl = MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
-            mt = and(onto, acl);
-            ACLMessage reply = receive(mt);
-            while (reply == null) {
-                block();
-                reply = receive(mt);
-            }
+            MessageTemplate onto = MatchOntology(World.get().getTechnicianOfferContract());
+            MessageTemplate acl = MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
+            ACLMessage reply = blockingReceive(and(onto, acl));
 
             contractHistory.add(renewed);
             nextContract = renewed;
         }
     }
 
-    class MoveToNextContract extends OneShotBehaviour {
+    private class MoveToNextContract extends OneShotBehaviour {
         private static final long serialVersionUID = -966288207328177898L;
 
         MoveToNextContract(Agent a) {
@@ -190,7 +182,7 @@ public class Technician extends Agent {
         }
     }
 
-    class TechnicianNight extends OneShotBehaviour {
+    private class TechnicianNight extends OneShotBehaviour {
         private static final long serialVersionUID = 3576074310971384343L;
 
         TechnicianNight(Agent a) {
@@ -207,11 +199,7 @@ public class Technician extends Agent {
             onto = MatchOntology(World.get().getCompanyPayment());
             acl = MatchPerformative(ACLMessage.INFORM);
             mt = and(and(onto, acl), MatchSender(company));
-            ACLMessage inform = receive(mt);  // Protocol A
-            while (inform == null) {
-                block();
-                inform = receive(mt);
-            }
+            ACLMessage inform = blockingReceive(mt);  // Protocol A
             createWorkLog(WorkFinance.from(inform));
         }
 
@@ -227,30 +215,24 @@ public class Technician extends Agent {
 
     private class InitialEmployment extends OneShotBehaviour {
         private static final long serialVersionUID = -8275421706452630634L;
-        private String ontology;
+        private final String ontology;
 
         InitialEmployment(Agent a) {
             super(a);
+            this.ontology = World.get().getInitialEmployment();
         }
 
         @Override
         public void action() {
-            ontology = World.get().getInitialEmployment();
-            MessageTemplate onto, acl, mt;
-
             ACLMessage message = new ACLMessage(ACLMessage.SUBSCRIBE);
             message.setOntology(ontology);
             message.addReceiver(company);
+            message.setContent(homeStation.getLocalName());
             send(message);
 
-            onto = MatchOntology(ontology);
-            acl = MatchPerformative(ACLMessage.INFORM);
-            mt = and(and(onto, acl), MatchSender(company));
-            ACLMessage reply = receive(mt);
-            while (reply == null) {
-                block();
-                reply = receive(mt);
-            }
+            MessageTemplate onto = MatchOntology(ontology);
+            MessageTemplate acl = MatchPerformative(ACLMessage.INFORM);
+            ACLMessage reply = blockingReceive(and(and(onto, acl), MatchSender(company)));
 
             Contract contract = Contract.from(company, myAgent.getAID(), reply);
             currentContract = contract;

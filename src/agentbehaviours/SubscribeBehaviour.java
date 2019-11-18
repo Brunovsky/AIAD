@@ -9,6 +9,7 @@ import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import utils.Logger;
 
 public class SubscribeBehaviour extends OneShotBehaviour {
     private static final long serialVersionUID = 5101487004586828719L;
@@ -32,10 +33,16 @@ public class SubscribeBehaviour extends OneShotBehaviour {
         subscribe.addReceiver(post);
         myAgent.send(subscribe);
 
+        Logger.error(myAgent.getLocalName(),
+                     "[" + ontology + "] Subscribing to " + post.getLocalName());
+
         ACLMessage confirm = myAgent.receive(and(onto, acl));
         while (confirm == null) {
             block();
             confirm = myAgent.receive(and(onto, acl));
         }
+
+        Logger.error(myAgent.getLocalName(),
+                     "[" + ontology + "] Subscribed to " + post.getLocalName());
     }
 }

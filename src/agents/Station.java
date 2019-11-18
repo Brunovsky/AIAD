@@ -3,32 +3,31 @@ package agents;
 import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
-import static jade.lang.acl.MessageTemplate.or;
 
+import agentbehaviours.AwaitNightBehaviour;
+import agentbehaviours.SequentialLoopBehaviour;
+import jade.core.AID;
+import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.ParallelBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+import jade.proto.AchieveREInitiator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
-
-import agentbehaviours.AwaitNight;
-import agentbehaviours.WorldLoop;
-import jade.core.AID;
-import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.SequentialBehaviour;
-import jade.domain.DFService;
-import jade.domain.FIPAException;
-import jade.domain.FIPANames;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREInitiator;
+import java.util.concurrent.ConcurrentHashMap;
 import simulation.World;
 import types.ClientRepairs;
 import types.JobList;
@@ -50,8 +49,8 @@ public class Station extends Agent {
     public Station(String id) {
         assert id != null;
         this.id = id;
-        this.clients = new HashSet<>();
-        this.companies = new HashSet<>();
+        this.clients = ConcurrentHashMap.newKeySet();
+        this.companies = ConcurrentHashMap.newKeySet();
         this.repairsQueue = new HashMap<>();
     }
 
@@ -62,18 +61,17 @@ public class Station extends Agent {
         String clientSub = World.get().getClientStationService();
         String companySub = World.get().getCompanyStationService();
 
-        // SETUP
         registerDFService();
+
+        // Background
         addBehaviour(new SubscriptionListener(this, clientSub, clients));
         addBehaviour(new SubscriptionListener(this, companySub, companies));
-
-        // NIGHT
-        SequentialBehaviour sequential = new SequentialBehaviour(this);
-        sequential.addSubBehaviour(new AwaitNight(this));
-        sequential.addSubBehaviour(new FetchNewMalfunctions(this));
-        sequential.addSubBehaviour(new AssignJobs(this));
-
-        addBehaviour(new WorldLoop(sequential));
+        // Night
+        SequentialLoopBehaviour loop = new SequentialLoopBehaviour(this);
+        loop.addSubBehaviour(new AwaitNightBehaviour(this));
+        loop.addSubBehaviour(new FetchNewMalfunctions(this));
+        loop.addSubBehaviour(new AssignJobs(this));
+        addBehaviour(loop);
     }
 
     @Override
@@ -295,15 +293,16 @@ public class Station extends Agent {
 
         private final MessageTemplate mt;
         private final Set<AID> subscribers;
+        private final String ontology;
 
         SubscriptionListener(Agent a, String ontology, Set<AID> subscribers) {
             super(a);
             this.subscribers = subscribers;
+            this.ontology = ontology;
 
             MessageTemplate subscribe = MatchPerformative(ACLMessage.SUBSCRIBE);
-            MessageTemplate unsubscribe = MatchPerformative(ACLMessage.CANCEL);
             MessageTemplate onto = MatchOntology(ontology);
-            this.mt = and(or(subscribe, unsubscribe), onto);
+            this.mt = and(subscribe, onto);
         }
 
         @Override
@@ -314,17 +313,12 @@ public class Station extends Agent {
                 return;
             }
 
-            if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
-                Logger.info(id, "Subscribe from " + message.getSender().getLocalName());
-                this.subscribers.add(message.getSender());
-            } else /* ACLMessage.CANCEL */ {
-                Logger.info(id, "Cancel from " + message.getSender().getLocalName());
-                this.subscribers.remove(message.getSender());
-            }
+            Logger.info(id, ontology + " = Subscribe from " + message.getSender().getLocalName());
+            this.subscribers.add(message.getSender());
 
-            message.createReply();
-            message.setPerformative(ACLMessage.CONFIRM);
-            send(message);
+            ACLMessage reply = message.createReply();
+            reply.setPerformative(ACLMessage.CONFIRM);
+            send(reply);
         }
     }
 }
