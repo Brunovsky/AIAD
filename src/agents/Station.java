@@ -7,6 +7,7 @@ import static jade.lang.acl.MessageTemplate.or;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -99,17 +100,20 @@ public class Station extends Agent {
     }
 
     private ACLMessage prepareCompanyQueryMessage() {
-        easy = groupRepairs(MalfunctionType.EASY);
-        medium = groupRepairs(MalfunctionType.MEDIUM);
-        hard = groupRepairs(MalfunctionType.HARD);
-        JobList jobs = new JobList(easy.length, medium.length, hard.length);
-
+        JobList jobList = prepareJobList();
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology(World.get().getInformCompanyJobs());
-        message.setContent(jobs.make());
+        message.setContent(jobList.make());
         for (AID company : companies) message.addReceiver(company);
         return message;
+    }
+
+    private JobList prepareJobList() {
+        easy = groupRepairs(MalfunctionType.EASY);
+        medium = groupRepairs(MalfunctionType.MEDIUM);
+        hard = groupRepairs(MalfunctionType.HARD);
+        return new JobList(easy.length, medium.length, hard.length);
     }
 
     // ***** UTILITIES
@@ -119,10 +123,59 @@ public class Station extends Agent {
         final Map<AID, Proposal> assignments;
         final Map<AID, RepairList> repairs;
 
+        private RepairKey[] get(MalfunctionType type) {
+            switch (type) {
+            case EASY:
+                return easy;
+            case MEDIUM:
+                return medium;
+            case HARD:
+                return hard;
+            }
+            return null;
+        }
+
+        private void order(MalfunctionType type) {
+            ArrayList<AID> list = new ArrayList<>();
+            for (Proposal proposal : proposals.values()) {
+                if (proposal.get(type) > 0) list.add(proposal.company);
+            }
+            Collections.sort(list, new Comparator<AID>() {
+                @Override
+                public int compare(AID lhs, AID rhs) {
+                    double l = proposals.get(lhs).getPrice(type);
+                    double r = proposals.get(rhs).getPrice(type);
+                    return l < r ? -1 : l > r ? 1 : 0;
+                }
+            });
+
+            AID[] companies = (AID[]) list.toArray();
+            RepairKey[] keys = get(type);
+
+            int c = 0, r = 0;
+            while (c < companies.length && r < keys.length) {
+                double price = proposals.get(companies[c]).getPrice(type);
+                double max = repairsQueue.get(keys[r].client).get(keys[r].id).getPrice();
+                if (price <= max) {
+                    assignments.get(companies[c]).add(type, 1);
+                    repairs.get(keys[r].client).ids.add(keys[r].id);
+                } else {
+                    break;
+                }
+            }
+        }
+
         Assignment(Map<AID, Proposal> proposals) {
             this.proposals = proposals;
             this.assignments = new HashMap<>();
             this.repairs = new HashMap<>();
+
+            for (AID company : proposals.keySet()) assignments.put(company, new Proposal(company));
+            for (AID client : clients) repairs.put(client, new RepairList());
+
+            order(MalfunctionType.EASY);
+            order(MalfunctionType.MEDIUM);
+            order(MalfunctionType.HARD);
         }
     }
 
