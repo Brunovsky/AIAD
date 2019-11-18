@@ -6,10 +6,14 @@ import static jade.lang.acl.MessageTemplate.and;
 
 import java.util.HashMap;
 
+import agentbehaviours.AwaitDay;
+import agentbehaviours.AwaitNight;
 import agentbehaviours.SubscribeBehaviour;
+import agentbehaviours.WorldLoop;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import simulation.World;
@@ -53,13 +57,19 @@ public class Client extends Agent {
 
         // SETUP
         addBehaviour(new SubscribeBehaviour(this, station, subscriptionOnto));
-        addBehaviour(new GenerateNewRepairs());
+        addBehaviour(new GenerateNewRepairs(this));
+
+        SequentialBehaviour sequential = new SequentialBehaviour(this);
 
         // NIGHT
-        addBehaviour(new ClientNight());
+        sequential.addSubBehaviour(new AwaitNight(this));
+        sequential.addSubBehaviour(new ClientNight(this));
 
         // DAY
-        addBehaviour(new GenerateNewRepairs());
+        sequential.addSubBehaviour(new AwaitDay(this));
+        sequential.addSubBehaviour(new GenerateNewRepairs(this));
+
+        addBehaviour(new WorldLoop(sequential));
     }
 
     @Override
@@ -70,6 +80,10 @@ public class Client extends Agent {
     class GenerateNewRepairs extends OneShotBehaviour {
         private static final long serialVersionUID = 4988514485354327443L;
 
+        GenerateNewRepairs(Agent a) {
+            super(a);
+        }
+
         @Override
         public void action() {
             strategy.evaluateAdjustments(dayRequestRepairs);
@@ -79,6 +93,10 @@ public class Client extends Agent {
 
     class ClientNight extends OneShotBehaviour {
         private static final long serialVersionUID = 2838271060454701293L;
+
+        ClientNight(Agent a) {
+            super(a);
+        }
 
         @Override
         public void action() {

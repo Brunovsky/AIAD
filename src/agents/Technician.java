@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import agentbehaviours.AwaitDay;
+import agentbehaviours.AwaitNight;
+import agentbehaviours.WorldLoop;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
@@ -60,15 +63,20 @@ public class Technician extends Agent {
         Logger.info(getLocalName(), "Setup " + id);
 
         // SETUP
-        addBehaviour(new InitialEmployment());
+        addBehaviour(new InitialEmployment(this));
+
+        SequentialBehaviour sequential = new SequentialBehaviour(this);
 
         // NIGHT
-        addBehaviour(new TechnicianNight());
+        sequential.addSubBehaviour(new AwaitNight(this));
+        sequential.addSubBehaviour(new TechnicianNight(this));
 
         // DAY
-        SequentialBehaviour sequential = new SequentialBehaviour();
-        sequential.addSubBehaviour(new FindNextContract());
-        sequential.addSubBehaviour(new MoveToNextContract());
+        sequential.addSubBehaviour(new AwaitDay(this));
+        sequential.addSubBehaviour(new FindNextContract(this));
+        sequential.addSubBehaviour(new MoveToNextContract(this));
+
+        addBehaviour(new WorldLoop(sequential));
     }
 
     @Override
@@ -125,6 +133,10 @@ public class Technician extends Agent {
     class FindNextContract extends OneShotBehaviour {
         private static final long serialVersionUID = 2433586834474062536L;
 
+        FindNextContract(Agent a) {
+            super(a);
+        }
+
         @Override
         public void action() {
             if (nextContract != null || !strategy.lookForContracts()) return;
@@ -155,6 +167,10 @@ public class Technician extends Agent {
     class MoveToNextContract extends OneShotBehaviour {
         private static final long serialVersionUID = -966288207328177898L;
 
+        MoveToNextContract(Agent a) {
+            super(a);
+        }
+
         @Override
         public void action() {
             int day = World.get().getDay();
@@ -175,6 +191,10 @@ public class Technician extends Agent {
 
     class TechnicianNight extends OneShotBehaviour {
         private static final long serialVersionUID = 3576074310971384343L;
+
+        TechnicianNight(Agent a) {
+            super(a);
+        }
 
         private void unemployedAction() {
             createEmptyWorkLog();
@@ -207,6 +227,10 @@ public class Technician extends Agent {
     private class InitialEmployment extends OneShotBehaviour {
         private static final long serialVersionUID = -8275421706452630634L;
         private String ontology;
+
+        InitialEmployment(Agent a) {
+            super(a);
+        }
 
         @Override
         public void action() {

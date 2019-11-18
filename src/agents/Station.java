@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import agentbehaviours.AwaitNight;
+import agentbehaviours.WorldLoop;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -68,9 +70,12 @@ public class Station extends Agent {
         addBehaviour(new SubscriptionListener(this, companySub, companies));
 
         // NIGHT
-        SequentialBehaviour sequential = new SequentialBehaviour();
+        SequentialBehaviour sequential = new SequentialBehaviour(this);
+        sequential.addSubBehaviour(new AwaitNight(this));
         sequential.addSubBehaviour(new FetchNewMalfunctions(this));
         sequential.addSubBehaviour(new AssignJobs(this));
+
+        addBehaviour(new WorldLoop(sequential));
     }
 
     @Override

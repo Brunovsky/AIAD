@@ -10,11 +10,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import agentbehaviours.AwaitDay;
+import agentbehaviours.AwaitNight;
 import agentbehaviours.SubscribeBehaviour;
+import agentbehaviours.WorldLoop;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -70,11 +74,17 @@ public class Company extends Agent {
         findStations();
         addBehaviour(new SubscriptionListener(this));
 
+        SequentialBehaviour sequential = new SequentialBehaviour(this);
+
         // NIGHT
-        addBehaviour(new CompanyNight(this));
+        sequential.addSubBehaviour(new AwaitNight(this));
+        sequential.addSubBehaviour(new CompanyNight(this));
 
         // DAY
-        addBehaviour(new ReceiveContractProposals(this));
+        sequential.addSubBehaviour(new AwaitDay(this));
+        sequential.addSubBehaviour(new ReceiveContractProposals(this));
+
+        addBehaviour(new WorldLoop(sequential));
     }
 
     @Override
