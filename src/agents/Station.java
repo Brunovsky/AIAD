@@ -58,14 +58,15 @@ public class Station extends Agent {
     protected void setup() {
         Logger.info(getLocalName(), "Setup " + id);
 
-        registerDFService();
-
         String clientSub = World.get().getClientStationService();
         String companySub = World.get().getCompanyStationService();
+
+        // SETUP
+        registerDFService();
         addBehaviour(new SubscriptionListener(this, clientSub, clients));
         addBehaviour(new SubscriptionListener(this, companySub, companies));
 
-        // TODO COMMS: in a loop, in this order (during the night)
+        // NIGHT
         addBehaviour(new FetchNewMalfunctions(this));
         addBehaviour(new AssignJobs(this));
     }

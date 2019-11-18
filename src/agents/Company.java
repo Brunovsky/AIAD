@@ -65,11 +65,15 @@ public class Company extends Agent {
     protected void setup() {
         Logger.info(getLocalName(), "Setup " + id);
 
+        // SETUP
         registerDFService();
         findStations();
-
         addBehaviour(new SubscriptionListener(this));
+
+        // NIGHT
         addBehaviour(new CompanyNight(this));
+
+        // DAY
         addBehaviour(new ReceiveContractProposals(this));
     }
 

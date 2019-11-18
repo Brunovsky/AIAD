@@ -17,14 +17,22 @@ public class TechnicianHistory {
     }
 
     public Contract currentContract() {
-        if (contracts.isEmpty()) return null;
-        Contract last = contracts.get(contracts.size() - 1);
         int day = World.get().getDay();
+        Contract last;
+
+        if (contracts.size() < 1) return null;
+        last = contracts.get(contracts.size() - 1);
         if (last.start <= day && day <= last.end) {
             return last;
-        } else {
-            return null;
         }
+
+        if (contracts.size() < 2) return null;
+        last = contracts.get(contracts.size() - 2);
+        if (last.start <= day && day <= last.end) {
+            return last;
+        }
+
+        return null;
     }
 
     public void addContract(Contract contract) {

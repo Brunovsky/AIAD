@@ -7,11 +7,9 @@ import static jade.lang.acl.MessageTemplate.and;
 import java.util.HashMap;
 
 import agentbehaviours.SubscribeBehaviour;
-import agentbehaviours.UnsubscribeBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
-import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import simulation.World;
@@ -53,11 +51,11 @@ public class Client extends Agent {
 
         String subscriptionOnto = World.get().getClientStationService();
 
-        SequentialBehaviour sequential = new SequentialBehaviour(this);
-        sequential.addSubBehaviour(new SubscribeBehaviour(this, station, subscriptionOnto));
-        sequential.addSubBehaviour(new ClientNight());
-        sequential.addSubBehaviour(new UnsubscribeBehaviour(this, station, subscriptionOnto));
-        addBehaviour(sequential);
+        // SETUP
+        addBehaviour(new SubscribeBehaviour(this, station, subscriptionOnto));
+
+        // NIGHT
+        addBehaviour(new ClientNight());
     }
 
     @Override

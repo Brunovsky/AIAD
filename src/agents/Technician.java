@@ -14,7 +14,6 @@ import java.util.Map;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
-import jade.core.behaviours.SequentialBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import simulation.World;
@@ -59,10 +58,14 @@ public class Technician extends Agent {
     protected void setup() {
         Logger.info(getLocalName(), "Setup " + id);
 
-        SequentialBehaviour sequential = new SequentialBehaviour(this);
-        sequential.addSubBehaviour(new InitialEmployment());
-        sequential.addSubBehaviour(new TechnicianNight());
-        addBehaviour(sequential);
+        // SETUP
+        addBehaviour(new InitialEmployment());
+
+        // NIGHT
+        addBehaviour(new TechnicianNight());
+
+        // DAY
+        addBehaviour(new FindNextContract());
     }
 
     @Override
