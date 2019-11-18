@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import agentbehaviours.AwaitDayBehaviour;
 import agentbehaviours.AwaitNightBehaviour;
 import agentbehaviours.SequentialLoopBehaviour;
 import agentbehaviours.SubscribeBehaviour;
@@ -80,6 +81,9 @@ public class Company extends Agent {
         // Night
         loop.addSubBehaviour(new AwaitNightBehaviour(this));
         loop.addSubBehaviour(new CompanyNight(this));
+        // Day
+        loop.addSubBehaviour(new AwaitDayBehaviour(this));
+        loop.addSubBehaviour(new UpdateContracts(this));
         addBehaviour(loop);
     }
 
@@ -138,6 +142,41 @@ public class Company extends Agent {
 
     // ***** BEHAVIOURS
 
+    private class UpdateContracts extends OneShotBehaviour {
+        private static final long serialVersionUID = 2769099897492753827L;
+
+        UpdateContracts(Agent a) {
+            super(a);
+        }
+
+        @Override
+        public void action() {
+            // Remove contracts ending now
+            int today = World.get().getDay();
+            for (AID station : stationTechnicians.keySet()) {
+                Set<AID> technicians = stationTechnicians.get(station);
+                for (AID technician : technicians) {
+                    Contract currentContract = technicianHistory.get(technician).currentContract();
+                    assert currentContract != null;
+                    if (currentContract.end == today) {
+                        stationTechnicians.get(station).remove(technician);
+                        activeTechnicians.remove(technician);
+                    }
+                }
+            }
+
+            // Add contracts starting tomorrow
+            int tomorrow = today + 1;
+            for (TechnicianHistory history : technicianHistory.values()) {
+                Contract contract = history.lastContract();
+                if (contract.start == tomorrow) {
+                    stationTechnicians.get(history.station).add(history.technician);
+                    activeTechnicians.add(history.technician);
+                }
+            }
+        }
+    }
+
     private class ReceiveContractProposals extends CyclicBehaviour {
         private static final long serialVersionUID = -3009146208732453520L;
 
@@ -191,6 +230,7 @@ public class Company extends Agent {
             }
 
             Logger.red(id, "Received job list from station " + station.getLocalName());
+            Logger.red(id, message.getContent());
 
             int technicians = numTechniciansInStation(station);
 
@@ -328,9 +368,11 @@ public class Company extends Agent {
             AID station = stationNames.get(message.getContent());
             Contract initialContract = strategy.initialContract(technician, station);
 
+            TechnicianHistory history = new TechnicianHistory(technician, station);
             activeTechnicians.add(technician);
-            technicianHistory.put(technician, new TechnicianHistory(technician));
+            technicianHistory.put(technician, history);
             stationTechnicians.get(station).add(technician);
+            history.addContract(initialContract);
 
             ACLMessage reply = message.createReply();
             reply.setPerformative(ACLMessage.INFORM);

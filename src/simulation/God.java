@@ -23,7 +23,7 @@ public class God extends Agent {
     public final Set<AID> day = new HashSet<>();
     public final Set<AID> night = new HashSet<>();
 
-    private static final int PERIOD = 4000, SETUP = 9000;
+    private static final int PERIOD = 6000, SETUP = 2500;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> dayFuture, nightFuture;

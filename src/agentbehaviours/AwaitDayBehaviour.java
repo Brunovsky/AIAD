@@ -21,9 +21,11 @@ public class AwaitDayBehaviour extends WaitingBehaviour {
 
         MessageTemplate mt = MessageTemplate.MatchOntology("simulation-day");
         ACLMessage message = myAgent.receive(mt);
-        if (message != null)
+        if (message != null) {
             finalize();
-        else
+            Logger.white(myAgent.getLocalName(), "Night arrived!");
+        } else {
             block();
+        }
     }
 }

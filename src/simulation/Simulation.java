@@ -107,7 +107,7 @@ public class Simulation {
             stationAgents.add(station);
 
             try {
-                Thread.sleep(150);
+                Thread.sleep(90);
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -155,7 +155,7 @@ public class Simulation {
 
             clientAgents.add(client);
             try {
-                Thread.sleep(150);
+                Thread.sleep(90);
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -191,7 +191,7 @@ public class Simulation {
             companyAgents.add(company);
 
             try {
-                Thread.sleep(150);
+                Thread.sleep(90);
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

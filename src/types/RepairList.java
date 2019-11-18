@@ -28,7 +28,10 @@ public class RepairList {
     public static RepairList from(ACLMessage message) {
         String[] parts = message.getContent().split(":");
         RepairList list = new RepairList();
-        for (String part : parts) list.ids.add(Integer.parseInt(part));
+        for (String part : parts) {
+            if (part.isEmpty()) continue;
+            list.ids.add(Integer.parseInt(part));
+        }
         return list;
     }
 }

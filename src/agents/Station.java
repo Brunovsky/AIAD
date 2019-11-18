@@ -97,24 +97,16 @@ public class Station extends Agent {
     }
 
     private ACLMessage prepareClientPromptMessage() {
-        Logger.green(id, "Running client prompts...");
-
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology(World.get().getPromptClient());
-        for (AID client : clients) message.addReceiver(client);
         return message;
     }
 
     private ACLMessage prepareCompanyQueryMessage() {
-        Logger.green(id, "Running company queries...");
-
-        JobList jobList = prepareJobList();
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
         message.setOntology(World.get().getInformCompanyJobs());
-        message.setContent(jobList.make());
-        for (AID company : companies) message.addReceiver(company);
         return message;
     }
 
@@ -158,8 +150,9 @@ public class Station extends Agent {
                 }
             });
 
-            AID[] companies = (AID[]) list.toArray();
+            AID[] companies = new AID[list.size()];
             RepairKey[] keys = get(type);
+            list.toArray(companies);
 
             int c = 0, r = 0;
             while (c < companies.length && r < keys.length) {
@@ -168,6 +161,10 @@ public class Station extends Agent {
                 if (price <= max) {
                     assignments.get(companies[c]).add(type, 1);
                     repairs.get(keys[r].client).ids.add(keys[r].id);
+                    ++r;
+                    if (assignments.get(companies[c]).get(type)
+                        == proposals.get(companies[c]).get(type))
+                        ++c;
                 } else {
                     break;
                 }
@@ -226,6 +223,19 @@ public class Station extends Agent {
             super(a, prepareClientPromptMessage());  // Protocol A
         }
 
+        @Override
+        protected Vector<ACLMessage> prepareRequests(ACLMessage request) {
+            Logger.green(id, "[FetchNewMalfunctions]");
+            Vector<ACLMessage> vector = new Vector<>();
+            if (request == null) request = prepareClientPromptMessage();
+            for (AID client : clients) {
+                ACLMessage clone = (ACLMessage) request.clone();
+                clone.addReceiver(client);
+                vector.add(clone);
+            }
+            return vector;
+        }
+
         @Override  // Protocol B
         protected void handleInform(ACLMessage inform) {
             AID client = inform.getSender();
@@ -247,6 +257,21 @@ public class Station extends Agent {
 
         AssignJobs(Agent a) {
             super(a, prepareCompanyQueryMessage());  // Protocol C
+        }
+
+        @Override
+        protected Vector<ACLMessage> prepareRequests(ACLMessage request) {
+            Logger.green(id, "[AssignJobs]");
+            Vector<ACLMessage> vector = new Vector<>();
+            JobList jobList = prepareJobList();
+            if (request == null) request = prepareCompanyQueryMessage();
+            request.setContent(jobList.make());
+            for (AID company : companies) {
+                ACLMessage clone = (ACLMessage) request.clone();
+                clone.addReceiver(company);
+                vector.add(clone);
+            }
+            return vector;
         }
 
         private void informCompany(AID company, Proposal content) {

@@ -31,7 +31,7 @@ public class ClientRepairs {
     public static ClientRepairs from(ACLMessage message) {
         String[] parts = message.getContent().split(";|=");
         ClientRepairs repairs = new ClientRepairs();
-        for (int i = 0; i < parts.length;) {
+        for (int i = 0; i + 2 < parts.length;) {
             int id = Integer.parseInt(parts[i++]);
             MalfunctionType type = MalfunctionType.make(Integer.parseInt(parts[i++]));
             double price = Double.parseDouble(parts[i++]);

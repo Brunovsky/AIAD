@@ -7,11 +7,13 @@ import simulation.World;
 
 public class TechnicianHistory {
     public final AID technician;
+    public final AID station;
     public final ArrayList<Contract> contracts;
     public final WorkFinance total;
 
-    public TechnicianHistory(AID technician) {
+    public TechnicianHistory(AID technician, AID station) {
         this.technician = technician;
+        this.station = station;
         this.contracts = new ArrayList<>();
         this.total = new WorkFinance();
     }
@@ -33,6 +35,11 @@ public class TechnicianHistory {
         }
 
         return null;
+    }
+
+    public Contract lastContract() {
+        if (contracts.isEmpty()) return null;
+        return contracts.get(contracts.size() - 1);
     }
 
     public void addContract(Contract contract) {

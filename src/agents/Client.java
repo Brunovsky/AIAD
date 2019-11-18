@@ -101,6 +101,8 @@ public class Client extends Agent {
             MessageTemplate onto = MatchOntology(World.get().getPromptClient());
             MessageTemplate acl = MatchPerformative(ACLMessage.REQUEST);
 
+            Logger.yellow(id, "[AnswerStationPrompt] Waiting request from station");
+
             // Protocol A: wait for request message
             ACLMessage request = receive(and(onto, acl));
             if (request == null) {
