@@ -18,7 +18,6 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import simulation.World;
 import strategies.ClientStrategy;
-import strategies.UniformClientStrategy;
 import types.ClientRepairs;
 import types.Repair;
 import types.RepairList;
@@ -29,34 +28,34 @@ public class Client extends Agent {
 
     private final String id;
     private AID station;
-
     private int repairId;
+
     private HashMap<Integer, Repair> repairsHistory;
     private HashMap<Integer, Repair> dayRequestRepairs;
-    ClientStrategy strategy;
+
+    private final ClientStrategy strategy;
 
     public Client(String id, ClientStrategy strategy, AID station) {
-        assert id != null && station != null;
+        assert id != null && strategy != null && station != null;
         this.id = id;
         this.station = station;
         this.repairId = 0;
+
+        this.repairsHistory = new HashMap<>();     // repairs done
+        this.dayRequestRepairs = new HashMap<>();  // repairs for the day
+
         this.strategy = strategy;
-
-        repairsHistory = new HashMap<>();     // repairs done
-        dayRequestRepairs = new HashMap<>();  // repairs for the day
-
-        // TODO Choose strategy, maybe send as a parameter in Client contructor
-        strategy = new UniformClientStrategy();
+        strategy.setClient(this);
     }
 
     @Override
     protected void setup() {
-        Logger.info(getLocalName(), "Setup " + id);
+        Logger.info(id, "Setup " + id);
 
-        String subscriptionOnto = World.get().getClientStationService();
+        String clientSub = World.get().getClientStationService();
 
         // SETUP
-        addBehaviour(new SubscribeBehaviour(this, station, subscriptionOnto));
+        addBehaviour(new SubscribeBehaviour(this, station, clientSub));
         addBehaviour(new GenerateNewRepairs(this));
 
         SequentialBehaviour sequential = new SequentialBehaviour(this);
@@ -74,7 +73,7 @@ public class Client extends Agent {
 
     @Override
     protected void takeDown() {
-        Logger.warn(getLocalName(), "Client Terminated!");
+        Logger.warn(id, "Client Terminated!");
     }
 
     class GenerateNewRepairs extends OneShotBehaviour {

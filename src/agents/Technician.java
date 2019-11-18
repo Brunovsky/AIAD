@@ -34,12 +34,12 @@ public class Technician extends Agent {
     private final AID homeStation;
     private AID company;
 
-    private final TechnicianStrategy strategy;
-
     private final Map<Integer, WorkLog> workHistory;
     private final ArrayList<Contract> contractHistory;
     private Contract currentContract, nextContract;
     private State state;
+
+    private final TechnicianStrategy strategy;
 
     public enum State { WORKING, UNEMPLOYED }
 
@@ -49,18 +49,19 @@ public class Technician extends Agent {
         this.homeStation = homeStation;
         this.company = company;
 
-        this.strategy = strategy;
-
         this.workHistory = new HashMap<>();
         this.contractHistory = new ArrayList<>();
         this.currentContract = null;
         this.nextContract = null;
         this.state = UNEMPLOYED;
+
+        this.strategy = strategy;
+        strategy.setTechnician(this);
     }
 
     @Override
     protected void setup() {
-        Logger.info(getLocalName(), "Setup " + id);
+        Logger.info(id, "Setup " + id);
 
         // SETUP
         addBehaviour(new InitialEmployment(this));
@@ -81,7 +82,7 @@ public class Technician extends Agent {
 
     @Override
     protected void takeDown() {
-        Logger.warn(getLocalName(), "Technician Terminated!");
+        Logger.warn(id, "Technician Terminated!");
     }
 
     public AID getHomeStation() {
@@ -255,7 +256,7 @@ public class Technician extends Agent {
             currentContract = contract;
             state = WORKING;
 
-            Logger.info(getLocalName(), "Initial employment @" + company.getLocalName());
+            Logger.info(id, "Initial employment @" + company.getLocalName());
         }
     }
 }

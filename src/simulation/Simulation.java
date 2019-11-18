@@ -18,23 +18,20 @@ import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
-import strategies.ClientStrategy;
-import strategies.CompanyStrategy;
-import strategies.TechnicianStrategy;
 
 public class Simulation {
-    private ArrayList<Technician> technicianAgents;
-    private ArrayList<Client> clientAgents;
-    private ArrayList<Station> stationAgents;
-    private ArrayList<Company> companyAgents;
+    private final ArrayList<Technician> technicianAgents;
+    private final ArrayList<Client> clientAgents;
+    private final ArrayList<Station> stationAgents;
+    private final ArrayList<Company> companyAgents;
 
-    private Map<ClientStrategy, ArrayList<Client>> clientMap;
-    private Map<CompanyStrategy, ArrayList<Company>> companyMap;
-    private Map<TechnicianStrategy, ArrayList<Technician>> technicianMap;
+    private final Map<ClientsDesc.Strategy, ArrayList<Client>> clientMap;
+    private final Map<CompaniesDesc.Strategy, ArrayList<Company>> companyMap;
+    private final Map<TechniciansDesc.Strategy, ArrayList<Technician>> technicianMap;
 
-    private Runtime runtime;
-    private Profile profile;
-    private ContainerController container;
+    private final Runtime runtime;
+    private final Profile profile;
+    private final ContainerController container;
 
     public static void main(String[] args) {
         System.out.print("\033[H\033[2J");
@@ -58,8 +55,9 @@ public class Simulation {
 
         launchStations();
         launchClients();
-        launchTechnicians();
         launchCompanies();
+        launchTechnicians();
+        launchSimulation();
 
         try {
             for (Technician technician : technicianAgents) technician.doDelete();
@@ -70,17 +68,6 @@ public class Simulation {
             runtime.shutDown();
         } catch (StaleProxyException e) {
             e.printStackTrace();
-        }
-    }
-
-    // shuffle array of ints
-    private void shuffle(int[] array) {
-        final Random rng = ThreadLocalRandom.current();
-        for (int i = array.length - 1; i > 0; --i) {
-            int j = rng.nextInt(i + 1);
-            int a = array[j];
-            array[j] = array[i];
-            array[i] = a;
         }
     }
 
@@ -125,7 +112,7 @@ public class Simulation {
      * locations.
      */
     private void launchClients() {
-        ClientStrategy strategies[] = new ClientStrategy[World.get().Cl];
+        ClientsDesc.Strategy strategies[] = new ClientsDesc.Strategy[World.get().Cl];
         AID[] stations = new AID[World.get().Cl];
 
         int z = 0;
@@ -152,7 +139,7 @@ public class Simulation {
         for (int i = 0; i < World.get().Cl; ++i) {
             String id = "client_" + (i + 1);
 
-            Client client = new Client(id, strategies[i], stations[i]);
+            Client client = new Client(id, strategies[i].make(), stations[i]);
 
             clientMap.get(strategies[i]).add(client);
 
@@ -166,7 +153,7 @@ public class Simulation {
      * Launch all world companies
      */
     private void launchCompanies() {
-        CompanyStrategy[] strategies = new CompanyStrategy[World.get().Co];
+        CompaniesDesc.Strategy[] strategies = new CompaniesDesc.Strategy[World.get().Co];
 
         int z = 0;
         for (CompaniesDesc entry : World.get().companies) {
@@ -181,7 +168,7 @@ public class Simulation {
         for (int i = 0; i < World.get().Co; ++i) {
             String id = "company_" + (i + 1);
 
-            Company company = new Company(id, strategies[i]);
+            Company company = new Company(id, strategies[i].make());
 
             companyMap.get(strategies[i]).add(company);
 
@@ -191,8 +178,11 @@ public class Simulation {
         }
     }
 
+    /**
+     * Launch all world technicians
+     */
     private void launchTechnicians() {
-        TechnicianStrategy[] strategies = new TechnicianStrategy[World.get().T];
+        TechniciansDesc.Strategy[] strategies = new TechniciansDesc.Strategy[World.get().T];
         AID[] stations = new AID[World.get().T];
         AID[] companies = new AID[World.get().T];
 
@@ -228,10 +218,11 @@ public class Simulation {
         shuffle(stations);
         shuffle(companies);
 
-        for (int i = 0; i < World.get().Co; ++i) {
+        for (int i = 0; i < World.get().T; ++i) {
             String id = "technician_" + (i + 1);
 
-            Technician technician = new Technician(id, stations[i], companies[i], strategies[i]);
+            Technician technician = new Technician(id, stations[i], companies[i],
+                                                   strategies[i].make());
 
             technicianMap.get(strategies[i]).add(technician);
 
@@ -241,39 +232,12 @@ public class Simulation {
         }
     }
 
-    //    public class ClientWaiter implements Client.Callback {
-    //        private Lock lock;
-    //        private Condition condition;
-    //
-    //        private ClientWaiter() {
-    //            lock = new ReentrantLock();
-    //            condition = lock.newCondition();
-    //        }
-    //
-    //        private boolean await() {
-    //            try {
-    //                lock.lock();
-    //                condition.await();
-    //                return true;
-    //            } catch (InterruptedException e) {
-    //                e.printStackTrace();
-    //                return false;
-    //            } finally {
-    //                lock.unlock();
-    //            }
-    //        }
-    //
-    //        private void signal() {
-    //            try {
-    //                lock.lock();
-    //                condition.signal();
-    //            } finally {
-    //                lock.unlock();
-    //            }
-    //        }
-    //
-    //        public void run() {
-    //            signal();
-    //        }
-    //    }
+    /**
+     * Schedule the world orchestrator runnables to control the progress of days.
+     * Await for the simulation to finish.
+     */
+    private void launchSimulation() {
+        God.get().run();
+        God.get().awaitWorld();
+    }
 }

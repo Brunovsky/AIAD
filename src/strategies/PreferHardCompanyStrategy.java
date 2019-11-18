@@ -7,7 +7,7 @@ import types.Contract;
 import types.JobList;
 import types.Proposal;
 
-public class UmNomeParaMeter extends CompanyStrategy {
+public class PreferHardCompanyStrategy extends CompanyStrategy {
     @Override
     public Contract initialContract(AID technician, AID station) {
         String stationName = station.getLocalName();
@@ -16,7 +16,7 @@ public class UmNomeParaMeter extends CompanyStrategy {
         double salary = 20;
         double percentage = 0.15;
         return new Contract(company.getAID(), technician, stationName, salary, percentage, start,
-                end);
+                            end);
     }
 
     @Override

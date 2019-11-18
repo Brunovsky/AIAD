@@ -6,7 +6,7 @@ import types.Contract;
 import types.JobList;
 import types.Proposal;
 
-public class SimpleCompanyStrategy extends CompanyStrategy {
+public class PreferEasyCompanyStrategy extends CompanyStrategy {
     @Override
     public Contract initialContract(AID technician, AID station) {
         String stationName = station.getLocalName();
@@ -15,7 +15,7 @@ public class SimpleCompanyStrategy extends CompanyStrategy {
         double salary = 20;
         double percentage = 0.15;
         return new Contract(company.getAID(), technician, stationName, salary, percentage, start,
-                end);
+                            end);
     }
 
     @Override

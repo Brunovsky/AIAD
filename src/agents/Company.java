@@ -46,12 +46,12 @@ public class Company extends Agent {
     private final Set<AID> activeStations;
     private final Map<AID, StationHistory> stationHistory;
     private final Map<AID, Set<AID>> stationTechnicians;
-    private final Map<String, AID> stationNames;  // can't parse AID from message
+    private final Map<String, AID> stationNames;
 
     private final CompanyStrategy strategy;
 
     public Company(String id, CompanyStrategy strategy) {
-        assert id != null;
+        assert id != null && strategy != null;
         this.id = id;
 
         this.activeTechnicians = new HashSet<>();
@@ -63,11 +63,12 @@ public class Company extends Agent {
         this.stationNames = new HashMap<>();
 
         this.strategy = strategy;
+        strategy.setCompany(this);
     }
 
     @Override
     protected void setup() {
-        Logger.info(getLocalName(), "Setup " + id);
+        Logger.info(id, "Setup " + id);
 
         // SETUP
         registerDFService();
@@ -89,7 +90,7 @@ public class Company extends Agent {
 
     @Override
     protected void takeDown() {
-        Logger.warn(getLocalName(), "Company Terminated!");
+        Logger.warn(id, "Company Terminated!");
     }
 
     // Register the company in yellow pages

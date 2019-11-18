@@ -53,13 +53,11 @@ public class Station extends Agent {
         this.clients = new HashSet<>();
         this.companies = new HashSet<>();
         this.repairsQueue = new HashMap<>();
-
-        // TODO LOGIC: replace String with a proper data structure for state tracking
     }
 
     @Override
     protected void setup() {
-        Logger.info(getLocalName(), "Setup " + id);
+        Logger.info(id, "Setup " + id);
 
         String clientSub = World.get().getClientStationService();
         String companySub = World.get().getCompanyStationService();
@@ -80,7 +78,7 @@ public class Station extends Agent {
 
     @Override
     protected void takeDown() {
-        Logger.warn(getLocalName(), "Station Terminated!");
+        Logger.warn(id, "Station Terminated!");
     }
 
     private void registerDFService() {
@@ -203,8 +201,9 @@ public class Station extends Agent {
             }
         }
 
-        RepairKey[] array = (RepairKey[]) list.toArray();
-        Arrays.sort(array, new Comparator<RepairKey>() {
+        RepairKey[] keys = new RepairKey[list.size()];
+        list.toArray(keys);
+        Arrays.sort(keys, new Comparator<RepairKey>() {
             @Override
             public int compare(RepairKey lhs, RepairKey rhs) {
                 double l = repairsQueue.get(lhs.client).get(lhs.id).getPrice();
@@ -213,7 +212,7 @@ public class Station extends Agent {
             }
         });
 
-        return array;
+        return keys;
     }
 
     // ***** BEHAVIOURS
@@ -316,8 +315,10 @@ public class Station extends Agent {
             }
 
             if (message.getPerformative() == ACLMessage.SUBSCRIBE) {
+                Logger.info(id, "Subscribe from " + message.getSender().getLocalName());
                 this.subscribers.add(message.getSender());
             } else /* ACLMessage.CANCEL */ {
+                Logger.info(id, "Cancel from " + message.getSender().getLocalName());
                 this.subscribers.remove(message.getSender());
             }
 
