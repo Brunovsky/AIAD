@@ -298,6 +298,7 @@ public class Station extends Agent {
 
             Map<AID, Proposal> proposals = new HashMap<>();
             for (int i = 0; i < N; ++i) {
+                if (messages[i].getPerformative() == ACLMessage.REFUSE) continue;
                 AID company = messages[i].getSender();
                 proposals.put(company, Proposal.from(company, messages[i]));
             }

@@ -79,6 +79,14 @@ public class Technician extends Agent {
     @Override
     protected void takeDown() {
         Logger.blue(id, "Technician Terminated!");
+        StringBuilder builder = new StringBuilder();
+        double earned = 0.0;
+        for (int day : workHistory.keySet()) {
+            WorkLog log = workHistory.get(day);
+            earned += log.finance.earned;
+            builder.append(String.format("%d %d %f\n", day, log.state == WORKING ? 1 : 0, earned));
+        }
+        Logger.write(id, builder.toString());
     }
 
     public AID getHomeStation() {
@@ -145,14 +153,12 @@ public class Technician extends Agent {
             message.setContent(renewed.make());
             send(message);
 
-            Logger.blue(id, "Proposing renewal to company " + company.getLocalName());
+            Logger.blue(id, "Renewing with company " + company.getLocalName());
 
             // TODO SIMPLIFICATION
             MessageTemplate onto = MatchOntology(World.get().getTechnicianOfferContract());
             MessageTemplate acl = MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
             /* ACLMessage reply = */ blockingReceive(and(onto, acl));
-
-            Logger.blue(id, "Received company confirmation of contract renewal");
 
             contractHistory.add(renewed);
             nextContract = renewed;
@@ -181,8 +187,6 @@ public class Technician extends Agent {
                 nextContract = null;
                 state = WORKING;
             }
-
-            Logger.blue(id, "Moved to next contract");
         }
     }
 

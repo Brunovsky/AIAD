@@ -107,9 +107,8 @@ public class Simulation {
             stationAgents.add(station);
 
             try {
-                Thread.sleep(90);
+                Thread.sleep(World.get().MILLI_WAIT);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -155,9 +154,8 @@ public class Simulation {
 
             clientAgents.add(client);
             try {
-                Thread.sleep(90);
+                Thread.sleep(World.get().MILLI_WAIT);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -191,9 +189,8 @@ public class Simulation {
             companyAgents.add(company);
 
             try {
-                Thread.sleep(90);
+                Thread.sleep(World.get().MILLI_WAIT);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -252,9 +249,8 @@ public class Simulation {
             technicianAgents.add(technician);
 
             try {
-                Thread.sleep(50);
+                Thread.sleep(World.get().MILLI_WAIT);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }

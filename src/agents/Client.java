@@ -50,7 +50,7 @@ public class Client extends Agent {
 
     @Override
     protected void setup() {
-        Logger.info(id, "Setup " + id);
+        Logger.yellow(id, "Setup " + id);
 
         String clientSub = World.get().getClientStationService();
 
@@ -71,7 +71,7 @@ public class Client extends Agent {
 
     @Override
     protected void takeDown() {
-        Logger.warn(id, "Client Terminated!");
+        Logger.yellow(id, "Client Terminated!");
     }
 
     private class GenerateNewRepairs extends OneShotBehaviour {
@@ -85,7 +85,7 @@ public class Client extends Agent {
         public void action() {
             strategy.evaluateAdjustments(dayRequestRepairs);
             repairId += strategy.generateNewJobs(dayRequestRepairs, repairId);
-            Logger.yellow(id, "Generated new jobs");
+            Logger.yellow(id, "Generated new jobs and price adjustments");
         }
     }
 
@@ -101,7 +101,7 @@ public class Client extends Agent {
             MessageTemplate onto = MatchOntology(World.get().getPromptClient());
             MessageTemplate acl = MatchPerformative(ACLMessage.REQUEST);
 
-            Logger.yellow(id, "[AnswerStationPrompt] Waiting request from station");
+            Logger.yellow(id, "Waiting request from station");
 
             // Protocol A: wait for request message
             ACLMessage request = receive(and(onto, acl));
@@ -116,7 +116,7 @@ public class Client extends Agent {
             reply.setContent(new ClientRepairs(dayRequestRepairs).make());
             send(reply);
 
-            Logger.yellow(id, "Sent set of repairs to station upon request");
+            Logger.yellow(id, "Sent new jobs to station");
 
             finalize();
         }

@@ -39,6 +39,10 @@ public abstract class World {
     int numberDays;
     int currentDay;
 
+    public int MILLI_PERIOD;
+    public int MILLI_DELAY;
+    public int MILLI_WAIT;
+
     private static World world;
 
     static void set(World newWorld) {

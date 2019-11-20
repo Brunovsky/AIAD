@@ -22,7 +22,7 @@ public class SimpleTechnicianStrategy extends TechnicianStrategy {
         double salary = cp.salary * 1.02;
         double percentage = cp.percentage;
         int start = Math.max(cp.end + 1, day);
-        int end = start + 30;
+        int end = start + 10;
         return new Contract(company, technician.getAID(), station, salary, percentage, start, end);
     }
 }

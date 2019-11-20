@@ -13,20 +13,43 @@ public class UniformClientStrategy extends ClientStrategy {
         Random rand = ThreadLocalRandom.current();
         for (int id : dayRequestRepairs.keySet()) {
             Repair repair = dayRequestRepairs.get(id);
-            double nextPrice = 20 * rand.nextDouble() + repair.getPrice();  // TODO CONSTANTS
-            repair.setPrice(nextPrice);
+            double d = rand.nextDouble(), price = repair.getPrice();
+            switch (repair.getMalfunctionType()) {
+            case EASY:
+                repair.setPrice(price + 2.5 * d);
+                break;
+            case MEDIUM:
+                repair.setPrice(price + 8 * d);
+                break;
+            case HARD:
+                repair.setPrice(price + 28 * d);
+                break;
+            }
         }
     }
 
     @Override
     public int generateNewJobs(Map<Integer, Repair> dayRequestRepairs, int repairId) {
         Random rand = ThreadLocalRandom.current();
-        int numberRequests = rand.nextInt(6);  // TODO CONSTANTS
+        int numberRequests = rand.nextInt(11);
         for (int i = 0; i < numberRequests; i++) {
-            // TODO CONSTANTS: max price between 20 and 80
-            double maxPrice = 20 + (80 - 20) * rand.nextDouble();
-            MalfunctionType type = MalfunctionType.make(rand.nextInt(3));
-            Repair request = new Repair(type, maxPrice);
+            double d = rand.nextDouble();
+            int t = rand.nextInt(14);
+            MalfunctionType type;
+            double price;
+
+            if (t <= 0) {
+                type = MalfunctionType.HARD;
+                price = 18 + 2 * d;
+            } else if (t <= 3) {
+                type = MalfunctionType.MEDIUM;
+                price = 64 + 7 * d;
+            } else {
+                type = MalfunctionType.EASY;
+                price = 235 + 20 * d;
+            }
+
+            Repair request = new Repair(type, price);
             dayRequestRepairs.put(repairId, request);
             repairId++;
         }

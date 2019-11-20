@@ -23,8 +23,6 @@ public class God extends Agent {
     public final Set<AID> day = new HashSet<>();
     public final Set<AID> night = new HashSet<>();
 
-    private static final int PERIOD = 3000, SETUP = 1500;
-
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> dayFuture, nightFuture;
     private final Lock simLock = new ReentrantLock();
@@ -42,10 +40,12 @@ public class God extends Agent {
 
     public void runSimulation() {
         World.get().currentDay = -1;
+        int period = World.get().MILLI_PERIOD;
+        int delay = World.get().MILLI_DELAY;
         SignalDay day = new SignalDay();
         SignalNight night = new SignalNight();
-        dayFuture = scheduler.scheduleAtFixedRate(day, SETUP + PERIOD / 2, PERIOD, MILLISECONDS);
-        nightFuture = scheduler.scheduleAtFixedRate(night, SETUP, PERIOD, MILLISECONDS);
+        dayFuture = scheduler.scheduleAtFixedRate(day, delay + period / 2, period, MILLISECONDS);
+        nightFuture = scheduler.scheduleAtFixedRate(night, delay, period, MILLISECONDS);
     }
 
     public void awaitWorld() {
@@ -112,7 +112,7 @@ public class God extends Agent {
             int total = World.get().getTotalAgents();
             if (World.get().currentDay == World.get().numberDays) {
                 dayFuture.cancel(false);
-                scheduler.schedule(new Terminate(), PERIOD / 2, MILLISECONDS);
+                scheduler.schedule(new Terminate(), World.get().MILLI_PERIOD / 2, MILLISECONDS);
             }
 
             try {

@@ -2,11 +2,15 @@ package simulation;
 
 public class AIADWorld extends World {
     public AIADWorld() {
-        numberDays = 4;
+        numberDays = 5;
 
-        T = 20;
+        MILLI_DELAY = 1000;
+        MILLI_PERIOD = 2000;
+        MILLI_WAIT = 30;
+
+        T = 160;
         technicians = new TechniciansDesc[] {
-            new TechniciansDesc(20, TechniciansDesc.Strategy.SIMPLE)  //
+            new TechniciansDesc(160, TechniciansDesc.Strategy.SIMPLE)  //
         };
 
         Cl = 40;
@@ -16,13 +20,13 @@ public class AIADWorld extends World {
 
         S = 4;
         stations = new StationsDesc[] {
-            new StationsDesc(4, 5, 10)  //
+            new StationsDesc(4, 40, 10)  //
         };
 
         Co = 5;
         companies = new CompaniesDesc[] {
-            new CompaniesDesc(3, CompaniesDesc.Strategy.PREFER_EASY, 4),  //
-            new CompaniesDesc(2, CompaniesDesc.Strategy.PREFER_HARD, 4)   //
+            new CompaniesDesc(3, CompaniesDesc.Strategy.PREFER_EASY, 32),  //
+            new CompaniesDesc(2, CompaniesDesc.Strategy.PREFER_HARD, 32)   //
         };
 
         assertValid();

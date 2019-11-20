@@ -21,11 +21,6 @@ public class Proposal {
         return easy * easyPrice + medium * mediumPrice + hard * hardPrice;
     }
 
-    public String make() {
-        return String.format("%d=%f:%d=%f:%d=%f", easy, easyPrice, medium, mediumPrice, hard,
-                             hardPrice);
-    }
-
     public int get(MalfunctionType type) {
         switch (type) {
         case EASY:
@@ -59,6 +54,11 @@ public class Proposal {
             return hardPrice;
         }
         return -1;
+    }
+
+    public String make() {
+        return String.format("%d=%f:%d=%f:%d=%f", easy, easyPrice, medium, mediumPrice, hard,
+                             hardPrice);
     }
 
     public static Proposal from(AID company, ACLMessage message) {

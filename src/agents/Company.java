@@ -90,6 +90,18 @@ public class Company extends Agent {
     @Override
     protected void takeDown() {
         Logger.red(id, "Company Terminated!");
+        StringBuilder builder = new StringBuilder();
+        for (StationHistory history : stationHistory.values()) {
+            double earned = 0.0;
+            builder.append(history.station.getLocalName()).append('\n');
+            for (int i = 0; i < history.finances.size(); ++i) {
+                WorkFinance finance = history.finances.get(i);
+                earned += finance.earned;
+                builder.append(String.format("%d %f %f %f %f\n", i, finance.salary, finance.cut,
+                                             finance.earned, earned));
+            }
+        }
+        Logger.write(id, builder.toString());
     }
 
     // Register the company in yellow pages
@@ -305,7 +317,7 @@ public class Company extends Agent {
                 totalSalaryPaid += salary;
                 totalCutPaid += techCut;
 
-                Logger.cyan(id, "Sent payment to technician " + technician.getLocalName());
+                Logger.red(id, "Sent payment to technician " + technician.getLocalName());
 
                 // Protocol D
                 ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
