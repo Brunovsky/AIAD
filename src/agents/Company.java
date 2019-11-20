@@ -91,7 +91,9 @@ public class Company extends Agent {
     protected void takeDown() {
         Logger.company(id, "Company Terminated!");
         StringBuilder builder = new StringBuilder();
+        builder.append(strategy.getClass().getName() + "\n");
         builder.append("\tDAY \tSALARY \t\tCUT \tEARNED \t\tACCUMULATED\n");
+        double total = 0.0;
         for (StationHistory history : stationHistory.values()) {
             double earned = 0.0;
             builder.append(history.station.getLocalName()).append('\n');
@@ -101,7 +103,9 @@ public class Company extends Agent {
                 builder.append(String.format("\t%d \t%f \t%f \t%f \t%f\n", i, finance.salary,
                                              finance.cut, finance.earned, earned));
             }
+            total += earned;
         }
+        builder.append("TOTAL: " + total);
         Logger.write(id, builder.toString());
     }
 
