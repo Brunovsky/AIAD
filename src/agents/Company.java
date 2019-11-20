@@ -5,10 +5,10 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import agentbehaviours.AwaitDayBehaviour;
 import agentbehaviours.AwaitNightBehaviour;
@@ -54,13 +54,13 @@ public class Company extends Agent {
         assert id != null && strategy != null;
         this.id = id;
 
-        this.activeTechnicians = new HashSet<>();
-        this.technicianHistory = new HashMap<>();
+        this.activeTechnicians = ConcurrentHashMap.newKeySet();
+        this.technicianHistory = new ConcurrentHashMap<>();
 
-        this.activeStations = new HashSet<>();
-        this.stationHistory = new HashMap<>();
-        this.stationTechnicians = new HashMap<>();
-        this.stationNames = new HashMap<>();
+        this.activeStations = ConcurrentHashMap.newKeySet();
+        this.stationHistory = new ConcurrentHashMap<>();
+        this.stationTechnicians = new ConcurrentHashMap<>();
+        this.stationNames = new ConcurrentHashMap<>();
 
         this.strategy = strategy;
         strategy.setCompany(this);
@@ -68,7 +68,7 @@ public class Company extends Agent {
 
     @Override
     protected void setup() {
-        Logger.red(id, "Setup " + id);
+        Logger.company(id, "Setup " + id);
 
         registerDFService();
         findStations();
@@ -89,7 +89,7 @@ public class Company extends Agent {
 
     @Override
     protected void takeDown() {
-        Logger.red(id, "Company Terminated!");
+        Logger.company(id, "Company Terminated!");
         StringBuilder builder = new StringBuilder();
         for (StationHistory history : stationHistory.values()) {
             double earned = 0.0;
@@ -167,14 +167,16 @@ public class Company extends Agent {
             int today = World.get().getDay();
             for (AID station : stationTechnicians.keySet()) {
                 Set<AID> technicians = stationTechnicians.get(station);
+                Set<AID> removed = new HashSet<>();
                 for (AID technician : technicians) {
                     Contract currentContract = technicianHistory.get(technician).currentContract();
                     assert currentContract != null;
                     if (currentContract.end == today) {
-                        stationTechnicians.get(station).remove(technician);
+                        removed.add(technician);
                         activeTechnicians.remove(technician);
                     }
                 }
+                technicians.removeAll(removed);
             }
 
             // Add contracts starting tomorrow
@@ -290,11 +292,14 @@ public class Company extends Agent {
                 return;
             }
 
-            Logger.red(id, "Received accepted jobs from station " + station.getLocalName());
+            Logger.company(id, "Received accepted jobs from station " + station.getLocalName());
 
             int technicians = numTechniciansInStation(station);
 
             Proposal accepted = Proposal.from(myAgent.getAID(), message);
+            accepted.easyPrice = proposed.easyPrice;
+            accepted.mediumPrice = proposed.mediumPrice;
+            accepted.hardPrice = proposed.hardPrice;
 
             final int haveJobs = accepted.totalJobs() > 0 ? 1 : 0;
             final int jobs = accepted.totalJobs();
@@ -317,7 +322,7 @@ public class Company extends Agent {
                 totalSalaryPaid += salary;
                 totalCutPaid += techCut;
 
-                Logger.red(id, "Sent payment to technician " + technician.getLocalName());
+                Logger.company(id, "Sent payment to technician " + technician.getLocalName());
 
                 // Protocol D
                 ACLMessage inform = new ACLMessage(ACLMessage.INFORM);

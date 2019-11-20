@@ -60,7 +60,7 @@ public class Technician extends Agent {
 
     @Override
     protected void setup() {
-        Logger.blue(id, "Setup " + id);
+        Logger.technician(id, "Setup " + id);
 
         // Setup
         addBehaviour(new InitialEmployment(this));
@@ -78,7 +78,7 @@ public class Technician extends Agent {
 
     @Override
     protected void takeDown() {
-        Logger.blue(id, "Technician Terminated!");
+        Logger.technician(id, "Technician Terminated!");
         StringBuilder builder = new StringBuilder();
         double earned = 0.0;
         for (int day : workHistory.keySet()) {
@@ -153,7 +153,7 @@ public class Technician extends Agent {
             message.setContent(renewed.make());
             send(message);
 
-            Logger.blue(id, "Renewing with company " + company.getLocalName());
+            Logger.technician(id, "Renewing with company " + company.getLocalName());
 
             // TODO SIMPLIFICATION
             MessageTemplate onto = MatchOntology(World.get().getTechnicianOfferContract());
@@ -209,7 +209,7 @@ public class Technician extends Agent {
             WorkFinance finance = WorkFinance.from(inform);
             createWorkLog(finance);
 
-            Logger.blue(id, "Received payment from company, value of " + finance.earned);
+            Logger.technician(id, "Received payment from company, value of " + finance.earned);
         }
 
         @Override
@@ -247,7 +247,7 @@ public class Technician extends Agent {
             currentContract = contract;
             state = WORKING;
 
-            Logger.blue(id, "Initial employment @" + company.getLocalName());
+            Logger.technician(id, "Initial employment @" + company.getLocalName());
         }
     }
 }

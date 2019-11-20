@@ -7,14 +7,23 @@ import types.Contract;
 import types.JobList;
 import types.Proposal;
 
+/**
+ * Company that prefers hard jobs with high pay that require more technicians
+ *
+ * Since hard jobs are less common, the company reduces risk by giving technicians a more
+ * substantial percentage of each job's pay but a lower salary.
+ *
+ * Company with 20 employees pays base salary of 20 * 20 = 400.
+ */
+
 public class PreferHardCompanyStrategy extends CompanyStrategy {
     @Override
     public Contract initialContract(AID technician, AID station) {
         String stationName = station.getLocalName();
         int day = World.get().getDay();
-        int start = day, end = day + 30;
+        int start = day, end = day + 3;
         double salary = 20;
-        double percentage = 0.15;
+        double percentage = 0.25;
         return new Contract(company.getAID(), technician, stationName, salary, percentage, start,
                             end);
     }
@@ -22,21 +31,22 @@ public class PreferHardCompanyStrategy extends CompanyStrategy {
     @Override
     public Proposal makeProposal(int technicians, JobList jobList) {
         Proposal proposal = new Proposal(company.getAID());
+        assert technicians > 0;
 
-        if (technicians == 0) return null;
+        proposal.easyPrice = 30;
+        proposal.mediumPrice = 85;
+        proposal.hardPrice = 270;
 
-        proposal.easyPrice = 20;
-        proposal.mediumPrice = 40;
-        proposal.hardPrice = 60;
-
-        if (technicians >= jobList.hard) {
-            technicians -= jobList.hard;
+        // take hard jobs
+        if (technicians >= 3 * jobList.hard) {
+            technicians -= 3 * jobList.hard;
             proposal.hard = jobList.hard;
         } else {
-            proposal.hard = technicians;
+            proposal.hard = technicians / 3;
             return proposal;
         }
 
+        // take medium jobs
         if (technicians >= jobList.medium) {
             technicians -= jobList.medium;
             proposal.medium = jobList.medium;
@@ -45,11 +55,12 @@ public class PreferHardCompanyStrategy extends CompanyStrategy {
             return proposal;
         }
 
-        if (technicians >= jobList.easy) {
-            technicians -= jobList.easy;
+        // take easy jobs
+        if (3 * technicians >= jobList.easy) {
+            technicians -= (jobList.easy + 2) / 3;
             proposal.easy = jobList.easy;
         } else {
-            proposal.easy = technicians;
+            proposal.easy = 3 * technicians;
             return proposal;
         }
 

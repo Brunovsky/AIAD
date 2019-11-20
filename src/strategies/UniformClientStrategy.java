@@ -40,13 +40,13 @@ public class UniformClientStrategy extends ClientStrategy {
 
             if (t <= 0) {
                 type = MalfunctionType.HARD;
-                price = 18 + 2 * d;
+                price = 320 + 20 * d;
             } else if (t <= 3) {
                 type = MalfunctionType.MEDIUM;
-                price = 64 + 7 * d;
+                price = 90 + 7 * d;
             } else {
                 type = MalfunctionType.EASY;
-                price = 235 + 20 * d;
+                price = 30 + 2 * d;
             }
 
             Repair request = new Repair(type, price);

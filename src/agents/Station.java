@@ -55,7 +55,7 @@ public class Station extends Agent {
 
     @Override
     protected void setup() {
-        Logger.green(id, "Setup " + id);
+        Logger.station(id, "Setup " + id);
 
         String clientSub = World.get().getClientStationService();
         String companySub = World.get().getCompanyStationService();
@@ -76,7 +76,7 @@ public class Station extends Agent {
 
     @Override
     protected void takeDown() {
-        Logger.green(id, "Station Terminated!");
+        Logger.station(id, "Station Terminated!");
     }
 
     private void registerDFService() {
@@ -152,7 +152,7 @@ public class Station extends Agent {
 
             AID[] companies = new AID[list.size()];
             RepairKey[] keys = get(type);
-            list.toArray(companies);
+            companies = list.toArray(companies);
 
             int c = 0, r = 0;
             while (c < companies.length && r < keys.length) {
@@ -225,7 +225,7 @@ public class Station extends Agent {
 
         @Override
         protected Vector<ACLMessage> prepareRequests(ACLMessage request) {
-            Logger.green(id, "[FetchNewMalfunctions]");
+            Logger.station(id, "[FetchNewMalfunctions]");
             Vector<ACLMessage> vector = new Vector<>();
             if (request == null) request = prepareClientPromptMessage();
             for (AID client : clients) {
@@ -261,7 +261,7 @@ public class Station extends Agent {
 
         @Override
         protected Vector<ACLMessage> prepareRequests(ACLMessage request) {
-            Logger.green(id, "[AssignJobs]");
+            Logger.station(id, "[AssignJobs]");
             Vector<ACLMessage> vector = new Vector<>();
             JobList jobList = prepareJobList();
             if (request == null) request = prepareCompanyQueryMessage();
@@ -298,9 +298,10 @@ public class Station extends Agent {
 
             Map<AID, Proposal> proposals = new HashMap<>();
             for (int i = 0; i < N; ++i) {
-                if (messages[i].getPerformative() == ACLMessage.REFUSE) continue;
+                if (messages[i].getPerformative() != ACLMessage.INFORM) continue;
                 AID company = messages[i].getSender();
-                proposals.put(company, Proposal.from(company, messages[i]));
+                Proposal proposal = Proposal.from(company, messages[i]);
+                proposals.put(company, proposal);
             }
 
             Assignment assignment = new Assignment(proposals);
@@ -343,7 +344,8 @@ public class Station extends Agent {
                 return;
             }
 
-            Logger.green(id, ontology + " = Subscribe from " + message.getSender().getLocalName());
+            Logger.station(id,
+                           ontology + " = Subscribe from " + message.getSender().getLocalName());
             this.subscribers.add(message.getSender());
 
             ACLMessage reply = message.createReply();

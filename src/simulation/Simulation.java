@@ -1,5 +1,6 @@
 package simulation;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +19,7 @@ import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
+import utils.Logger;
 
 public class Simulation {
     private final ArrayList<Technician> technicianAgents;
@@ -35,6 +37,8 @@ public class Simulation {
 
     public static void main(String[] args) {
         System.out.print("\033[H\033[2J");
+        File dir = new File(Logger.logfolder);
+        for (File file : dir.listFiles()) file.delete();
         World.set(new AIADWorld());
         new Simulation();
     }

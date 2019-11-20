@@ -29,7 +29,7 @@ public class Logger {
     // private static final String ANSI_WHITE_BACKGROUND = "\u001B[47m";
 
     private static final boolean useColours = true;
-    private static final String logfolder = "./log/";
+    public static final String logfolder = "./log/";
 
     public static void print(String pre, String name, String text) {
         if (useColours) {
@@ -48,6 +48,8 @@ public class Logger {
             e.printStackTrace();
         }
     }
+
+    // * debug
 
     public static void info(String agentName, String info) {
         print(ANSI_GREEN, agentName, info);
@@ -72,6 +74,8 @@ public class Logger {
     public static void ERROR(String agentName, String error) {
         print(ANSI_RED_BACKGROUND + ANSI_BLACK, agentName, error);
     }
+
+    // * colors
 
     public static void red(String agentName, String text) {
         print(ANSI_RED, agentName, text);
@@ -99,5 +103,38 @@ public class Logger {
 
     public static void white(String agentName, String text) {
         print(ANSI_WHITE, agentName, text);
+    }
+
+    // * agents
+
+    private static final boolean showClient = false;
+    private static final boolean showStation = true;
+    private static final boolean showCompany = true;
+    private static final boolean showTechnician = false;
+    private static final boolean showGod = true;
+
+    public static void client(String agentName, String text) {
+        if (!showClient) return;
+        print(ANSI_WHITE, agentName, text);
+    }
+
+    public static void station(String agentName, String text) {
+        if (!showStation) return;
+        print(ANSI_RED, agentName, text);
+    }
+
+    public static void company(String agentName, String text) {
+        if (!showCompany) return;
+        print(ANSI_PURPLE, agentName, text);
+    }
+
+    public static void technician(String agentName, String text) {
+        if (!showTechnician) return;
+        print(ANSI_RED, agentName, text);
+    }
+
+    public static void god(String agentName, String text) {
+        if (!showGod) return;
+        print(ANSI_YELLOW, agentName, text);
     }
 }

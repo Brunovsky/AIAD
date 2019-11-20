@@ -9,7 +9,7 @@ public class SimpleTechnicianStrategy extends TechnicianStrategy {
     public boolean lookForContracts() {
         int day = World.get().getDay();
         Contract current = technician.getCurrentContract();
-        return current.end - day <= 3;
+        return current.end - day <= 3;  // run 3 days before contract expires
     }
 
     @Override
@@ -19,10 +19,10 @@ public class SimpleTechnicianStrategy extends TechnicianStrategy {
 
         AID company = cp.company;
         String station = technician.getHomeStation().getLocalName();
-        double salary = cp.salary * 1.02;
+        double salary = cp.salary * Math.pow(1.005, cp.numDays());
         double percentage = cp.percentage;
         int start = Math.max(cp.end + 1, day);
-        int end = start + 10;
+        int end = start + Math.min(cp.numDays(), 10);
         return new Contract(company, technician.getAID(), station, salary, percentage, start, end);
     }
 }
