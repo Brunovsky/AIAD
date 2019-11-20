@@ -56,6 +56,7 @@ public class Station extends Agent {
     @Override
     protected void setup() {
         Logger.station(id, "Setup " + id);
+        Logger.write(id, "\tDAY \tEASY \tMEDIUM \tHARD\n");
 
         String clientSub = World.get().getClientStationService();
         String companySub = World.get().getCompanyStationService();
@@ -114,6 +115,9 @@ public class Station extends Agent {
         easy = groupRepairs(MalfunctionType.EASY);
         medium = groupRepairs(MalfunctionType.MEDIUM);
         hard = groupRepairs(MalfunctionType.HARD);
+        int day = World.get().getDay();
+        Logger.write(id, String.format("\t%d \t\t%d \t\t%d \t\t%d\n", day, easy.length,
+                                       medium.length, hard.length));
         return new JobList(easy.length, medium.length, hard.length);
     }
 

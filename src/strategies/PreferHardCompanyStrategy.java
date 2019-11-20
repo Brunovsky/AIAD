@@ -21,7 +21,7 @@ public class PreferHardCompanyStrategy extends CompanyStrategy {
     public Contract initialContract(AID technician, AID station) {
         String stationName = station.getLocalName();
         int day = World.get().getDay();
-        int start = day, end = day + 3;
+        int start = day, end = day + 1000;
         double salary = 20;
         double percentage = 0.25;
         return new Contract(company.getAID(), technician, stationName, salary, percentage, start,

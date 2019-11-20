@@ -80,11 +80,15 @@ public class Technician extends Agent {
     protected void takeDown() {
         Logger.technician(id, "Technician Terminated!");
         StringBuilder builder = new StringBuilder();
+        builder.append("COMPANY: " + company.getLocalName() + "\n");
+        builder.append("\tDAY \tSALARY \tCUT \tACCUMULATED\n");
         double earned = 0.0;
         for (int day : workHistory.keySet()) {
             WorkLog log = workHistory.get(day);
             earned += log.finance.earned;
-            builder.append(String.format("%d %d %f\n", day, log.state == WORKING ? 1 : 0, earned));
+            String line = String.format("\t%d \t%f \t%f \t%f\n", day, log.finance.salary,
+                                        log.finance.cut, earned);
+            builder.append(line);
         }
         Logger.write(id, builder.toString());
     }

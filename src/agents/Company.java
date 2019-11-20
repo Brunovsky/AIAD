@@ -91,14 +91,15 @@ public class Company extends Agent {
     protected void takeDown() {
         Logger.company(id, "Company Terminated!");
         StringBuilder builder = new StringBuilder();
+        builder.append("\tDAY \tSALARY \t\tCUT \tEARNED \t\tACCUMULATED\n");
         for (StationHistory history : stationHistory.values()) {
             double earned = 0.0;
             builder.append(history.station.getLocalName()).append('\n');
             for (int i = 0; i < history.finances.size(); ++i) {
                 WorkFinance finance = history.finances.get(i);
                 earned += finance.earned;
-                builder.append(String.format("%d %f %f %f %f\n", i, finance.salary, finance.cut,
-                                             finance.earned, earned));
+                builder.append(String.format("\t%d \t%f \t%f \t%f \t%f\n", i, finance.salary,
+                                             finance.cut, finance.earned, earned));
             }
         }
         Logger.write(id, builder.toString());

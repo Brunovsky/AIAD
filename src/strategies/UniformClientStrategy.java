@@ -31,7 +31,7 @@ public class UniformClientStrategy extends ClientStrategy {
     @Override
     public int generateNewJobs(Map<Integer, Repair> dayRequestRepairs, int repairId) {
         Random rand = ThreadLocalRandom.current();
-        int numberRequests = rand.nextInt(11);
+        int numberRequests = rand.nextInt(4);
         for (int i = 0; i < numberRequests; i++) {
             double d = rand.nextDouble();
             int t = rand.nextInt(14);
