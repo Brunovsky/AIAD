@@ -97,11 +97,12 @@ public abstract class World {
 
         assert clients != null && stations != null && companies != null;
 
-        int cl = 0, s = 0, co = 0;
+        int cl = 0, s = 0, co = 0, sc = 0;
         for (ClientsDesc client : clients) cl += client.numberClients;
         for (StationsDesc station : stations) s += station.numberStations;
         for (CompaniesDesc company : companies) co += company.numberCompanies;
-        assert Cl == cl && S == s && Co == co;
+        for (StationsDesc station : stations) sc += station.numberStations * station.numberClients;
+        assert Cl == cl && S == s && Co == co && Cl == sc;
 
         assert currentDay <= numberDays;
     }
