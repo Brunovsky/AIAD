@@ -5,6 +5,11 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+
 import agentbehaviours.AwaitDayBehaviour;
 import agentbehaviours.AwaitNightBehaviour;
 import agentbehaviours.SequentialLoopBehaviour;
@@ -14,25 +19,20 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
+import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import simulation.World;
 import strategies.CompanyStrategy;
 import types.Finance;
 import types.JobList;
 import types.Proposal;
-import types.Record;
 import types.StationHistory;
 import types.WorkdayFinance;
 import utils.Logger;
-import utils.Logger.Format;
+import utils.Table;
 
 public class Company extends Agent {
     private static final long serialVersionUID = -4840612670786798770L;
@@ -79,8 +79,6 @@ public class Company extends Agent {
     @Override
     protected void takeDown() {
         Logger.company(id, "Company Terminated!");
-        logAggregate();
-        logSingle();
     }
 
     // Register the company in yellow pages
@@ -133,6 +131,10 @@ public class Company extends Agent {
                 stationTechnicians.put(station, each);
             }
         }
+    }
+
+    public String getId() {
+        return id;
     }
 
     // ***** UTILITIES
@@ -259,125 +261,35 @@ public class Company extends Agent {
 
     // ***** LOGGING
 
-    private void logAggregate() {
-        CompanyRecord record = new CompanyRecord(id, strategy.toString(), numTechnicians);
-        Finance finance = totalFinance();
-        String line = Record.line(Logger.AGGREGATE_FORMAT, record, finance);
-        Logger.appendCompany(line);
+    public void populateRow(Map<String, String> row) {
+        row.put("company", id);
+        row.put("strategy", strategy.toString());
+        row.put("techns", String.format("%d", numTechnicians));
+        totalFinance().populateRow(row);
     }
 
-    private void logSingle() {
-        StringBuilder builder = new StringBuilder();
-
-        if (Logger.RECORD_DEBUG) {
-            builder.append("Strategy:    ").append(strategy).append('\n');
-            builder.append("Technicians: ").append(numTechnicians).append('\n');
+    public Table makeTableStations() {
+        Table table = new Table(id);
+        TreeMap<String, AID> map = new TreeMap<>();
+        for (AID station : stations) map.put(station.getLocalName(), station);
+        for (AID station : map.values()) {
+            Map<String, String> row = table.addRow();
+            row.put("station", station.getLocalName());
+            row.put("techns", String.format("%d", stationTechnicians.get(station)));
+            stationHistory.get(station).finance.populateRow(row);
         }
+        return table;
+    }
 
-        String headerStation = StationRecord.header(Logger.COMPANY_FORMAT);
-        String headerFinance = Finance.header(Logger.COMPANY_FORMAT);
-        String header = Record.line(Logger.COMPANY_FORMAT, headerStation, headerFinance);
-        builder.append(header);
-
-        TreeMap<String, String> lines = new TreeMap<>();
-        TreeMap<String, String> blocks = new TreeMap<>();
-
+    public Table[] makeTablesStationHistory() {
+        TreeMap<String, Table> map = new TreeMap<>();
         for (AID station : stations) {
-            String name = station.getLocalName();
-            int technicians = stationTechnicians.get(station);
-            StationHistory history = stationHistory.get(station);
-            StationRecord record = new StationRecord(name, technicians);
-            String line = Record.line(Logger.COMPANY_FORMAT, record, history.finance);
-            lines.put(name, line);
-
-            if (Logger.RECORD_DEBUG) {
-                String block = history.formatWorkdays(Logger.COMPANY_FORMAT);
-                blocks.put(name, String.format("\n==> Station: %s\n%s", name, block));
-            }
+            map.put(station.getLocalName(), stationHistory.get(station).makeTable());
         }
 
-        for (String line : lines.values()) builder.append(line);
-        for (String block : blocks.values()) builder.append(block);
-
-        String string = builder.toString();
-        Logger.single(id, string);
-    }
-
-    public static class CompanyRecord extends Record {
-        private final String name;
-        private final String strategy;
-        private final int technicians;
-
-        public CompanyRecord(String name, String strategy, int technicians) {
-            this.name = name;
-            this.strategy = strategy;
-            this.technicians = technicians;
-        }
-
-        public static String csvHeader() {
-            return "company,strategy,techns";
-        }
-
-        public static String tableHeader() {
-            return String.format("%10s  %15s  %6s", "station", "strategy", "techns");
-        }
-
-        public static String header(Format format) {
-            switch (format) {
-            case CSV:
-                return csvHeader();
-            case TABLE:
-            default:
-                return tableHeader();
-            }
-        }
-
-        @Override
-        public String csv() {
-            return String.format("%s,%s,%d", name, strategy, technicians);
-        }
-
-        @Override
-        public String table() {
-            return String.format("%10s  %15s  %6d", name, strategy, technicians);
-        }
-    }
-
-    public static class StationRecord extends Record {
-        private final String name;
-        private final int technicians;
-
-        public StationRecord(String name, int technicians) {
-            this.name = name;
-            this.technicians = technicians;
-        }
-
-        public static String csvHeader() {
-            return "station,techns";
-        }
-
-        public static String tableHeader() {
-            return String.format("%10s  %6s", "station", "techns");
-        }
-
-        public static String header(Format format) {
-            switch (format) {
-            case CSV:
-                return csvHeader();
-            case TABLE:
-            default:
-                return tableHeader();
-            }
-        }
-
-        @Override
-        public String csv() {
-            return String.format("%s,%d", name, technicians);
-        }
-
-        @Override
-        public String table() {
-            return String.format("%10s  %6d", name, technicians);
-        }
+        Table[] tables = new Table[stations.size()];
+        int i = 0;
+        for (Table table : map.values()) tables[i++] = table;
+        return tables;
     }
 }

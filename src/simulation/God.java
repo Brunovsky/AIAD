@@ -2,9 +2,6 @@ package simulation;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-import jade.core.AID;
-import jade.core.Agent;
-import jade.lang.acl.ACLMessage;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -13,6 +10,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import jade.core.AID;
+import jade.core.Agent;
+import jade.lang.acl.ACLMessage;
 import utils.Logger;
 
 public class God extends Agent {
@@ -95,8 +96,8 @@ public class God extends Agent {
             try {
                 lock.lock();
                 String text = String.format("%d/%d waiting for night", night.size(), total);
-                Logger.god(text);
-                Logger.god("Night | " + World.get().currentDay);
+                if (Simulation.SIMULATION_DEBUG_MODE) Logger.god(text);
+                Logger.god("Night " + World.get().currentDay);
                 wakeup(night, "simulation-night");
             } finally {
                 night.clear();
@@ -117,8 +118,8 @@ public class God extends Agent {
             try {
                 lock.lock();
                 String text = String.format("%d/%d waiting for day", night.size(), total);
-                Logger.god(text);
-                Logger.god("Day | " + World.get().currentDay);
+                if (Simulation.SIMULATION_DEBUG_MODE) Logger.god(text);
+                Logger.god("Day   " + World.get().currentDay);
                 wakeup(day, "simulation-day");
             } finally {
                 day.clear();

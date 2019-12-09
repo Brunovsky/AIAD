@@ -1,8 +1,10 @@
 package types;
 
-import jade.core.AID;
 import java.util.ArrayList;
-import utils.Logger.Format;
+import java.util.Map;
+
+import jade.core.AID;
+import utils.Table;
 
 public class StationHistory {
     public final AID station;
@@ -20,22 +22,14 @@ public class StationHistory {
         finance.add(workday);
     }
 
-    public String formatWorkdays(Format format) {
-        StringBuilder builder = new StringBuilder();
-
-        builder.append(WorkdayFinance.header(format)).append('\n');
-        for (WorkdayFinance workday : workdays) {
-            builder.append(workday.format(format)).append('\n');
-        }
-
-        return builder.toString();
+    public void populateRow(Map<String, String> row) {
+        row.put("station", station.getLocalName());
+        finance.populateRow(row);
     }
 
-    public String formatFinance(Format format) {
-        return finance.format(format) + '\n';
-    }
-
-    public String format(Format format) {
-        return Finance.header(format) + '\n' + formatFinance(format) + formatWorkdays(format);
+    public Table makeTable() {
+        Table table = new Table(station.getLocalName());
+        for (WorkdayFinance workday : workdays) workday.rowSet(table.addRow());
+        return table;
     }
 }

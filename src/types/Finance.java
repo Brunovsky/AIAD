@@ -1,8 +1,8 @@
 package types;
 
-import utils.Logger.Format;
+import java.util.Map;
 
-public class Finance extends Record {
+public class Finance {
     public double cost = 0.0;
     public double revenue = 0.0;
     public int proposalWeight = 0;
@@ -37,34 +37,11 @@ public class Finance extends Record {
 
     // ***** FORMATTING
 
-    public static String csvHeader() {
-        return "cost,revenue,proposal,assigned,worker";
-    }
-
-    public static String tableHeader() {
-        return String.format("%10s  %10s  %8s  %8s  %8s", "cost", "revenue", "proposal", "assigned",
-                             "worker");
-    }
-
-    public static String header(Format format) {
-        switch (format) {
-        case CSV:
-            return csvHeader();
-        case TABLE:
-        default:
-            return tableHeader();
-        }
-    }
-
-    @Override
-    public String csv() {
-        return String.format("%f,%f,%d,%d,%d", cost, revenue, proposalWeight, assignedWeight,
-                             workerWeight);
-    }
-
-    @Override
-    public String table() {
-        return String.format("%10.2f  %10.2f  %8d  %8d  %8d", cost, revenue, proposalWeight,
-                             assignedWeight, workerWeight);
+    public void populateRow(Map<String, String> row) {
+        row.put("cost", String.format("%.1f", cost));
+        row.put("revenue", String.format("%.1f", revenue));
+        row.put("proposal", String.format("%d", proposalWeight));
+        row.put("assigned", String.format("%d", assignedWeight));
+        row.put("worker", String.format("%d", workerWeight));
     }
 }

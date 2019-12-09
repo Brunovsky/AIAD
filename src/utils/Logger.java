@@ -9,10 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import agents.Company;
-import types.Finance;
-import types.Record;
-
 public class Logger {
     private static final String ANSI_RESET = "\u001B[0m";
     private static final String ANSI_RED = "\u001B[31m";
@@ -25,22 +21,17 @@ public class Logger {
 
     private static final boolean USE_COLOURS = true;
 
-    private static final String LOG_FOLDER = "./log/";
-    private static final Path COMPANIES_AGGREGATE = Paths.get(LOG_FOLDER + "COMPANIES");
-    private static final Path STATIONS_AGGREGATE = Paths.get(LOG_FOLDER + "STATIONS");
-    private static final Path CLIENTS_AGGREGATE = Paths.get(LOG_FOLDER + "CLIENTS");
+    public static final String LOG_FOLDER = "./log/";
+    public static final String COMPANIES_AGGREGATE_FILE = "COMPANIES";
 
     private static final boolean SHOW_CLIENT = false;
     private static final boolean SHOW_STATION = false;
-    private static final boolean SHOW_COMPANY = true;
+    private static final boolean SHOW_COMPANY = false;
     private static final boolean SHOW_GOD = true;
-    public static final boolean RECORD_DEBUG = true;
-    public static final boolean RECORD_COMPANY_VERBOSE = true;
-    public static final boolean RECORD_STATION_VERBOSE = true;
-    public static final boolean RECORD_CLIENT_VERBOSE = true;
+    private static final boolean SHOW_SIMULATION = true;
 
     public enum Format { CSV, TABLE }
-    public static final Format AGGREGATE_FORMAT = Format.CSV;
+    public static final Format AGGREGATE_FORMAT = Format.TABLE;
     public static final Format COMPANY_FORMAT = Format.TABLE;
 
     // * Generic
@@ -58,41 +49,13 @@ public class Logger {
         }
     }
 
-    public static void single(String id, String text) {
+    public static void write(String id, String text) {
         Path path = Paths.get(LOG_FOLDER + id);
         try {
             Files.write(path, text.getBytes(), APPEND, CREATE);
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void aggregateHeaders() {
-        // Company
-        String headerCompany = Company.CompanyRecord.header(AGGREGATE_FORMAT);
-        String headerFinance = Finance.header(AGGREGATE_FORMAT);
-        String header = Record.line(AGGREGATE_FORMAT, headerCompany, headerFinance);
-        aggregate(COMPANIES_AGGREGATE, header);
-    }
-
-    public static void aggregate(Path path, String text) {
-        try {
-            Files.write(path, text.getBytes(), APPEND, CREATE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void appendCompany(String text) {
-        aggregate(COMPANIES_AGGREGATE, text);
-    }
-
-    public static void appendStation(String text) {
-        aggregate(STATIONS_AGGREGATE, text);
-    }
-
-    public static void appendClient(String text) {
-        aggregate(CLIENTS_AGGREGATE, text);
     }
 
     // * colors
@@ -145,5 +108,10 @@ public class Logger {
     public static void god(String text) {
         if (!SHOW_GOD) return;
         console(ANSI_YELLOW, "god", text);
+    }
+
+    public static void simulation(String text) {
+        if (!SHOW_SIMULATION) return;
+        console(ANSI_BLUE, "SIMULATION", text);
     }
 }

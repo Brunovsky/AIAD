@@ -4,19 +4,6 @@ import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 
-import agentbehaviours.AwaitNightBehaviour;
-import agentbehaviours.SequentialLoopBehaviour;
-import jade.core.AID;
-import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
-import jade.domain.DFService;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
-import jade.domain.FIPANames;
-import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREInitiator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,6 +13,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+
+import agentbehaviours.AwaitNightBehaviour;
+import agentbehaviours.SequentialLoopBehaviour;
+import jade.core.AID;
+import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+import jade.proto.AchieveREInitiator;
 import simulation.World;
 import types.ClientRepairs;
 import types.JobList;
@@ -55,7 +56,6 @@ public class Station extends Agent {
     @Override
     protected void setup() {
         Logger.station(id, "Setup " + id);
-        Logger.single(id, "\tDAY \tEASY \tMEDIUM \tHARD\n");
 
         String clientSub = World.CLIENT_STATION_SERVICE;
         String companySub = World.COMPANY_STATION_SERVICE;
@@ -115,8 +115,6 @@ public class Station extends Agent {
         medium = groupRepairs(MalfunctionType.MEDIUM);
         hard = groupRepairs(MalfunctionType.HARD);
         int day = World.get().getDay();
-        Logger.single(id, String.format("\t%d \t\t%d \t\t%d \t\t%d\n", day, easy.length,
-                                        medium.length, hard.length));
         return new JobList(easy.length, medium.length, hard.length);
     }
 

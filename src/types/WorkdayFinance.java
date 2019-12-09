@@ -1,12 +1,13 @@
 package types;
 
+import java.util.Map;
+
 import simulation.World;
-import utils.Logger.Format;
 
 /**
  * Report for one day's work at a station or accross all stations for a given company.
  */
-public class WorkdayFinance extends Record {
+public class WorkdayFinance {
     public final int day;
     public final int technicians;
     public final Proposal proposal;
@@ -49,34 +50,13 @@ public class WorkdayFinance extends Record {
 
     // ***** FORMATTING
 
-    public static String csvHeader() {
-        return "day,techns,cost,revenue,proposal,assigned,worker";
-    }
-
-    public static String tableHeader() {
-        return String.format("%3s  %6s  %10s  %10s  %8s  %8s  %8s", "day", "techns", "cost",
-                             "revenue", "proposal", "assigned", "worker");
-    }
-
-    public static String header(Format format) {
-        switch (format) {
-        case CSV:
-            return csvHeader();
-        case TABLE:
-        default:
-            return tableHeader();
-        }
-    }
-
-    @Override
-    public String csv() {
-        return String.format("%d,%d,%f,%f,%d,%d,%d", day, technicians, cost, revenue,
-                             proposalWeight(), assignedWeight(), workerWeight());
-    }
-
-    @Override
-    public String table() {
-        return String.format("%3d  %6d  %10.2f  %10.2f  %8d  %8d  %8d", day, technicians, cost,
-                             revenue, proposalWeight(), assignedWeight(), workerWeight());
+    public void rowSet(Map<String, String> row) {
+        row.put("day", String.format("%d", day));
+        row.put("techns", String.format("%d", technicians));
+        row.put("cost", String.format("%.1f", cost));
+        row.put("revenue", String.format("%.1f", revenue));
+        row.put("proposal", String.format("%d", proposalWeight()));
+        row.put("assigned", String.format("%d", assignedWeight()));
+        row.put("worker", String.format("%d", workerWeight()));
     }
 }

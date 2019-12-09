@@ -1,5 +1,7 @@
 package simulation;
 
+import utils.Table;
+
 public abstract class World {
     // Services
     static public final String CLIENT_STATION_SERVICE = "client-station-subscription";
@@ -31,9 +33,9 @@ public abstract class World {
         return "client-" + id;
     }
 
-    public static final int MILLI_DELAY = 1000;
-    public static final int MILLI_PERIOD = 1300;
-    public static final int MILLI_WAIT = 30;
+    public static final int MILLI_DELAY = 500;
+    public static final int MILLI_PERIOD = 700;
+    public static final int MILLI_WAIT = 20;
 
     // *****
 
@@ -105,5 +107,13 @@ public abstract class World {
         assert Cl == cl && S == s && Co == co && Cl == sc;
 
         assert currentDay <= numberDays;
+    }
+
+    public void extend(Table table) {
+        table.setAll("days", String.format("%d", numberDays));
+        table.setAll("companies", String.format("%d", Co));
+        table.setAll("clients", String.format("%d", Cl));
+        table.setAll("stations", String.format("%d", S));
+        table.setAll("salary", String.format("%.1f", salary));
     }
 }
