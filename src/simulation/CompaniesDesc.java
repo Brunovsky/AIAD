@@ -5,9 +5,9 @@ import strategies.PreferEasyCompanyStrategy;
 import strategies.PreferHardCompanyStrategy;
 
 public class CompaniesDesc {
-    public int number;
-    public Strategy strategy;
-    public int numberTechnicians;
+    public final int numberCompanies;
+    public final Strategy strategy;
+    public final int numberTechnicians;
 
     public enum Strategy {
         PREFER_EASY,
@@ -24,9 +24,9 @@ public class CompaniesDesc {
         }
     }
 
-    public CompaniesDesc(int number, Strategy strategy, int numberTechnicians) {
-        this.number = number;
+    public CompaniesDesc(int number, Strategy strategy, int numTechnicians) {
+        this.numberCompanies = number;
         this.strategy = strategy;
-        this.numberTechnicians = numberTechnicians;
+        this.numberTechnicians = numTechnicians;
     }
 }

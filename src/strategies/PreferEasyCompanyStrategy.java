@@ -1,32 +1,13 @@
 package strategies;
 
-import jade.core.AID;
-import simulation.World;
-import types.Contract;
 import types.JobList;
 import types.Proposal;
 
 /**
  * Company that prefers easy jobs with low pay that require less technicians
- *
- * Since these jobs are very common, the company has low risk, and therefore can afford to pay
- * technicians a more substancial salary but reduced job cuts.
- *
- * Company with 20 employees pays base salary of 20 * 28 = 560.
  */
 
 public class PreferEasyCompanyStrategy extends CompanyStrategy {
-    @Override
-    public Contract initialContract(AID technician, AID station) {
-        String stationName = station.getLocalName();
-        int day = World.get().getDay();
-        int start = day, end = day + 1000;
-        double salary = 28;
-        double percentage = 0.05;
-        return new Contract(company.getAID(), technician, stationName, salary, percentage, start,
-                            end);
-    }
-
     @Override
     public Proposal makeProposal(int technicians, JobList jobList) {
         Proposal proposal = new Proposal(company.getAID());
@@ -64,5 +45,10 @@ public class PreferEasyCompanyStrategy extends CompanyStrategy {
         }
 
         return proposal;
+    }
+
+    @Override
+    public String toString() {
+        return "PREFER_EASY";
     }
 }

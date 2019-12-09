@@ -4,6 +4,19 @@ import static jade.lang.acl.MessageTemplate.MatchOntology;
 import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.and;
 
+import agentbehaviours.AwaitNightBehaviour;
+import agentbehaviours.SequentialLoopBehaviour;
+import jade.core.AID;
+import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+import jade.proto.AchieveREInitiator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,20 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
-
-import agentbehaviours.AwaitNightBehaviour;
-import agentbehaviours.SequentialLoopBehaviour;
-import jade.core.AID;
-import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
-import jade.domain.DFService;
-import jade.domain.FIPAException;
-import jade.domain.FIPANames;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
-import jade.proto.AchieveREInitiator;
 import simulation.World;
 import types.ClientRepairs;
 import types.JobList;
@@ -56,10 +55,10 @@ public class Station extends Agent {
     @Override
     protected void setup() {
         Logger.station(id, "Setup " + id);
-        Logger.write(id, "\tDAY \tEASY \tMEDIUM \tHARD\n");
+        Logger.single(id, "\tDAY \tEASY \tMEDIUM \tHARD\n");
 
-        String clientSub = World.get().getClientStationService();
-        String companySub = World.get().getCompanyStationService();
+        String clientSub = World.CLIENT_STATION_SERVICE;
+        String companySub = World.COMPANY_STATION_SERVICE;
 
         registerDFService();
 
@@ -85,7 +84,7 @@ public class Station extends Agent {
         dfd.setName(getAID());
         ServiceDescription sd = new ServiceDescription();
         sd.setName("station-" + id);
-        sd.setType(World.get().getStationType());
+        sd.setType(World.STATION_TYPE);
 
         dfd.addServices(sd);
 
@@ -100,14 +99,14 @@ public class Station extends Agent {
     private ACLMessage prepareClientPromptMessage() {
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-        message.setOntology(World.get().getPromptClient());
+        message.setOntology(World.PROMPT_CLIENT);
         return message;
     }
 
     private ACLMessage prepareCompanyQueryMessage() {
         ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
         message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-        message.setOntology(World.get().getInformCompanyJobs());
+        message.setOntology(World.INFORM_COMPANY_JOBS);
         return message;
     }
 
@@ -116,8 +115,8 @@ public class Station extends Agent {
         medium = groupRepairs(MalfunctionType.MEDIUM);
         hard = groupRepairs(MalfunctionType.HARD);
         int day = World.get().getDay();
-        Logger.write(id, String.format("\t%d \t\t%d \t\t%d \t\t%d\n", day, easy.length,
-                                       medium.length, hard.length));
+        Logger.single(id, String.format("\t%d \t\t%d \t\t%d \t\t%d\n", day, easy.length,
+                                        medium.length, hard.length));
         return new JobList(easy.length, medium.length, hard.length);
     }
 
@@ -251,8 +250,6 @@ public class Station extends Agent {
             for (int id : repairs.list.keySet()) {
                 repairsQueue.get(client).put(id, repairs.list.get(id));
             }
-
-            // TODO COMMS: verify this does indeed finish when all clients respond.
         }
     }
 
@@ -280,7 +277,7 @@ public class Station extends Agent {
 
         private void informCompany(AID company, Proposal content) {
             ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-            message.setOntology(World.get().getInformCompanyAssignment());
+            message.setOntology(World.INFORM_COMPANY_ASSIGNMENT);
             message.addReceiver(company);
             message.setContent(content.make());
             send(message);  // Protocol E
@@ -288,7 +285,7 @@ public class Station extends Agent {
 
         private void informClient(AID client, RepairList content) {
             ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-            message.setOntology(World.get().getInformClient());
+            message.setOntology(World.INFORM_CLIENT);
             message.addReceiver(client);
             message.setContent(content.make());
             send(message);  // Protocol F

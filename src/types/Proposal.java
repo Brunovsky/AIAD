@@ -2,6 +2,7 @@ package types;
 
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
+import simulation.World;
 import utils.MalfunctionType;
 
 public class Proposal {
@@ -17,8 +18,14 @@ public class Proposal {
         return easy + medium + hard;
     }
 
-    public double totalEarnings() {
+    public double totalRevenue() {
         return easy * easyPrice + medium * mediumPrice + hard * hardPrice;
+    }
+
+    public void copyPrices(Proposal other) {
+        easyPrice = other.easyPrice;
+        mediumPrice = other.mediumPrice;
+        hardPrice = other.hardPrice;
     }
 
     public int get(MalfunctionType type) {
@@ -57,6 +64,10 @@ public class Proposal {
             return hardPrice;
         }
         return -1;
+    }
+
+    public int weight() {
+        return World.EASY_WEIGHT * easy + World.MEDIUM_WEIGHT * medium + World.HARD_WEIGHT * hard;
     }
 
     public String make() {

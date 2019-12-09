@@ -1,16 +1,8 @@
 package simulation;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
 import agents.Client;
 import agents.Company;
 import agents.Station;
-import agents.Technician;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.Profile;
@@ -19,17 +11,20 @@ import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import utils.Logger;
 
 public class Simulation {
-    private final ArrayList<Technician> technicianAgents;
     private final ArrayList<Client> clientAgents;
     private final ArrayList<Station> stationAgents;
     private final ArrayList<Company> companyAgents;
 
     private final Map<ClientsDesc.Strategy, ArrayList<Client>> clientMap;
     private final Map<CompaniesDesc.Strategy, ArrayList<Company>> companyMap;
-    private final Map<TechniciansDesc.Strategy, ArrayList<Technician>> technicianMap;
 
     private final Runtime runtime;
     private final Profile profile;
@@ -37,40 +32,38 @@ public class Simulation {
 
     public static void main(String[] args) {
         System.out.print("\033[H\033[2J");
-        File dir = new File(Logger.logfolder);
-        for (File file : dir.listFiles()) file.delete();
+        Logger.clearLogFolder();
+        Logger.aggregateHeaders();
         World.set(new AIADWorld());
         new Simulation();
     }
 
     public Simulation() {
-        technicianAgents = new ArrayList<>();
         clientAgents = new ArrayList<>();
         stationAgents = new ArrayList<>();
         companyAgents = new ArrayList<>();
 
         clientMap = new HashMap<>();
         companyMap = new HashMap<>();
-        technicianMap = new HashMap<>();
 
         runtime = Runtime.instance();
-        profile = new ProfileImpl(true);
-        container = runtime.createAgentContainer(profile);
+        profile = new ProfileImpl();
+        container = runtime.createMainContainer(profile);
 
         God.renew();
         launchStations();
         launchClients();
         launchCompanies();
-        launchTechnicians();
         launchSimulation();
 
         try {
-            for (Technician technician : technicianAgents) technician.doDelete();
             for (Company company : companyAgents) company.doDelete();
             for (Client client : clientAgents) client.doDelete();
             for (Station station : stationAgents) station.doDelete();
+
             container.kill();
             runtime.shutDown();
+            // System.exit(0);
         } catch (StaleProxyException e) {
             e.printStackTrace();
         }
@@ -105,13 +98,12 @@ public class Simulation {
             String id = "station_" + (i + 1);
 
             Station station = new Station(id);
+            stationAgents.add(station);
 
             launchAgent(id, station);
 
-            stationAgents.add(station);
-
             try {
-                Thread.sleep(World.get().MILLI_WAIT);
+                Thread.sleep(World.MILLI_WAIT);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -123,42 +115,44 @@ public class Simulation {
      * locations.
      */
     private void launchClients() {
-        ClientsDesc.Strategy strategies[] = new ClientsDesc.Strategy[World.get().Cl];
+        ClientsDesc[] configs = new ClientsDesc[World.get().Cl];
         AID[] stations = new AID[World.get().Cl];
 
         int z = 0;
         for (ClientsDesc entry : World.get().clients) {
             clientMap.putIfAbsent(entry.strategy, new ArrayList<>());
-            for (int k = 0; k < entry.number; ++k, ++z) {
-                strategies[z] = entry.strategy;
+            for (int k = 0; k < entry.numberClients; ++k, ++z) {
+                configs[z] = entry;
             }
         }
 
         z = 0;
         int n = 0;
         for (StationsDesc entry : World.get().stations) {
-            for (int i = 0; i < entry.number; i++, n++) {
+            for (int i = 0; i < entry.numberStations; i++, n++) {
                 for (int k = 0; k < entry.numberClients; k++, z++) {
                     stations[z] = stationAgents.get(n).getAID();
                 }
             }
         }
 
-        shuffle(strategies);
+        shuffle(configs);
         shuffle(stations);
 
         for (int i = 0; i < World.get().Cl; ++i) {
             String id = "client_" + (i + 1);
+            ClientsDesc config = configs[i];
+            AID station = stations[i];
 
-            Client client = new Client(id, strategies[i].make(), stations[i]);
+            Client client = new Client(id, config.strategy.make(), station);
 
-            clientMap.get(strategies[i]).add(client);
+            clientMap.get(config.strategy).add(client);
+            clientAgents.add(client);
 
             launchAgent(id, client);
 
-            clientAgents.add(client);
             try {
-                Thread.sleep(World.get().MILLI_WAIT);
+                Thread.sleep(World.MILLI_WAIT);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -169,91 +163,31 @@ public class Simulation {
      * Launch all world companies
      */
     private void launchCompanies() {
-        CompaniesDesc.Strategy[] strategies = new CompaniesDesc.Strategy[World.get().Co];
+        CompaniesDesc[] configs = new CompaniesDesc[World.get().Co];
 
         int z = 0;
         for (CompaniesDesc entry : World.get().companies) {
             companyMap.putIfAbsent(entry.strategy, new ArrayList<>());
-            for (int i = 0; i < entry.number; i++, z++) {
-                strategies[z] = entry.strategy;
+            for (int i = 0; i < entry.numberCompanies; i++, z++) {
+                configs[z] = entry;
             }
         }
 
-        shuffle(strategies);
+        shuffle(configs);
 
         for (int i = 0; i < World.get().Co; ++i) {
             String id = "company_" + (i + 1);
+            CompaniesDesc config = configs[i];
 
-            Company company = new Company(id, strategies[i].make());
+            Company company = new Company(id, config.numberTechnicians, config.strategy.make());
 
-            companyMap.get(strategies[i]).add(company);
+            companyMap.get(config.strategy).add(company);
+            companyAgents.add(company);
 
             launchAgent(id, company);
 
-            companyAgents.add(company);
-
             try {
-                Thread.sleep(World.get().MILLI_WAIT);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Launch all world technicians
-     */
-    private void launchTechnicians() {
-        TechniciansDesc.Strategy[] strategies = new TechniciansDesc.Strategy[World.get().T];
-        AID[] stations = new AID[World.get().T];
-        AID[] companies = new AID[World.get().T];
-
-        int z = 0;
-        for (TechniciansDesc entry : World.get().technicians) {
-            technicianMap.putIfAbsent(entry.strategy, new ArrayList<>());
-            for (int i = 0; i < entry.number; i++, z++) {
-                strategies[z] = entry.strategy;
-            }
-        }
-
-        z = 0;
-        int n = 0;
-        for (StationsDesc entry : World.get().stations) {
-            for (int i = 0; i < entry.number; i++, n++) {
-                for (int k = 0; k < entry.numberTechnicians; k++, z++) {
-                    stations[z] = stationAgents.get(n).getAID();
-                }
-            }
-        }
-
-        z = 0;
-        n = 0;
-        for (CompaniesDesc entry : World.get().companies) {
-            for (int i = 0; i < entry.number; i++, n++) {
-                for (int k = 0; k < entry.numberTechnicians; k++, z++) {
-                    companies[z] = companyAgents.get(n).getAID();
-                }
-            }
-        }
-
-        shuffle(strategies);
-        shuffle(stations);
-        shuffle(companies);
-
-        for (int i = 0; i < World.get().T; ++i) {
-            String id = "technician_" + (i + 1);
-
-            Technician technician = new Technician(id, stations[i], companies[i],
-                                                   strategies[i].make());
-
-            technicianMap.get(strategies[i]).add(technician);
-
-            launchAgent(id, technician);
-
-            technicianAgents.add(technician);
-
-            try {
-                Thread.sleep(World.get().MILLI_WAIT);
+                Thread.sleep(World.MILLI_WAIT);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

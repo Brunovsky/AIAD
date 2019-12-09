@@ -5,8 +5,8 @@ import strategies.PoissonClientStrategy;
 import strategies.UniformClientStrategy;
 
 public class ClientsDesc {
-    public int number;
-    public Strategy strategy;
+    public final int numberClients;
+    public final Strategy strategy;
 
     public enum Strategy {
         UNIFORM,
@@ -24,7 +24,7 @@ public class ClientsDesc {
     }
 
     public ClientsDesc(int number, Strategy strategy) {
-        this.number = number;
+        this.numberClients = number;
         this.strategy = strategy;
     }
 }

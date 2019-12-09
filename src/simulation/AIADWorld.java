@@ -2,16 +2,8 @@ package simulation;
 
 public class AIADWorld extends World {
     public AIADWorld() {
-        numberDays = 15;
-
-        MILLI_DELAY = 1000;
-        MILLI_PERIOD = 2000;
-        MILLI_WAIT = 30;
-
-        T = 60;
-        technicians = new TechniciansDesc[] {
-            new TechniciansDesc(60, TechniciansDesc.Strategy.SIMPLE)  //
-        };
+        numberDays = 20;
+        salary = 30.0;
 
         Cl = 24;
         clients = new ClientsDesc[] {

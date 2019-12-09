@@ -2,26 +2,45 @@ package simulation;
 
 public abstract class World {
     // Services
-    final String clientStationService = "client-station-subscription";
-    final String companyStationService = "company-station-subscription";
+    static public final String CLIENT_STATION_SERVICE = "client-station-subscription";
+    static public final String COMPANY_STATION_SERVICE = "company-station-subscription";
 
     // Types
-    final String stationType = "station";
-    final String companyType = "company";
+    static public final String STATION_TYPE = "station";
+    static public final String COMPANY_TYPE = "company";
 
     // Ontologies
-    final String promptClient = "prompt-client-malfunctions";
-    final String informClient = "inform-client-assignment";
-    final String companyPayment = "company-payment";
-    final String initialEmployment = "initial-employment";
-    final String informCompanyJobs = "inform-company-jobs";
-    final String informCompanyAssignment = "inform-company-assignment";
-    final String technicianOfferContract = "technician-offer-contract";
-    final String companySubscription = "company-subscription";
+    static public final String PROMPT_CLIENT = "prompt-client-malfunctions";
+    static public final String INFORM_CLIENT = "inform-client-assignment";
+    static public final String COMPANY_PAYMENT = "company-payment";
+    static public final String INITIAL_EMPLOYMENT = "initial-employment";
+    static public final String INFORM_COMPANY_JOBS = "inform-company-jobs";
+    static public final String INFORM_COMPANY_ASSIGNMENT = "inform-company-assignment";
+    static public final String TECHNICIAN_OFFER_CONTRACT = "technician-offer-contract";
+    static public final String COMPANY_SUBSCRIPTION = "company-subscription";
 
-    // Technicians
-    int T;
-    TechniciansDesc[] technicians;
+    public static final String companyName(String id) {
+        return "company-" + id;
+    }
+
+    public static final String stationName(String id) {
+        return "station-" + id;
+    }
+
+    public static final String clientName(String id) {
+        return "client-" + id;
+    }
+
+    public static final int MILLI_DELAY = 1000;
+    public static final int MILLI_PERIOD = 1300;
+    public static final int MILLI_WAIT = 30;
+
+    // *****
+
+    public static final int EASY_WEIGHT = 1;
+    public static final int MEDIUM_WEIGHT = 3;
+    public static final int HARD_WEIGHT = 9;
+    public static final int WORKER_WEIGHT = 3;
 
     // Clients
     int Cl;
@@ -35,13 +54,11 @@ public abstract class World {
     int Co;
     CompaniesDesc[] companies;
 
+    double salary;
+
     // * State
     int numberDays;
     int currentDay;
-
-    public int MILLI_PERIOD;
-    public int MILLI_DELAY;
-    public int MILLI_WAIT;
 
     private static World world;
 
@@ -54,6 +71,10 @@ public abstract class World {
         return world;
     }
 
+    public double getSalary() {
+        return salary;
+    }
+
     public int getDay() {
         return currentDay;
     }
@@ -62,73 +83,25 @@ public abstract class World {
         this.currentDay = currentDay;
     }
 
-    public String getClientStationService() {
-        return clientStationService;
-    }
-
-    public String getPromptClient() {
-        return promptClient;
-    }
-
-    public String getInformClient() {
-        return informClient;
-    }
-
-    public String getCompanyPayment() {
-        return companyPayment;
-    }
-
-    public String getInitialEmployment() {
-        return initialEmployment;
-    }
-
-    public String getInformCompanyJobs() {
-        return informCompanyJobs;
-    }
-
-    public String getInformCompanyAssignment() {
-        return informCompanyAssignment;
-    }
-
-    public String getTechnicianOfferContract() {
-        return technicianOfferContract;
-    }
-
-    public String getCompanySubscription() {
-        return companySubscription;
-    }
-
-    public String getStationType() {
-        return stationType;
-    }
-
-    public String getCompanyType() {
-        return companyType;
-    }
-
-    public String getCompanyStationService() {
-        return companyStationService;
-    }
-
     public int getNumberDays() {
         return numberDays;
     }
 
     public int getTotalAgents() {
-        return S + Cl + Co + T;
+        return S + Cl + Co;
     }
 
     void assertValid() {
-        assert T > 0 && Cl > 0 && S > 0 && Co > 0;
+        assert Cl > 0 && S > 0 && Co > 0;
+        assert numberDays > 0 && salary > 0.0;
 
-        assert technicians != null && clients != null && stations != null && companies != null;
+        assert clients != null && stations != null && companies != null;
 
-        int t = 0, cl = 0, s = 0, co = 0;
-        for (TechniciansDesc tech : technicians) t += tech.number;
-        for (ClientsDesc client : clients) cl += client.number;
-        for (StationsDesc station : stations) s += station.number;
-        for (CompaniesDesc company : companies) co += company.number;
-        assert T == t && Cl == cl && S == s && Co == co;
+        int cl = 0, s = 0, co = 0;
+        for (ClientsDesc client : clients) cl += client.numberClients;
+        for (StationsDesc station : stations) s += station.numberStations;
+        for (CompaniesDesc company : companies) co += company.numberCompanies;
+        assert Cl == cl && S == s && Co == co;
 
         assert currentDay <= numberDays;
     }

@@ -52,7 +52,7 @@ public class Client extends Agent {
     protected void setup() {
         Logger.client(id, "Setup " + id);
 
-        String clientSub = World.get().getClientStationService();
+        String clientSub = World.CLIENT_STATION_SERVICE;
 
         // Setup
         addBehaviour(new SubscribeBehaviour(this, station, clientSub));
@@ -98,7 +98,7 @@ public class Client extends Agent {
 
         @Override
         public void action() {
-            MessageTemplate onto = MatchOntology(World.get().getPromptClient());
+            MessageTemplate onto = MatchOntology(World.PROMPT_CLIENT);
             MessageTemplate acl = MatchPerformative(ACLMessage.REQUEST);
 
             Logger.client(id, "Waiting request from station");
@@ -132,7 +132,7 @@ public class Client extends Agent {
         @Override
         public void action() {
             // Protocol C: wait for assignments...
-            MessageTemplate onto = MatchOntology(World.get().getInformClient());
+            MessageTemplate onto = MatchOntology(World.INFORM_CLIENT);
             MessageTemplate acl = MatchPerformative(ACLMessage.INFORM);
             ACLMessage assign = receive(and(onto, acl));
             if (assign == null) {

@@ -1,9 +1,6 @@
 
 package strategies;
 
-import jade.core.AID;
-import simulation.World;
-import types.Contract;
 import types.JobList;
 import types.Proposal;
 
@@ -17,17 +14,6 @@ import types.Proposal;
  */
 
 public class PreferHardCompanyStrategy extends CompanyStrategy {
-    @Override
-    public Contract initialContract(AID technician, AID station) {
-        String stationName = station.getLocalName();
-        int day = World.get().getDay();
-        int start = day, end = day + 1000;
-        double salary = 20;
-        double percentage = 0.25;
-        return new Contract(company.getAID(), technician, stationName, salary, percentage, start,
-                            end);
-    }
-
     @Override
     public Proposal makeProposal(int technicians, JobList jobList) {
         Proposal proposal = new Proposal(company.getAID());
@@ -65,5 +51,10 @@ public class PreferHardCompanyStrategy extends CompanyStrategy {
         }
 
         return proposal;
+    }
+
+    @Override
+    public String toString() {
+        return "PREFER_HARD";
     }
 }

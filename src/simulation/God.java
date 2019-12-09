@@ -2,6 +2,9 @@ package simulation;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import jade.core.AID;
+import jade.core.Agent;
+import jade.lang.acl.ACLMessage;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -10,10 +13,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import jade.core.AID;
-import jade.core.Agent;
-import jade.lang.acl.ACLMessage;
 import utils.Logger;
 
 public class God extends Agent {
@@ -40,8 +39,8 @@ public class God extends Agent {
 
     public void runSimulation() {
         World.get().currentDay = -1;
-        int period = World.get().MILLI_PERIOD;
-        int delay = World.get().MILLI_DELAY;
+        int period = World.MILLI_PERIOD;
+        int delay = World.MILLI_DELAY;
         SignalDay day = new SignalDay();
         SignalNight night = new SignalNight();
         dayFuture = scheduler.scheduleAtFixedRate(day, delay + period / 2, period, MILLISECONDS);
@@ -95,9 +94,9 @@ public class God extends Agent {
 
             try {
                 lock.lock();
-                String text = String.format("\n%d/%d waiting for night", night.size(), total);
-                Logger.purple("god", text);
-                Logger.purple("god", "Night | " + World.get().currentDay);
+                String text = String.format("%d/%d waiting for night", night.size(), total);
+                Logger.god(text);
+                Logger.god("Night | " + World.get().currentDay);
                 wakeup(night, "simulation-night");
             } finally {
                 night.clear();
@@ -112,14 +111,14 @@ public class God extends Agent {
             int total = World.get().getTotalAgents();
             if (World.get().currentDay == World.get().numberDays) {
                 dayFuture.cancel(false);
-                scheduler.schedule(new Terminate(), World.get().MILLI_PERIOD / 2, MILLISECONDS);
+                scheduler.schedule(new Terminate(), World.MILLI_PERIOD / 2, MILLISECONDS);
             }
 
             try {
                 lock.lock();
-                String text = String.format("\n%d/%d waiting for day", night.size(), total);
-                Logger.purple("god", text);
-                Logger.purple("god", "Day | " + World.get().currentDay);
+                String text = String.format("%d/%d waiting for day", night.size(), total);
+                Logger.god(text);
+                Logger.god("Day | " + World.get().currentDay);
                 wakeup(day, "simulation-day");
             } finally {
                 day.clear();

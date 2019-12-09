@@ -5,11 +5,6 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import agentbehaviours.AwaitDayBehaviour;
 import agentbehaviours.AwaitNightBehaviour;
 import agentbehaviours.SequentialLoopBehaviour;
@@ -17,51 +12,49 @@ import agentbehaviours.SubscribeBehaviour;
 import agentbehaviours.WaitingBehaviour;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
-import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import simulation.World;
 import strategies.CompanyStrategy;
-import types.Contract;
+import types.Finance;
 import types.JobList;
 import types.Proposal;
+import types.Record;
 import types.StationHistory;
-import types.TechnicianHistory;
-import types.WorkFinance;
+import types.WorkdayFinance;
 import utils.Logger;
+import utils.Logger.Format;
 
 public class Company extends Agent {
     private static final long serialVersionUID = -4840612670786798770L;
 
     private final String id;
 
-    private final Set<AID> activeTechnicians;
-    private final Map<AID, TechnicianHistory> technicianHistory;
-
-    private final Set<AID> activeStations;
+    private final Set<AID> stations;
     private final Map<AID, StationHistory> stationHistory;
-    private final Map<AID, Set<AID>> stationTechnicians;
-    private final Map<String, AID> stationNames;
+    private final Map<AID, Integer> stationTechnicians;
 
+    private final int numTechnicians;
     private final CompanyStrategy strategy;
 
-    public Company(String id, CompanyStrategy strategy) {
+    public Company(String id, int numTechnicians, CompanyStrategy strategy) {
         assert id != null && strategy != null;
         this.id = id;
 
-        this.activeTechnicians = ConcurrentHashMap.newKeySet();
-        this.technicianHistory = new ConcurrentHashMap<>();
-
-        this.activeStations = ConcurrentHashMap.newKeySet();
+        this.stations = ConcurrentHashMap.newKeySet();
         this.stationHistory = new ConcurrentHashMap<>();
         this.stationTechnicians = new ConcurrentHashMap<>();
-        this.stationNames = new ConcurrentHashMap<>();
 
+        this.numTechnicians = numTechnicians;
         this.strategy = strategy;
         strategy.setCompany(this);
     }
@@ -74,39 +67,20 @@ public class Company extends Agent {
         findStations();
 
         // Background
-        addBehaviour(new SubscriptionListener(this));
-        addBehaviour(new ReceiveContractProposals(this));
-
         SequentialLoopBehaviour loop = new SequentialLoopBehaviour(this);
         // Night
         loop.addSubBehaviour(new AwaitNightBehaviour(this));
         loop.addSubBehaviour(new CompanyNight(this));
         // Day
         loop.addSubBehaviour(new AwaitDayBehaviour(this));
-        loop.addSubBehaviour(new UpdateContracts(this));
         addBehaviour(loop);
     }
 
     @Override
     protected void takeDown() {
         Logger.company(id, "Company Terminated!");
-        StringBuilder builder = new StringBuilder();
-        builder.append(strategy.getClass().getName() + "\n");
-        builder.append("\tDAY \tSALARY \t\tCUT \tEARNED \t\tACCUMULATED\n");
-        double total = 0.0;
-        for (StationHistory history : stationHistory.values()) {
-            double earned = 0.0;
-            builder.append(history.station.getLocalName()).append('\n');
-            for (int i = 0; i < history.finances.size(); ++i) {
-                WorkFinance finance = history.finances.get(i);
-                earned += finance.earned;
-                builder.append(String.format("\t%d \t%f \t%f \t%f \t%f\n", i, finance.salary,
-                                             finance.cut, finance.earned, earned));
-            }
-            total += earned;
-        }
-        builder.append("TOTAL: " + total);
-        Logger.write(id, builder.toString());
+        logAggregate();
+        logSingle();
     }
 
     // Register the company in yellow pages
@@ -115,8 +89,8 @@ public class Company extends Agent {
             DFAgentDescription dfd = new DFAgentDescription();
             dfd.setName(getAID());
             ServiceDescription sd = new ServiceDescription();
-            sd.setName("company-" + id);
-            sd.setType(World.get().getCompanyType());
+            sd.setName(World.companyName(id));
+            sd.setType(World.COMPANY_TYPE);
 
             dfd.addServices(sd);
 
@@ -131,102 +105,52 @@ public class Company extends Agent {
     private void findStations() {
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription templateSd = new ServiceDescription();
-        templateSd.setType(World.get().getStationType());
+        templateSd.setType(World.STATION_TYPE);
         template.addServices(templateSd);
 
-        String companySub = World.get().getCompanyStationService();
+        String companySub = World.COMPANY_STATION_SERVICE;
 
         try {
-            DFAgentDescription[] stations = DFService.search(this, template);
-            for (DFAgentDescription stationDescriptor : stations) {
+            DFAgentDescription[] descriptions = DFService.search(this, template);
+            for (DFAgentDescription stationDescriptor : descriptions) {
                 AID station = stationDescriptor.getName();
-                activeStations.add(station);
+                stations.add(station);
                 stationHistory.put(station, new StationHistory(station));
-                stationNames.put(station.getLocalName(), station);
-                stationTechnicians.put(station, new HashSet<>());
                 addBehaviour(new SubscribeBehaviour(this, station, companySub));
             }
         } catch (FIPAException e) {
             e.printStackTrace();
         }
+
+        int each = numTechnicians / stations.size();
+        int extra = numTechnicians % stations.size();
+
+        for (AID station : stations) {
+            if (extra > 0) {
+                stationTechnicians.put(station, each + 1);
+                --extra;
+            } else {
+                stationTechnicians.put(station, each);
+            }
+        }
     }
 
     // ***** UTILITIES
 
-    private int numTechniciansInStation(AID station) {
-        return stationTechnicians.get(station).size();
+    private Finance totalFinance() {
+        Finance finance = new Finance();
+        for (StationHistory history : stationHistory.values()) {
+            finance.add(history.finance);
+        }
+        return finance;
     }
 
     // ***** BEHAVIOURS
 
-    private class UpdateContracts extends OneShotBehaviour {
-        private static final long serialVersionUID = 2769099897492753827L;
-
-        UpdateContracts(Agent a) {
-            super(a);
-        }
-
-        @Override
-        public void action() {
-            // Remove contracts ending now
-            int today = World.get().getDay();
-            for (AID station : stationTechnicians.keySet()) {
-                Set<AID> technicians = stationTechnicians.get(station);
-                Set<AID> removed = new HashSet<>();
-                for (AID technician : technicians) {
-                    Contract currentContract = technicianHistory.get(technician).currentContract();
-                    assert currentContract != null;
-                    if (currentContract.end == today) {
-                        removed.add(technician);
-                        activeTechnicians.remove(technician);
-                    }
-                }
-                technicians.removeAll(removed);
-            }
-
-            // Add contracts starting tomorrow
-            int tomorrow = today + 1;
-            for (TechnicianHistory history : technicianHistory.values()) {
-                Contract contract = history.lastContract();
-                if (contract.start == tomorrow) {
-                    stationTechnicians.get(history.station).add(history.technician);
-                    activeTechnicians.add(history.technician);
-                }
-            }
-        }
-    }
-
-    private class ReceiveContractProposals extends CyclicBehaviour {
-        private static final long serialVersionUID = -3009146208732453520L;
-
-        ReceiveContractProposals(Agent a) {
-            super(a);
-        }
-
-        @Override
-        public void action() {
-            MessageTemplate onto = MatchOntology(World.get().getTechnicianOfferContract());
-            MessageTemplate acl = MatchPerformative(ACLMessage.PROPOSE);
-            ACLMessage propose = receive(and(onto, acl));
-            if (propose == null) {
-                block();
-                return;
-            }
-
-            AID technician = propose.getSender();
-            Contract contract = Contract.from(myAgent.getAID(), technician, propose);
-            technicianHistory.get(technician).addContract(contract);
-
-            // TODO SIMPLIFICATION
-            assert activeTechnicians.contains(technician);
-
-            ACLMessage reply = propose.createReply();
-            reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-            reply.setContent(propose.getContent());
-            send(reply);
-        }
-    }
-
+    /**
+     * Behaviour: Receive a list of Job offers from a subscribed station.
+     * Reply with a list of proposals.
+     */
     private class ReceiveJobList extends WaitingBehaviour {
         private static final long serialVersionUID = -5608877347217729029L;
 
@@ -240,15 +164,16 @@ public class Company extends Agent {
         @Override
         public void action() {
             // Protocol A
-            MessageTemplate onto = MatchOntology(World.get().getInformCompanyJobs());
+            MessageTemplate onto = MatchOntology(World.INFORM_COMPANY_JOBS);
             MessageTemplate acl = MatchPerformative(ACLMessage.REQUEST);
-            ACLMessage message = receive(and(and(onto, acl), MatchSender(station)));
+            MessageTemplate mt = and(and(onto, acl), MatchSender(station));
+            ACLMessage message = receive(mt);
             if (message == null) {
                 block();
                 return;
             }
 
-            int technicians = numTechniciansInStation(station);
+            int technicians = stationTechnicians.get(station);
 
             if (technicians > 0) {
                 JobList jobList = JobList.from(message);
@@ -262,8 +187,7 @@ public class Company extends Agent {
 
                 addBehaviour(new ReceiveAcceptedJobs(myAgent, station, proposal));
             } else {
-                stationHistory.get(station).add(null, null);
-                stationHistory.get(station).add(new WorkFinance(1));
+                stationHistory.get(station).add(WorkdayFinance.empty());
 
                 ACLMessage reply = message.createReply();
                 reply.setPerformative(ACLMessage.REFUSE);
@@ -274,24 +198,28 @@ public class Company extends Agent {
         }
     }
 
+    /**
+     * Behaviour: Receive list of accepted jobs from the station.
+     */
     private class ReceiveAcceptedJobs extends WaitingBehaviour {
         private static final long serialVersionUID = 239544247798867648L;
 
         private final AID station;
-        private final Proposal proposed;
+        private final Proposal proposal;
 
-        ReceiveAcceptedJobs(Agent a, AID station, Proposal proposed) {
+        ReceiveAcceptedJobs(Agent a, AID station, Proposal proposal) {
             super(a);
             this.station = station;
-            this.proposed = proposed;
+            this.proposal = proposal;
         }
 
         @Override
         public void action() {
             // Protocol C
-            MessageTemplate onto = MatchOntology(World.get().getInformCompanyAssignment());
+            MessageTemplate onto = MatchOntology(World.INFORM_COMPANY_ASSIGNMENT);
             MessageTemplate acl = MatchPerformative(ACLMessage.INFORM);
-            ACLMessage message = receive(and(and(onto, acl), MatchSender(station)));
+            MessageTemplate mt = and(and(onto, acl), MatchSender(station));
+            ACLMessage message = receive(mt);
             if (message == null) {
                 block();
                 return;
@@ -299,54 +227,21 @@ public class Company extends Agent {
 
             Logger.company(id, "Received accepted jobs from station " + station.getLocalName());
 
-            int technicians = numTechniciansInStation(station);
+            int technicians = stationTechnicians.get(station);
 
             Proposal accepted = Proposal.from(myAgent.getAID(), message);
-            accepted.easyPrice = proposed.easyPrice;
-            accepted.mediumPrice = proposed.mediumPrice;
-            accepted.hardPrice = proposed.hardPrice;
+            accepted.copyPrices(proposal);
 
-            final int haveJobs = accepted.totalJobs() > 0 ? 1 : 0;
-            final int jobs = accepted.totalJobs();
-            final double cut = accepted.totalEarnings() / technicians;
-
-            double totalSalaryPaid = 0.0;
-            double totalCutPaid = 0.0;
-
-            for (AID technician : stationTechnicians.get(station)) {
-                TechnicianHistory history = technicianHistory.get(technician);
-                Contract contract = history.currentContract();
-
-                double salary = contract.salary;
-                double techCut = contract.percentage * cut;
-                double sum = salary + techCut;
-                WorkFinance payment = new WorkFinance(1, haveJobs, salary, techCut, sum);
-
-                history.add(payment);
-
-                totalSalaryPaid += salary;
-                totalCutPaid += techCut;
-
-                Logger.company(id, "Sent payment to technician " + technician.getLocalName());
-
-                // Protocol D
-                ACLMessage inform = new ACLMessage(ACLMessage.INFORM);
-                inform.setOntology(World.get().getCompanyPayment());
-                inform.setContent(payment.make());
-                inform.addReceiver(technician);
-                send(inform);
-            }
-
-            final double earned = accepted.totalEarnings() - totalSalaryPaid - totalCutPaid;
-            WorkFinance finance = new WorkFinance(1, jobs, totalSalaryPaid, totalCutPaid, earned);
-
-            stationHistory.get(station).add(proposed, accepted);
-            stationHistory.get(station).add(finance);
+            WorkdayFinance workday = new WorkdayFinance(technicians, proposal, accepted);
+            stationHistory.get(station).add(workday);
 
             finalize();
         }
     }
 
+    /**
+     * Behaviour: Expect list of job offers from each subscribed station.
+     */
     private class CompanyNight extends OneShotBehaviour {
         private static final long serialVersionUID = 6059838822925652797L;
 
@@ -356,49 +251,133 @@ public class Company extends Agent {
 
         @Override
         public void action() {
-            for (AID station : activeStations) {
+            for (AID station : stations) {
                 addBehaviour(new ReceiveJobList(myAgent, station));
             }
         }
     }
 
-    private class SubscriptionListener extends CyclicBehaviour {
-        private static final long serialVersionUID = 9068977292715279066L;
+    // ***** LOGGING
 
-        private final MessageTemplate mt;
-        private final String ontology;
+    private void logAggregate() {
+        CompanyRecord record = new CompanyRecord(id, strategy.toString(), numTechnicians);
+        Finance finance = totalFinance();
+        String line = Record.line(Logger.AGGREGATE_FORMAT, record, finance);
+        Logger.appendCompany(line);
+    }
 
-        SubscriptionListener(Agent a) {
-            super(a);
-            this.ontology = World.get().getInitialEmployment();
+    private void logSingle() {
+        StringBuilder builder = new StringBuilder();
 
-            MessageTemplate subscribe = MatchPerformative(ACLMessage.SUBSCRIBE);
-            MessageTemplate onto = MatchOntology(ontology);
-            this.mt = and(subscribe, onto);
+        if (Logger.RECORD_DEBUG) {
+            builder.append("Strategy:    ").append(strategy).append('\n');
+            builder.append("Technicians: ").append(numTechnicians).append('\n');
+        }
+
+        String headerStation = StationRecord.header(Logger.COMPANY_FORMAT);
+        String headerFinance = Finance.header(Logger.COMPANY_FORMAT);
+        String header = Record.line(Logger.COMPANY_FORMAT, headerStation, headerFinance);
+        builder.append(header);
+
+        TreeMap<String, String> lines = new TreeMap<>();
+        TreeMap<String, String> blocks = new TreeMap<>();
+
+        for (AID station : stations) {
+            String name = station.getLocalName();
+            int technicians = stationTechnicians.get(station);
+            StationHistory history = stationHistory.get(station);
+            StationRecord record = new StationRecord(name, technicians);
+            String line = Record.line(Logger.COMPANY_FORMAT, record, history.finance);
+            lines.put(name, line);
+
+            if (Logger.RECORD_DEBUG) {
+                String block = history.formatWorkdays(Logger.COMPANY_FORMAT);
+                blocks.put(name, String.format("\n==> Station: %s\n%s", name, block));
+            }
+        }
+
+        for (String line : lines.values()) builder.append(line);
+        for (String block : blocks.values()) builder.append(block);
+
+        String string = builder.toString();
+        Logger.single(id, string);
+    }
+
+    public static class CompanyRecord extends Record {
+        private final String name;
+        private final String strategy;
+        private final int technicians;
+
+        public CompanyRecord(String name, String strategy, int technicians) {
+            this.name = name;
+            this.strategy = strategy;
+            this.technicians = technicians;
+        }
+
+        public static String csvHeader() {
+            return "company,strategy,techns";
+        }
+
+        public static String tableHeader() {
+            return String.format("%10s  %15s  %6s", "station", "strategy", "techns");
+        }
+
+        public static String header(Format format) {
+            switch (format) {
+            case CSV:
+                return csvHeader();
+            case TABLE:
+            default:
+                return tableHeader();
+            }
         }
 
         @Override
-        public void action() {
-            ACLMessage message = receive(mt);
-            if (message == null) {
-                block();
-                return;
+        public String csv() {
+            return String.format("%s,%s,%d", name, strategy, technicians);
+        }
+
+        @Override
+        public String table() {
+            return String.format("%10s  %15s  %6d", name, strategy, technicians);
+        }
+    }
+
+    public static class StationRecord extends Record {
+        private final String name;
+        private final int technicians;
+
+        public StationRecord(String name, int technicians) {
+            this.name = name;
+            this.technicians = technicians;
+        }
+
+        public static String csvHeader() {
+            return "station,techns";
+        }
+
+        public static String tableHeader() {
+            return String.format("%10s  %6s", "station", "techns");
+        }
+
+        public static String header(Format format) {
+            switch (format) {
+            case CSV:
+                return csvHeader();
+            case TABLE:
+            default:
+                return tableHeader();
             }
+        }
 
-            AID technician = message.getSender();
-            AID station = stationNames.get(message.getContent());
-            Contract initialContract = strategy.initialContract(technician, station);
+        @Override
+        public String csv() {
+            return String.format("%s,%d", name, technicians);
+        }
 
-            TechnicianHistory history = new TechnicianHistory(technician, station);
-            activeTechnicians.add(technician);
-            technicianHistory.put(technician, history);
-            stationTechnicians.get(station).add(technician);
-            history.addContract(initialContract);
-
-            ACLMessage reply = message.createReply();
-            reply.setPerformative(ACLMessage.INFORM);
-            reply.setContent(initialContract.make());
-            send(reply);
+        @Override
+        public String table() {
+            return String.format("%10s  %6d", name, technicians);
         }
     }
 }
