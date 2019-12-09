@@ -295,6 +295,7 @@ public class Station extends Agent {
         }
 
         @Override  // Protocol D
+        @SuppressWarnings("rawtypes")
         protected void handleAllResultNotifications(Vector resultNotifications) {
             int N = resultNotifications.size();
             ACLMessage[] messages = new ACLMessage[N];
