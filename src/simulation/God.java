@@ -2,6 +2,9 @@ package simulation;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import jade.core.AID;
+import jade.core.Agent;
+import jade.lang.acl.ACLMessage;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -10,10 +13,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import jade.core.AID;
-import jade.core.Agent;
-import jade.lang.acl.ACLMessage;
 import utils.Logger;
 
 public class God extends Agent {

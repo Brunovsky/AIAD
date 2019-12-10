@@ -33,9 +33,9 @@ public class Simulation {
 
     private static Runtime runtime;
 
-    public static boolean SIMULATION_DEBUG_MODE = true;
-    public static boolean EXECUTION_MODE_MULTI = false;
-    public static int NUM_WORLDS = 10;
+    public static boolean SIMULATION_DEBUG_MODE = false;
+    public static boolean EXECUTION_MODE_MULTI = true;
+    public static int NUM_WORLDS = 5;
 
     public static void main(String[] args) {
         Locale.setDefault(Locale.US);
@@ -85,7 +85,7 @@ public class Simulation {
 
         for (int n = 1; n <= NUM_WORLDS; ++n) {
             Simulation simulation = new Simulation();
-            World world = new AIADWorld();
+            World world = new MiguelWorld(a);
 
             simulation.setup(world);
 
@@ -229,8 +229,8 @@ public class Simulation {
     }
 
     /**
-     * Launch all world clients according to the world specification with randomly ordered
-     * locations.
+     * Launch all world clients according to the world specification with randomly
+     * ordered locations.
      */
     private void launchClients() {
         ClientsDesc[] configs = new ClientsDesc[World.get().Cl];
