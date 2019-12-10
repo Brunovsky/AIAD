@@ -1,12 +1,5 @@
 package simulation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.Locale;
-
 import agents.Client;
 import agents.Company;
 import agents.Station;
@@ -18,6 +11,12 @@ import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import utils.Logger;
 import utils.Table;
 
@@ -108,12 +107,9 @@ public class Simulation {
         table.setAll("world", String.format("%d", n));
         world.extend(table);
 
-        for (Company company : companyAgents)
-            company.doDelete();
-        for (Client client : clientAgents)
-            client.doDelete();
-        for (Station station : stationAgents)
-            station.doDelete();
+        for (Company company : companyAgents) company.doDelete();
+        for (Client client : clientAgents) client.doDelete();
+        for (Station station : stationAgents) station.doDelete();
 
         Logger.simulation("END: WORLD " + n);
 
@@ -128,38 +124,39 @@ public class Simulation {
 
     // ***** TABLES
 
-    private static final String[] WORLDS_KEYS = new String[] { "world", // Simulation
-            "days", // World[i]
-            "company", // World[i] > Company[c]
-            "strategy", // World[i] > Company[c]
-            "techns", // World[i] > Company[c]
-            "cost", // World[i] > Company[c].totalFinance()
-            "revenue", // World[i] > Company[c].totalFinance()
-            "proposal", // World[i] > Company[c].totalFinance()
-            "assigned", // World[i] > Company[c].totalFinance()
-            "worker", // World[i] > Company[c].totalFinance()
-            "companies", // World[i]
-            "clients", // World[i]
-            "stations", // World[i]
-            "salary", // World[i]
+    private static final String[] WORLDS_KEYS = new String[] {
+        "world",      // Simulation
+        "days",       // World[i]
+        "company",    // World[i] > Company[c]
+        "strategy",   // World[i] > Company[c]
+        "techns",     // World[i] > Company[c]
+        "cost",       // World[i] > Company[c].totalFinance()
+        "revenue",    // World[i] > Company[c].totalFinance()
+        "proposal",   // World[i] > Company[c].totalFinance()
+        "assigned",   // World[i] > Company[c].totalFinance()
+        "worker",     // World[i] > Company[c].totalFinance()
+        "companies",  // World[i]
+        "clients",    // World[i]
+        "stations",   // World[i]
+        "salary",     // World[i]
     };
 
     // COMPANIES TABLE
 
-    private static final String[] COMPANIES_KEYS = new String[] { "company", // Company[c]
-            "strategy", // Company[c]
-            "techns", // Company[c]
-            "cost", // Company[c].totalFinance()
-            "revenue", // Company[c].totalFinance()
-            "proposal", // Company[c].totalFinance()
-            "assigned", // Company[c].totalFinance()
-            "worker", // Company[c].totalFinance()
+    private static final String[] COMPANIES_KEYS = new String[] {
+        "company",   // Company[c]
+        "strategy",  // Company[c]
+        "techns",    // Company[c]
+        "cost",      // Company[c].totalFinance()
+        "revenue",   // Company[c].totalFinance()
+        "proposal",  // Company[c].totalFinance()
+        "assigned",  // Company[c].totalFinance()
+        "worker",    // Company[c].totalFinance()
     };
 
     private Table tableCompanies() {
         Table table = new Table();
-        for (Company company : companyAgents)
-            company.populateRow(table.addRow());
+        for (Company company : companyAgents) company.populateRow(table.addRow());
         return table;
     }
 
@@ -172,13 +169,14 @@ public class Simulation {
 
     // INDIVIDUAL COMPANY TABLES
 
-    private static final String[] COMPANY_STATIONS_KEYS = new String[] { "station", // Company[c]
-            "techns", // Company[c]
-            "cost", // Company[c].StationHistory[s].Finance
-            "revenue", // Company[c].StationHistory[s].Finance
-            "proposal", // Company[c].StationHistory[s].Finance
-            "assigned", // Company[c].StationHistory[s].Finance
-            "worker", // Company[c].StationHistory[s].Finance
+    private static final String[] COMPANY_STATIONS_KEYS = new String[] {
+        "station",   // Company[c]
+        "techns",    // Company[c]
+        "cost",      // Company[c].StationHistory[s].Finance
+        "revenue",   // Company[c].StationHistory[s].Finance
+        "proposal",  // Company[c].StationHistory[s].Finance
+        "assigned",  // Company[c].StationHistory[s].Finance
+        "worker",    // Company[c].StationHistory[s].Finance
     };
 
     private Table tableCompanyStations(Company company) {
@@ -193,13 +191,14 @@ public class Simulation {
 
     // INDIVIDUAL COMPANY STATION HISTORY TABLES
 
-    private static final String[] COMPANY_STATION_HISTORY_KEYS = new String[] { "day", // Company[c].StationHistory[s].WorkdayFinance[d]
-            "techns", // Company[c].StationHistory[s].WorkdayFinance[d]
-            "cost", // Company[c].StationHistory[s].WorkdayFinance[d]
-            "revenue", // Company[c].StationHistory[s].WorkdayFinance[d]
-            "proposal", // Company[c].StationHistory[s].WorkdayFinance[d]
-            "assigned", // Company[c].StationHistory[s].WorkdayFinance[d]
-            "worker", // Company[c].StationHistory[s].WorkdayFinance[d]
+    private static final String[] COMPANY_STATION_HISTORY_KEYS = new String[] {
+        "day",       // Company[c].StationHistory[s].WorkdayFinance[d]
+        "techns",    // Company[c].StationHistory[s].WorkdayFinance[d]
+        "cost",      // Company[c].StationHistory[s].WorkdayFinance[d]
+        "revenue",   // Company[c].StationHistory[s].WorkdayFinance[d]
+        "proposal",  // Company[c].StationHistory[s].WorkdayFinance[d]
+        "assigned",  // Company[c].StationHistory[s].WorkdayFinance[d]
+        "worker",    // Company[c].StationHistory[s].WorkdayFinance[d]
     };
 
     private Table[] tablesCompanyStationHistories(Company company) {

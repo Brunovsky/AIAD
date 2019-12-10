@@ -5,11 +5,6 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-
 import agentbehaviours.AwaitDayBehaviour;
 import agentbehaviours.AwaitNightBehaviour;
 import agentbehaviours.SequentialLoopBehaviour;
@@ -19,11 +14,15 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
-import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import simulation.World;
 import strategies.CompanyStrategy;
 import types.Finance;
