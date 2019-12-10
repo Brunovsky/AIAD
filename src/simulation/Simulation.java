@@ -1,5 +1,12 @@
 package simulation;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
 import agents.Client;
 import agents.Company;
 import agents.Station;
@@ -11,12 +18,6 @@ import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 import utils.Logger;
 import utils.SimulationTables;
 import utils.Table;
@@ -34,7 +35,7 @@ public class Simulation {
     private static Runtime runtime;
 
     public static boolean SIMULATION_DEBUG_MODE = false;
-    public static boolean EXECUTION_MODE_MULTI = true;
+    public static boolean EXECUTION_MODE_MULTI = false;
     public static int NUM_WORLDS = 5;
 
     public static void main(String[] args) {
@@ -58,7 +59,7 @@ public class Simulation {
 
     private static void runOnce() {
         Simulation simulation = new Simulation();
-        World world = new AIADWorld();
+        World world = new MiguelWorld();
 
         simulation.setup(world);
 
@@ -85,7 +86,7 @@ public class Simulation {
 
         for (int n = 1; n <= NUM_WORLDS; ++n) {
             Simulation simulation = new Simulation();
-            World world = new MiguelWorld(a);
+            World world = new MiguelWorld();
 
             simulation.setup(world);
 

@@ -1,9 +1,5 @@
 # clang-format Style file
 # https://clang.llvm.org/docs/ClangFormatStyleOptions.html
-# ! highly volatile -- may change regularly between style guides
-# * arguable -- may change my mind in the future/some guides will demand other values
-# ^ unarguable -- good luck trying to change my mind
-# ? unknown -- not sure what to put here
 ---
 #
 # Languages (Java)

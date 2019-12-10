@@ -35,7 +35,7 @@ public abstract class World {
     }
 
     public static final int MILLI_DELAY = 500;
-    public static final int MILLI_PERIOD = 400;
+    public static final int MILLI_PERIOD = 300;
     public static final int MILLI_WAIT = 20;
 
     public static final int EASY_WEIGHT = 1;

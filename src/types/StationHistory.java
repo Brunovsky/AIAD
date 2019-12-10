@@ -4,8 +4,6 @@ import jade.core.AID;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
-import utils.Table;
 
 public class StationHistory {
     public final AID station;
