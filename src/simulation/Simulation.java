@@ -34,9 +34,9 @@ public class Simulation {
 
     private static Runtime runtime;
 
-    public static boolean SIMULATION_DEBUG_MODE = false;
-    public static boolean EXECUTION_MODE_MULTI = false;
-    public static int NUM_WORLDS = 5;
+    public static boolean SIMULATION_DEBUG_MODE = true;
+    public static boolean EXECUTION_MODE_MULTI = true;
+    public static int NUM_WORLDS = 40;
 
     public static void main(String[] args) {
         Locale.setDefault(Locale.US);
@@ -84,6 +84,10 @@ public class Simulation {
     private static void runSeveral() {
         Table worldTable = new Table("World Table");
 
+        String output = worldTable.outputHeader(SimulationTables.AGGREGATE_FORMAT,
+                                                SimulationTables.WORLDS_KEYS);
+        Logger.write(Logger.COMPANIES_AGGREGATE_FILE, output);
+
         for (int n = 1; n <= NUM_WORLDS; ++n) {
             Simulation simulation = new Simulation();
             World world = new MiguelWorld();
@@ -99,9 +103,16 @@ public class Simulation {
             Table table = simulation.tableCompanies("world_" + n);
             worldTable.merge(table);
             world.extend(table);
+            table.setAll("world", String.format("%d", n));
+
+            output = table.outputBody(SimulationTables.AGGREGATE_FORMAT,
+                                      SimulationTables.WORLDS_KEYS);
+            Logger.write(Logger.COMPANIES_AGGREGATE_FILE, output);
 
             simulation.terminate();
         }
+
+        // Do something with worldTable?
     }
 
     // ***** SIMULATION
@@ -214,7 +225,7 @@ public class Simulation {
      */
     private void launchStations() {
         for (int i = World.get().S - 1; i >= 0; --i) {
-            String id = "station_" + (i + 1);
+            String id = "station_" + (i < 9 ? "0" : "") + (i + 1);
 
             Station station = new Station(id);
             stationAgents.add(station);
@@ -259,7 +270,7 @@ public class Simulation {
         shuffle(stations);
 
         for (int i = 0; i < World.get().Cl; ++i) {
-            String id = "client_" + (i + 1);
+            String id = "client_" + (i < 9 ? "00" : i < 99 ? "0" : "") + (i + 1);
             ClientsDesc config = configs[i];
             AID station = stations[i];
 
@@ -295,7 +306,7 @@ public class Simulation {
         shuffle(configs);
 
         for (int i = 0; i < World.get().Co; ++i) {
-            String id = "company_" + (i + 1);
+            String id = "company_" + (i < 9 ? "0" : "") + (i + 1);
             CompaniesDesc config = configs[i];
 
             Company company = new Company(id, config.numberTechnicians, config.strategy.make());

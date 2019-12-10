@@ -3,6 +3,7 @@ package utils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+
 import utils.SimulationTables.Format;
 
 public class Table {
@@ -74,6 +75,26 @@ public class Table {
         return builder.toString();
     }
 
+    // Build just a CSV header
+    public String csvHeader(String[] keys) {
+        return String.join(",", keys) + "\n";
+    }
+
+    // Build just a CSV body
+    public String csvBody(String[] keys) {
+        StringBuilder builder = new StringBuilder();
+        String[] elems = new String[keys.length];
+
+        for (Map<String, String> map : rows.values()) {
+            for (int i = 0; i < keys.length; ++i) {
+                elems[i] = map.getOrDefault(keys[i], "");
+            }
+            builder.append(String.join(",", elems)).append('\n');
+        }
+
+        return builder.toString();
+    }
+
     // Build a pretty table
     public String table(String[] keys, String columnDelimiter) {
         StringBuilder builder = new StringBuilder();
@@ -106,8 +127,57 @@ public class Table {
         return builder.toString();
     }
 
+    // Build just a pretty table header
+    public String tableHeader(String[] keys, String columnDelimiter, int[] width) {
+        String[] elems = new String[keys.length];
+
+        for (int i = 0; i < keys.length; ++i) {
+            elems[i] = " ".repeat(width[i] - keys[i].length()) + keys[i];
+        }
+
+        return String.join(columnDelimiter, elems) + "\n";
+    }
+
+    // Build just a pretty table body
+    public String tableBody(String[] keys, String columnDelimiter, int[] width) {
+        StringBuilder builder = new StringBuilder();
+        String[] elems = new String[keys.length];
+
+        for (Map<String, String> map : rows.values()) {
+            for (int i = 0; i < keys.length; ++i) {
+                String value = map.getOrDefault(keys[i], "");
+                elems[i] = " ".repeat(width[i] - value.length()) + value;
+            }
+            builder.append(String.join(columnDelimiter, elems)).append('\n');
+        }
+
+        return builder.toString();
+    }
+
     public String table(String[] keys) {
         return table(keys, "  ");
+    }
+
+    public String tableHeader(String[] keys, int[] width) {
+        return tableHeader(keys, "  ", width);
+    }
+
+    public String tableBody(String[] keys, int[] width) {
+        return tableBody(keys, "  ", width);
+    }
+
+    public static final int DEFAULT_WIDTH = 10;
+
+    public String tableHeader(String[] keys) {
+        int[] width = new int[keys.length];
+        for (int i = 0; i < width.length; ++i) width[i] = DEFAULT_WIDTH;
+        return tableHeader(keys, width);
+    }
+
+    public String tableBody(String[] keys) {
+        int[] width = new int[keys.length];
+        for (int i = 0; i < width.length; ++i) width[i] = DEFAULT_WIDTH;
+        return tableBody(keys, width);
     }
 
     public String output(Format format, String[] keys) {
@@ -117,6 +187,26 @@ public class Table {
         case TABLE:
         default:
             return table(keys);
+        }
+    }
+
+    public String outputHeader(Format format, String[] keys) {
+        switch (format) {
+        case CSV:
+            return csvHeader(keys);
+        case TABLE:
+        default:
+            return tableHeader(keys);
+        }
+    }
+
+    public String outputBody(Format format, String[] keys) {
+        switch (format) {
+        case CSV:
+            return csvBody(keys);
+        case TABLE:
+        default:
+            return tableBody(keys);
         }
     }
 }
