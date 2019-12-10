@@ -1,11 +1,5 @@
 package simulation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
 import agents.Client;
 import agents.Company;
 import agents.Station;
@@ -17,7 +11,14 @@ import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import utils.Logger;
+import utils.SimulationTables;
 import utils.Table;
 
 public class Simulation {
@@ -25,26 +26,23 @@ public class Simulation {
     private final ArrayList<Client> clientAgents;
     private final ArrayList<Station> stationAgents;
     private final ArrayList<Company> companyAgents;
-
     private final Map<ClientsDesc.Strategy, ArrayList<Client>> clientMap;
     private final Map<CompaniesDesc.Strategy, ArrayList<Company>> companyMap;
 
-    private static Runtime runtime;
     private ContainerController container;
 
-    private static Table worldTable;
+    private static Runtime runtime;
 
-    public static boolean SIMULATION_DEBUG_MODE = false;
-    public static boolean EXECUTION_MODE_MULTI = true;
-    public static int NUM_WORLDS = 3;
+    public static boolean SIMULATION_DEBUG_MODE = true;
+    public static boolean EXECUTION_MODE_MULTI = false;
+    public static int NUM_WORLDS = 10;
 
     public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
         System.out.print("\033[H\033[2J");
         Logger.clearLogFolder();
 
         runtime = Runtime.instance();
-
-        worldTable = new Table("World Table");
 
         if (EXECUTION_MODE_MULTI) {
             runSeveral();
@@ -59,19 +57,50 @@ public class Simulation {
     // ***** EXECUTION MODES
 
     private static void runOnce() {
-        Table table = new Simulation().run(1, new AIADWorld());
-        worldTable.merge(table);
-        String output = table.output(Logger.AGGREGATE_FORMAT, WORLDS_KEYS);
+        Simulation simulation = new Simulation();
+        World world = new AIADWorld();
+
+        simulation.setup(world);
+
+        Logger.simulation("BEGIN");
+
+        simulation.launch();
+
+        Logger.simulation("END");
+
+        Table table = simulation.tableCompanies();
+        world.extend(table);
+
+        simulation.writeCompanyStationAll();
+
+        simulation.terminate();
+
+        String output = table.output(SimulationTables.AGGREGATE_FORMAT,
+                                     SimulationTables.WORLDS_KEYS);
         Logger.write(Logger.COMPANIES_AGGREGATE_FILE, output);
     }
 
     private static void runSeveral() {
+        Table worldTable = new Table("World Table");
+
         for (int n = 1; n <= NUM_WORLDS; ++n) {
-            Table table = new Simulation().run(n, new AIADWorld());
+            Simulation simulation = new Simulation();
+            World world = new AIADWorld();
+
+            simulation.setup(world);
+
+            Logger.simulation("BEGIN " + n);
+
+            simulation.launch();
+
+            Logger.simulation("END " + n);
+
+            Table table = simulation.tableCompanies("world_" + n);
             worldTable.merge(table);
+            world.extend(table);
+
+            simulation.terminate();
         }
-        String output = worldTable.output(Logger.AGGREGATE_FORMAT, WORLDS_KEYS);
-        Logger.write(Logger.COMPANIES_AGGREGATE_FILE, output);
     }
 
     // ***** SIMULATION
@@ -80,147 +109,76 @@ public class Simulation {
         clientAgents = new ArrayList<>();
         stationAgents = new ArrayList<>();
         companyAgents = new ArrayList<>();
-
         clientMap = new HashMap<>();
         companyMap = new HashMap<>();
     }
 
-    private Table run(int n, World world) {
+    private void setup(World world) {
         World.set(world);
         assert !ran;
         ran = true;
 
         Profile profile = new ProfileImpl();
         container = runtime.createMainContainer(profile);
+    }
 
-        Logger.simulation("BEGIN: WORLD " + n);
-
+    private void launch() {
         God.renew();
         launchStations();
         launchClients();
         launchCompanies();
         launchSimulation();
+    }
 
-        Table table = tableCompanies();
-        table.setAll("world", String.format("%d", n));
-        world.extend(table);
-
+    private void terminate() {
         for (Company company : companyAgents) company.doDelete();
         for (Client client : clientAgents) client.doDelete();
         for (Station station : stationAgents) station.doDelete();
-
-        Logger.simulation("END: WORLD " + n);
 
         try {
             container.kill();
         } catch (StaleProxyException e) {
             e.printStackTrace();
         }
-
-        return table;
     }
 
     // ***** TABLES
 
-    private static final String[] WORLDS_KEYS = new String[] {
-        "world",      // Simulation
-        "days",       // World[i]
-        "company",    // World[i] > Company[c]
-        "strategy",   // World[i] > Company[c]
-        "techns",     // World[i] > Company[c]
-        "cost",       // World[i] > Company[c].totalFinance()
-        "revenue",    // World[i] > Company[c].totalFinance()
-        "proposal",   // World[i] > Company[c].totalFinance()
-        "assigned",   // World[i] > Company[c].totalFinance()
-        "worker",     // World[i] > Company[c].totalFinance()
-        "companies",  // World[i]
-        "clients",    // World[i]
-        "stations",   // World[i]
-        "salary",     // World[i]
-    };
-
     // COMPANIES TABLE
 
-    private static final String[] COMPANIES_KEYS = new String[] {
-        "company",   // Company[c]
-        "strategy",  // Company[c]
-        "techns",    // Company[c]
-        "cost",      // Company[c].totalFinance()
-        "revenue",   // Company[c].totalFinance()
-        "proposal",  // Company[c].totalFinance()
-        "assigned",  // Company[c].totalFinance()
-        "worker",    // Company[c].totalFinance()
-    };
-
-    private Table tableCompanies() {
-        Table table = new Table();
-        for (Company company : companyAgents) company.populateRow(table.addRow());
+    private Table tableCompanies(String prefix) {
+        Table table = new Table("Global Performance");
+        for (Company company : companyAgents) {
+            company.populateRow(table.addRow(prefix + company.getId()));
+        }
         return table;
     }
 
-    @SuppressWarnings("unused")
-    private void writeCompanies() {
-        Table table = tableCompanies();
-        String output = table.output(Logger.AGGREGATE_FORMAT, COMPANIES_KEYS);
-        Logger.write(Logger.COMPANIES_AGGREGATE_FILE, output);
-    }
-
-    // INDIVIDUAL COMPANY TABLES
-
-    private static final String[] COMPANY_STATIONS_KEYS = new String[] {
-        "station",   // Company[c]
-        "techns",    // Company[c]
-        "cost",      // Company[c].StationHistory[s].Finance
-        "revenue",   // Company[c].StationHistory[s].Finance
-        "proposal",  // Company[c].StationHistory[s].Finance
-        "assigned",  // Company[c].StationHistory[s].Finance
-        "worker",    // Company[c].StationHistory[s].Finance
-    };
-
-    private Table tableCompanyStations(Company company) {
-        return company.makeTableStations();
-    }
-
-    private void writeCompanyStation(Company company) {
-        Table table = tableCompanyStations(company);
-        String output = table.output(Logger.COMPANY_FORMAT, COMPANY_STATIONS_KEYS);
-        Logger.write(company.getId(), output);
+    private Table tableCompanies() {
+        return tableCompanies("");
     }
 
     // INDIVIDUAL COMPANY STATION HISTORY TABLES
 
-    private static final String[] COMPANY_STATION_HISTORY_KEYS = new String[] {
-        "day",       // Company[c].StationHistory[s].WorkdayFinance[d]
-        "techns",    // Company[c].StationHistory[s].WorkdayFinance[d]
-        "cost",      // Company[c].StationHistory[s].WorkdayFinance[d]
-        "revenue",   // Company[c].StationHistory[s].WorkdayFinance[d]
-        "proposal",  // Company[c].StationHistory[s].WorkdayFinance[d]
-        "assigned",  // Company[c].StationHistory[s].WorkdayFinance[d]
-        "worker",    // Company[c].StationHistory[s].WorkdayFinance[d]
-    };
-
-    private Table[] tablesCompanyStationHistories(Company company) {
-        return company.makeTablesStationHistory();
-    }
-
     private void writeCompanyStationHistory(Company company) {
-        Table[] tables = tablesCompanyStationHistories(company);
-        String[] outputs = new String[tables.length];
-        for (int i = 0; i < tables.length; ++i) {
-            outputs[i] = "Station: " + tables[i].getTitle() + "\n";
-            outputs[i] += tables[i].output(Logger.COMPANY_FORMAT, COMPANY_STATION_HISTORY_KEYS);
+        Map<String, Table> map = SimulationTables.getCompany(company.getId());
+        String[] outputs = new String[map.size()];
+        int i = 0;
+        for (Table table : map.values()) {
+            outputs[i] = "Station: " + table.getTitle() + "\n";
+            outputs[i++] += table.output(SimulationTables.COMPANY_FORMAT,
+                                         SimulationTables.DAILY_KEYS);
         }
-        String output = String.join("\n", outputs);
+        String header = String.format("Company: %s\nStrategy: %s\n\n", company.getId(),
+                                      company.getStrategy().getName());
+        String output = header + String.join("\n", outputs);
         Logger.write(company.getId(), output);
     }
 
     // Write all company station tables
 
-    @SuppressWarnings("unused")
     private void writeCompanyStationAll() {
         for (Company company : companyAgents) {
-            writeCompanyStation(company);
-            Logger.write(company.getId(), "\n");
             writeCompanyStationHistory(company);
         }
     }

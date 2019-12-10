@@ -14,18 +14,22 @@ public class Proposal {
         this.company = company;
     }
 
-    public int totalJobs() {
-        return easy + medium + hard;
-    }
-
-    public double totalRevenue() {
-        return easy * easyPrice + medium * mediumPrice + hard * hardPrice;
-    }
-
     public void copyPrices(Proposal other) {
         easyPrice = other.easyPrice;
         mediumPrice = other.mediumPrice;
         hardPrice = other.hardPrice;
+    }
+
+    public int totalJobs() {
+        return easy + medium + hard;
+    }
+
+    public double revenue(MalfunctionType type) {
+        return get(type) * getPrice(type);
+    }
+
+    public double totalRevenue() {
+        return easy * easyPrice + medium * mediumPrice + hard * hardPrice;
     }
 
     public int get(MalfunctionType type) {
@@ -36,6 +40,18 @@ public class Proposal {
             return medium;
         case HARD:
             return hard;
+        }
+        return -1;
+    }
+
+    public double getPrice(MalfunctionType type) {
+        switch (type) {
+        case EASY:
+            return easyPrice;
+        case MEDIUM:
+            return mediumPrice;
+        case HARD:
+            return hardPrice;
         }
         return -1;
     }
@@ -54,19 +70,11 @@ public class Proposal {
         }
     }
 
-    public double getPrice(MalfunctionType type) {
-        switch (type) {
-        case EASY:
-            return easyPrice;
-        case MEDIUM:
-            return mediumPrice;
-        case HARD:
-            return hardPrice;
-        }
-        return -1;
+    public int weight(MalfunctionType type) {
+        return World.getWeight(type) * get(type);
     }
 
-    public int weight() {
+    public int totalWeight() {
         return World.EASY_WEIGHT * easy + World.MEDIUM_WEIGHT * medium + World.HARD_WEIGHT * hard;
     }
 

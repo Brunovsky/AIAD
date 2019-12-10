@@ -1,13 +1,12 @@
 package types;
 
 import java.util.Map;
-
 import simulation.World;
 
 /**
  * Report for one day's work at a station or accross all stations for a given company.
  */
-public class WorkdayFinance {
+public class Workday {
     public final int day;
     public final int technicians;
     public final Proposal proposal;
@@ -15,7 +14,7 @@ public class WorkdayFinance {
     public final double cost;
     public final double revenue;
 
-    public WorkdayFinance(int technicians, Proposal proposal, Proposal assignment) {
+    public Workday(int technicians, Proposal proposal, Proposal assignment) {
         this.day = World.get().getDay();
         this.technicians = technicians;
         this.proposal = proposal;
@@ -24,16 +23,16 @@ public class WorkdayFinance {
         this.revenue = assignment.totalRevenue();
     }
 
-    public static WorkdayFinance empty() {
-        return new WorkdayFinance(0, null, null);
+    public static Workday empty() {
+        return new Workday(0, null, null);
     }
 
     public int proposalWeight() {
-        return proposal.weight();
+        return proposal.totalWeight();
     }
 
     public int assignedWeight() {
-        return assignment.weight();
+        return assignment.totalWeight();
     }
 
     public int workerWeight() {
@@ -50,7 +49,7 @@ public class WorkdayFinance {
 
     // ***** FORMATTING
 
-    public void rowSet(Map<String, String> row) {
+    public void populateRow(Map<String, String> row) {
         row.put("day", String.format("%d", day));
         row.put("techns", String.format("%d", technicians));
         row.put("cost", String.format("%.1f", cost));
@@ -58,5 +57,8 @@ public class WorkdayFinance {
         row.put("proposal", String.format("%d", proposalWeight()));
         row.put("assigned", String.format("%d", assignedWeight()));
         row.put("worker", String.format("%d", workerWeight()));
+        row.put("easy", String.format("%d/%d", assignment.easy, proposal.easy));
+        row.put("medium", String.format("%d/%d", assignment.medium, proposal.medium));
+        row.put("hard", String.format("%d/%d", assignment.hard, proposal.hard));
     }
 }

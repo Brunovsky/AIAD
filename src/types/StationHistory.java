@@ -1,35 +1,43 @@
 package types;
 
-import java.util.ArrayList;
-import java.util.Map;
-
 import jade.core.AID;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import utils.Table;
 
 public class StationHistory {
     public final AID station;
-    public final ArrayList<WorkdayFinance> workdays;
+    public final List<Workday> workdays;
     public final Finance finance;
 
     public StationHistory(AID station) {
         this.station = station;
-        this.workdays = new ArrayList<>();
+        this.workdays = new LinkedList<>();
         this.finance = new Finance();
     }
 
-    public void add(WorkdayFinance workday) {
+    public void add(Workday workday) {
         workdays.add(workday);
         finance.add(workday);
     }
 
-    public void populateRow(Map<String, String> row) {
-        row.put("station", station.getLocalName());
-        finance.populateRow(row);
+    public Workday last() {
+        return workdays.isEmpty() ? null : workdays.get(workdays.size() - 1);
     }
 
-    public Table makeTable() {
-        Table table = new Table(station.getLocalName());
-        for (WorkdayFinance workday : workdays) workday.rowSet(table.addRow());
-        return table;
+    public List<Workday> lastDays(int n) {
+        List<Workday> last = new LinkedList<>();
+        ListIterator<Workday> it = workdays.listIterator(workdays.size());
+        while (it.hasPrevious() && n-- > 0) last.add(it.previous());
+        return last;
+    }
+
+    public TypedFinance lastDaysAggregate(int n) {
+        TypedFinance finance = new TypedFinance();
+        ListIterator<Workday> it = workdays.listIterator(workdays.size());
+        while (it.hasPrevious() && n-- > 0) finance.add(it.previous());
+        return finance;
     }
 }

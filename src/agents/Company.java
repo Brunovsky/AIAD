@@ -5,11 +5,6 @@ import static jade.lang.acl.MessageTemplate.MatchPerformative;
 import static jade.lang.acl.MessageTemplate.MatchSender;
 import static jade.lang.acl.MessageTemplate.and;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-
 import agentbehaviours.AwaitDayBehaviour;
 import agentbehaviours.AwaitNightBehaviour;
 import agentbehaviours.SequentialLoopBehaviour;
@@ -19,19 +14,24 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
-import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import simulation.World;
 import strategies.CompanyStrategy;
 import types.Finance;
 import types.JobList;
 import types.Proposal;
 import types.StationHistory;
-import types.WorkdayFinance;
+import types.Workday;
 import utils.Logger;
+import utils.SimulationTables;
 import utils.Table;
 
 public class Company extends Agent {
@@ -73,6 +73,7 @@ public class Company extends Agent {
         loop.addSubBehaviour(new CompanyNight(this));
         // Day
         loop.addSubBehaviour(new AwaitDayBehaviour(this));
+        loop.addSubBehaviour(new CheckPerformance(this));
         addBehaviour(loop);
     }
 
@@ -147,6 +148,22 @@ public class Company extends Agent {
         return finance;
     }
 
+    public Set<AID> getStations() {
+        return stations;
+    }
+
+    public Map<AID, StationHistory> getStationHistory() {
+        return stationHistory;
+    }
+
+    public Map<AID, Integer> getStationTechnicians() {
+        return stationTechnicians;
+    }
+
+    public CompanyStrategy getStrategy() {
+        return strategy;
+    }
+
     // ***** BEHAVIOURS
 
     /**
@@ -179,7 +196,7 @@ public class Company extends Agent {
 
             if (technicians > 0) {
                 JobList jobList = JobList.from(message);
-                Proposal proposal = strategy.makeProposal(technicians, jobList);
+                Proposal proposal = strategy.makeProposal(technicians, jobList, station);
 
                 // Protocol B
                 ACLMessage reply = message.createReply();
@@ -189,7 +206,7 @@ public class Company extends Agent {
 
                 addBehaviour(new ReceiveAcceptedJobs(myAgent, station, proposal));
             } else {
-                stationHistory.get(station).add(WorkdayFinance.empty());
+                stationHistory.get(station).add(Workday.empty());
 
                 ACLMessage reply = message.createReply();
                 reply.setPerformative(ACLMessage.REFUSE);
@@ -234,7 +251,7 @@ public class Company extends Agent {
             Proposal accepted = Proposal.from(myAgent.getAID(), message);
             accepted.copyPrices(proposal);
 
-            WorkdayFinance workday = new WorkdayFinance(technicians, proposal, accepted);
+            Workday workday = new Workday(technicians, proposal, accepted);
             stationHistory.get(station).add(workday);
 
             finalize();
@@ -259,6 +276,30 @@ public class Company extends Agent {
         }
     }
 
+    private class CheckPerformance extends OneShotBehaviour {
+        private static final long serialVersionUID = 6209021715457803180L;
+
+        CheckPerformance(Agent a) {
+            super(a);
+        }
+
+        @Override
+        public void action() {
+            strategy.adjustPrices();
+            for (StationHistory history : stationHistory.values()) {
+                Workday workday = history.last();
+                assert workday != null;
+
+                AID station = history.station;
+                Table daily = SimulationTables.getDaily(id, station.getLocalName());
+
+                Map<String, String> row = daily.addRow(World.get().getDay());
+                workday.populateRow(row);
+                strategy.populateRow(row, station);
+            }
+        }
+    }
+
     // ***** LOGGING
 
     public void populateRow(Map<String, String> row) {
@@ -266,30 +307,6 @@ public class Company extends Agent {
         row.put("strategy", strategy.toString());
         row.put("techns", String.format("%d", numTechnicians));
         totalFinance().populateRow(row);
-    }
-
-    public Table makeTableStations() {
-        Table table = new Table(id);
-        TreeMap<String, AID> map = new TreeMap<>();
-        for (AID station : stations) map.put(station.getLocalName(), station);
-        for (AID station : map.values()) {
-            Map<String, String> row = table.addRow();
-            row.put("station", station.getLocalName());
-            row.put("techns", String.format("%d", stationTechnicians.get(station)));
-            stationHistory.get(station).finance.populateRow(row);
-        }
-        return table;
-    }
-
-    public Table[] makeTablesStationHistory() {
-        TreeMap<String, Table> map = new TreeMap<>();
-        for (AID station : stations) {
-            map.put(station.getLocalName(), stationHistory.get(station).makeTable());
-        }
-
-        Table[] tables = new Table[stations.size()];
-        int i = 0;
-        for (Table table : map.values()) tables[i++] = table;
-        return tables;
+        strategy.populateRow(row);
     }
 }

@@ -1,8 +1,8 @@
 package simulation;
 
 import strategies.CompanyStrategy;
-import strategies.PreferEasyCompanyStrategy;
-import strategies.PreferHardCompanyStrategy;
+import strategies.EasyCommonCompanyStrategy;
+import strategies.HardSpecializedCompanyStrategy;
 
 public class CompaniesDesc {
     public final int numberCompanies;
@@ -16,9 +16,9 @@ public class CompaniesDesc {
         public CompanyStrategy make() {
             switch (this) {
             case PREFER_EASY:
-                return new PreferEasyCompanyStrategy();
+                return new EasyCommonCompanyStrategy();
             case PREFER_HARD:
-                return new PreferHardCompanyStrategy();
+                return new HardSpecializedCompanyStrategy();
             }
             return null;
         }

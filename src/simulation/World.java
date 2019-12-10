@@ -1,5 +1,6 @@
 package simulation;
 
+import utils.MalfunctionType;
 import utils.Table;
 
 public abstract class World {
@@ -34,15 +35,15 @@ public abstract class World {
     }
 
     public static final int MILLI_DELAY = 500;
-    public static final int MILLI_PERIOD = 700;
+    public static final int MILLI_PERIOD = 400;
     public static final int MILLI_WAIT = 20;
-
-    // *****
 
     public static final int EASY_WEIGHT = 1;
     public static final int MEDIUM_WEIGHT = 3;
     public static final int HARD_WEIGHT = 9;
     public static final int WORKER_WEIGHT = 3;
+
+    // *****
 
     // Clients
     int Cl;
@@ -57,6 +58,9 @@ public abstract class World {
     CompaniesDesc[] companies;
 
     double salary;
+    double easyBase;
+    double mediumBase;
+    double hardBase;
 
     // * State
     int numberDays;
@@ -73,8 +77,32 @@ public abstract class World {
         return world;
     }
 
+    public static int getWeight(MalfunctionType type) {
+        switch (type) {
+        case EASY:
+            return EASY_WEIGHT;
+        case MEDIUM:
+            return MEDIUM_WEIGHT;
+        case HARD:
+        default:
+            return HARD_WEIGHT;
+        }
+    }
+
     public double getSalary() {
         return salary;
+    }
+
+    public double getEasyBase() {
+        return easyBase;
+    }
+
+    public double getMediumBase() {
+        return mediumBase;
+    }
+
+    public double getHardBase() {
+        return hardBase;
     }
 
     public int getDay() {
@@ -93,9 +121,29 @@ public abstract class World {
         return S + Cl + Co;
     }
 
+    public int numClients() {
+        return Cl;
+    }
+
+    public int numCompanies() {
+        return Co;
+    }
+
+    public int numStations() {
+        return S;
+    }
+
+    public int numTechnicians() {
+        int technicians = 0;
+        for (CompaniesDesc desc : companies)
+            technicians += desc.numberCompanies * desc.numberTechnicians;
+        return technicians;
+    }
+
     void assertValid() {
         assert Cl > 0 && S > 0 && Co > 0;
         assert numberDays > 0 && salary > 0.0;
+        assert easyBase > 0.0 && mediumBase > easyBase && hardBase > mediumBase;
 
         assert clients != null && stations != null && companies != null;
 
@@ -114,6 +162,7 @@ public abstract class World {
         table.setAll("companies", String.format("%d", Co));
         table.setAll("clients", String.format("%d", Cl));
         table.setAll("stations", String.format("%d", S));
+        table.setAll("alltechns", String.format("%d", numTechnicians()));
         table.setAll("salary", String.format("%.1f", salary));
     }
 }

@@ -9,6 +9,10 @@ public class Finance {
     public int assignedWeight = 0;
     public int workerWeight = 0;
 
+    public int rejectedWeight() {
+        return proposalWeight - assignedWeight;
+    }
+
     public int wastedWeight() {
         return workerWeight - proposalWeight;
     }
@@ -17,9 +21,33 @@ public class Finance {
         return workerWeight - assignedWeight;
     }
 
+    // Share of jobs accepted by the station, [0,1]
+    public double acceptedShare() {
+        if (proposalWeight == 0) return 0.5;
+        return (double) assignedWeight / proposalWeight;
+    }
+
+    // Share of jobs rejected by the station, [0,1]
+    public double rejectedShare() {
+        if (proposalWeight == 0) return 0.5;
+        return (double) rejectedWeight() / proposalWeight;
+    }
+
+    // Share of workers not assigned to a proposal (not enough jobs), [0,1]
+    public double wastedShare() {
+        if (workerWeight == 0) return 0;
+        return (double) wastedWeight() / workerWeight;
+    }
+
+    // Share of workers not assigned to a job (not enough (accepted) jobs), [0,1]
+    public double lostShare() {
+        if (workerWeight == 0) return 0;
+        return (double) lostWeight() / workerWeight;
+    }
+
     public Finance() {}
 
-    public void add(WorkdayFinance workday) {
+    public void add(Workday workday) {
         this.cost += workday.cost;
         this.revenue += workday.revenue;
         this.proposalWeight += workday.proposalWeight();

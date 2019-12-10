@@ -30,10 +30,6 @@ public class Logger {
     private static final boolean SHOW_GOD = true;
     private static final boolean SHOW_SIMULATION = true;
 
-    public enum Format { CSV, TABLE }
-    public static final Format AGGREGATE_FORMAT = Format.TABLE;
-    public static final Format COMPANY_FORMAT = Format.TABLE;
-
     // * Generic
 
     public static void clearLogFolder() {
