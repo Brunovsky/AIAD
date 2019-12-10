@@ -30,15 +30,19 @@ public class Logger {
     private static final boolean SHOW_GOD = true;
     private static final boolean SHOW_SIMULATION = true;
 
-    public enum Format { CSV, TABLE }
-    public static final Format AGGREGATE_FORMAT = Format.TABLE;
-    public static final Format COMPANY_FORMAT = Format.TABLE;
+    public enum Format {
+        CSV, TABLE
+    }
+
+    public static final Format AGGREGATE_FORMAT = Format.CSV;
+    public static final Format COMPANY_FORMAT = Format.CSV;
 
     // * Generic
 
     public static void clearLogFolder() {
         File dir = new File(LOG_FOLDER);
-        for (File file : dir.listFiles()) file.delete();
+        for (File file : dir.listFiles())
+            file.delete();
     }
 
     public static void console(String pre, String name, String text) {
@@ -91,27 +95,32 @@ public class Logger {
     // * single logging
 
     public static void client(String agentName, String text) {
-        if (!SHOW_CLIENT) return;
+        if (!SHOW_CLIENT)
+            return;
         console(ANSI_WHITE, agentName, text);
     }
 
     public static void station(String agentName, String text) {
-        if (!SHOW_STATION) return;
+        if (!SHOW_STATION)
+            return;
         console(ANSI_RED, agentName, text);
     }
 
     public static void company(String agentName, String text) {
-        if (!SHOW_COMPANY) return;
+        if (!SHOW_COMPANY)
+            return;
         console(ANSI_PURPLE, agentName, text);
     }
 
     public static void god(String text) {
-        if (!SHOW_GOD) return;
+        if (!SHOW_GOD)
+            return;
         console(ANSI_YELLOW, "god", text);
     }
 
     public static void simulation(String text) {
-        if (!SHOW_SIMULATION) return;
+        if (!SHOW_SIMULATION)
+            return;
         console(ANSI_BLUE, "SIMULATION", text);
     }
 }
