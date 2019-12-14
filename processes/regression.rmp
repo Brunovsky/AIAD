@@ -73,7 +73,7 @@
         <parameter key="local_random_seed" value="1992"/>
         <process expanded="true">
           <operator activated="true" class="select_subprocess" compatibility="9.5.001" expanded="true" height="103" name="Select Subprocess" width="90" x="112" y="34">
-            <parameter key="select_which" value="4"/>
+            <parameter key="select_which" value="5"/>
             <process expanded="true">
               <operator activated="true" class="linear_regression" compatibility="9.5.001" expanded="true" height="103" name="Linear Regression" width="90" x="45" y="34">
                 <parameter key="feature_selection" value="M5 prime"/>
