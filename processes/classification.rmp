@@ -54,12 +54,12 @@
           <operator activated="true" class="sample" compatibility="9.5.001" expanded="true" height="82" name="Sample" width="90" x="45" y="34">
             <parameter key="sample" value="absolute"/>
             <parameter key="balance_data" value="true"/>
-            <parameter key="sample_size" value="100"/>
+            <parameter key="sample_size" value="6000"/>
             <parameter key="sample_ratio" value="0.1"/>
             <parameter key="sample_probability" value="0.1"/>
             <list key="sample_size_per_class">
-              <parameter key="true" value="1000"/>
-              <parameter key="false" value="1000"/>
+              <parameter key="true" value="4000"/>
+              <parameter key="false" value="4000"/>
             </list>
             <list key="sample_ratio_per_class"/>
             <list key="sample_probability_per_class"/>
@@ -67,11 +67,11 @@
             <parameter key="local_random_seed" value="1992"/>
           </operator>
           <operator activated="true" class="select_subprocess" compatibility="9.5.001" expanded="true" height="103" name="Select Subprocess" width="90" x="179" y="34">
-            <parameter key="select_which" value="1"/>
+            <parameter key="select_which" value="7"/>
             <process expanded="true">
               <operator activated="true" class="concurrency:parallel_decision_tree" compatibility="9.5.001" expanded="true" height="103" name="Decision Tree" width="90" x="45" y="34">
-                <parameter key="criterion" value="gain_ratio"/>
-                <parameter key="maximal_depth" value="10"/>
+                <parameter key="criterion" value="accuracy"/>
+                <parameter key="maximal_depth" value="5"/>
                 <parameter key="apply_pruning" value="true"/>
                 <parameter key="confidence" value="0.1"/>
                 <parameter key="apply_prepruning" value="true"/>
@@ -333,19 +333,19 @@
           <operator activated="true" class="performance_classification" compatibility="9.5.001" expanded="true" height="82" name="Performance Testing" width="90" x="246" y="136">
             <parameter key="main_criterion" value="first"/>
             <parameter key="accuracy" value="true"/>
-            <parameter key="classification_error" value="false"/>
+            <parameter key="classification_error" value="true"/>
             <parameter key="kappa" value="false"/>
             <parameter key="weighted_mean_recall" value="false"/>
             <parameter key="weighted_mean_precision" value="false"/>
             <parameter key="spearman_rho" value="false"/>
             <parameter key="kendall_tau" value="false"/>
-            <parameter key="absolute_error" value="false"/>
-            <parameter key="relative_error" value="false"/>
+            <parameter key="absolute_error" value="true"/>
+            <parameter key="relative_error" value="true"/>
             <parameter key="relative_error_lenient" value="false"/>
             <parameter key="relative_error_strict" value="false"/>
             <parameter key="normalized_absolute_error" value="false"/>
-            <parameter key="root_mean_squared_error" value="false"/>
-            <parameter key="root_relative_squared_error" value="false"/>
+            <parameter key="root_mean_squared_error" value="true"/>
+            <parameter key="root_relative_squared_error" value="true"/>
             <parameter key="squared_error" value="false"/>
             <parameter key="correlation" value="false"/>
             <parameter key="squared_correlation" value="false"/>
