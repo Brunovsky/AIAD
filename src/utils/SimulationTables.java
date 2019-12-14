@@ -16,8 +16,10 @@ public class SimulationTables {
     }
 
     public enum Format { CSV, TABLE }
-    public static final Format AGGREGATE_FORMAT = Format.TABLE;
-    public static final Format COMPANY_FORMAT = Format.TABLE;
+    // public static final Format AGGREGATE_FORMAT = Format.TABLE;
+    // public static final Format COMPANY_FORMAT = Format.TABLE;
+    public static final Format AGGREGATE_FORMAT = Format.CSV;
+    public static final Format COMPANY_FORMAT = Format.CSV;
 
     public static void writeGlobal(Table table) {
         String output = table.output(AGGREGATE_FORMAT, WORLDS_KEYS);

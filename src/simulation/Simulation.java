@@ -1,12 +1,5 @@
 package simulation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
 import agents.Client;
 import agents.Company;
 import agents.Station;
@@ -18,6 +11,12 @@ import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import utils.Logger;
 import utils.SimulationTables;
 import utils.Table;
@@ -36,7 +35,7 @@ public class Simulation {
 
     public static boolean SIMULATION_DEBUG_MODE = true;
     public static boolean EXECUTION_MODE_MULTI = true;
-    public static int NUM_WORLDS = 40;
+    public static int NUM_WORLDS = 10000;
 
     public static void main(String[] args) {
         Locale.setDefault(Locale.US);
