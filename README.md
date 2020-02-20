@@ -1,5 +1,9 @@
 # AIAD
 
+Project partners:
+* [Nuno Lopes](https://github.com/nunottlopes)
+* [Miguel Carvalho](https://github.com/migudmigu)
+
 ### How to run
 
 IntelliJ : In out/production/<project_folder_name>
